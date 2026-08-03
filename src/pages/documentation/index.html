@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>subscription-essential-e2e — Documentation</title>
+<style>
+:root{
+  --bg:#ffffff; --bg-alt:#f6f8fa; --bg-code:#f2f4f7; --bg-side:#fbfcfd;
+  --fg:#1c2024; --fg-muted:#5b6570; --fg-faint:#818b96;
+  --border:#e2e6ea; --border-strong:#cdd4db;
+  --accent:#0b6b63; --accent-fg:#0b6b63; --accent-bg:#e6f2f1;
+  --red:#b4232a; --red-bg:#fdeced;
+  --orange:#9a5b12; --orange-bg:#fdf1e2;
+  --yellow:#8a6d11; --yellow-bg:#fbf5e0;
+  --grey:#5b6570; --grey-bg:#eef1f4;
+  --shadow:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#12161a; --bg-alt:#181d22; --bg-code:#1c2228; --bg-side:#14181d;
+    --fg:#e5e9ed; --fg-muted:#a2adb8; --fg-faint:#7d8894;
+    --border:#262d35; --border-strong:#374049;
+    --accent:#4fd1c5; --accent-fg:#4fd1c5; --accent-bg:#16302e;
+    --red:#f28b8b; --red-bg:#33191b;
+    --orange:#e0a463; --orange-bg:#2e2213;
+    --yellow:#d6c164; --yellow-bg:#2b2715;
+    --grey:#a2adb8; --grey-bg:#1f252b;
+    --shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161a; --bg-alt:#181d22; --bg-code:#1c2228; --bg-side:#14181d;
+  --fg:#e5e9ed; --fg-muted:#a2adb8; --fg-faint:#7d8894;
+  --border:#262d35; --border-strong:#374049;
+  --accent:#4fd1c5; --accent-fg:#4fd1c5; --accent-bg:#16302e;
+  --red:#f28b8b; --red-bg:#33191b;
+  --orange:#e0a463; --orange-bg:#2e2213;
+  --yellow:#d6c164; --yellow-bg:#2b2715;
+  --grey:#a2adb8; --grey-bg:#1f252b;
+  --shadow:0 1px 3px rgba(0,0,0,.4);
+}
+:root[data-theme="light"]{
+  --bg:#ffffff; --bg-alt:#f6f8fa; --bg-code:#f2f4f7; --bg-side:#fbfcfd;
+  --fg:#1c2024; --fg-muted:#5b6570; --fg-faint:#818b96;
+  --border:#e2e6ea; --border-strong:#cdd4db;
+  --accent:#0b6b63; --accent-fg:#0b6b63; --accent-bg:#e6f2f1;
+  --red:#b4232a; --red-bg:#fdeced;
+  --orange:#9a5b12; --orange-bg:#fdf1e2;
+  --yellow:#8a6d11; --yellow-bg:#fbf5e0;
+  --grey:#5b6570; --grey-bg:#eef1f4;
+  --shadow:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font-family:var(--sans);font-size:15px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- Layout ---------- */
+.shell{display:flex;min-height:100vh}
+.sidebar{
+  width:280px;flex:0 0 280px;background:var(--bg-side);
+  border-right:1px solid var(--border);
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  padding:22px 0 60px;
+}
+.main{flex:1;min-width:0;padding:0 0 120px}
+.wrap{max-width:920px;margin:0 auto;padding:0 32px}
+
+/* ---------- Sidebar ---------- */
+.brand{padding:0 20px 18px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.brand h1{font-size:15px;margin:0 0 3px;letter-spacing:-.01em;font-family:var(--mono);font-weight:600}
+.brand p{margin:0;font-size:12.5px;color:var(--fg-faint);line-height:1.45}
+.search{padding:0 16px 14px}
+.search input{
+  width:100%;padding:7px 10px;font-size:13px;font-family:var(--sans);
+  background:var(--bg);color:var(--fg);
+  border:1px solid var(--border-strong);border-radius:6px;outline:none;
+}
+.search input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+nav ul{list-style:none;margin:0;padding:0}
+nav .grp{
+  font-size:11px;text-transform:uppercase;letter-spacing:.07em;font-weight:600;
+  color:var(--fg-faint);padding:14px 20px 5px;
+}
+nav a{
+  display:block;padding:5px 20px 5px 20px;color:var(--fg-muted);
+  text-decoration:none;font-size:13.5px;border-left:2px solid transparent;
+}
+nav a:hover{color:var(--fg);background:var(--bg-alt)}
+nav a.sub{padding-left:32px;font-size:13px;color:var(--fg-faint)}
+nav a.active{color:var(--accent-fg);border-left-color:var(--accent);background:var(--accent-bg);font-weight:500}
+nav li.hidden{display:none}
+
+/* ---------- Topbar ---------- */
+.topbar{
+  position:sticky;top:0;z-index:20;background:var(--bg);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  padding:11px 32px;backdrop-filter:blur(8px);
+}
+.topbar .crumb{font-size:13px;color:var(--fg-faint);flex:1;min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{
+  background:var(--bg-alt);border:1px solid var(--border-strong);color:var(--fg-muted);
+  border-radius:6px;padding:5px 10px;font-size:12.5px;cursor:pointer;font-family:var(--sans);
+  line-height:1.3;white-space:nowrap;
+}
+.btn:hover{color:var(--fg);border-color:var(--fg-faint)}
+.menu-btn{display:none}
+
+/* ---------- Content ---------- */
+section{padding-top:34px}
+h2{
+  font-size:26px;letter-spacing:-.02em;margin:0 0 6px;padding-bottom:10px;
+  border-bottom:1px solid var(--border);font-weight:650;
+}
+h3{font-size:19px;letter-spacing:-.01em;margin:34px 0 10px;font-weight:620}
+h4{font-size:15.5px;margin:24px 0 8px;font-weight:620}
+h2 .anchor,h3 .anchor,h4 .anchor{
+  opacity:0;text-decoration:none;color:var(--fg-faint);font-weight:400;
+  margin-left:8px;font-size:.8em;
+}
+h2:hover .anchor,h3:hover .anchor,h4:hover .anchor{opacity:1}
+p{margin:11px 0}
+.lede{color:var(--fg-muted);font-size:15.5px;margin-top:12px}
+a{color:var(--accent-fg)}
+ul,ol{padding-left:22px;margin:11px 0}
+li{margin:4px 0}
+hr{border:0;border-top:1px solid var(--border);margin:34px 0}
+
+code{
+  font-family:var(--mono);font-size:12.8px;background:var(--bg-code);
+  padding:1.5px 5px;border-radius:4px;border:1px solid var(--border);
+  word-break:break-word;
+}
+pre{
+  background:var(--bg-code);border:1px solid var(--border);border-radius:8px;
+  padding:14px 16px;overflow-x:auto;margin:14px 0;font-size:12.8px;line-height:1.6;
+}
+pre code{background:none;border:0;padding:0;font-size:inherit;word-break:normal}
+
+.table-wrap{overflow-x:auto;margin:14px 0;border:1px solid var(--border);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:top}
+th{background:var(--bg-alt);font-weight:620;font-size:12.5px;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td code,th code{font-size:12.2px}
+
+blockquote{
+  margin:14px 0;padding:10px 16px;border-left:3px solid var(--border-strong);
+  background:var(--bg-alt);color:var(--fg-muted);border-radius:0 6px 6px 0;
+}
+blockquote p{margin:0}
+
+/* ---------- Callouts ---------- */
+.note{
+  border-radius:8px;padding:12px 16px;margin:16px 0;border:1px solid;
+  font-size:14px;
+}
+.note p{margin:6px 0}
+.note p:first-child{margin-top:0}
+.note p:last-child{margin-bottom:0}
+.note-title{font-weight:640;display:block;margin-bottom:4px}
+.note.red{background:var(--red-bg);border-color:var(--red);color:var(--fg)}
+.note.red .note-title{color:var(--red)}
+.note.orange{background:var(--orange-bg);border-color:var(--orange);color:var(--fg)}
+.note.orange .note-title{color:var(--orange)}
+.note.yellow{background:var(--yellow-bg);border-color:var(--yellow);color:var(--fg)}
+.note.yellow .note-title{color:var(--yellow)}
+.note.info{background:var(--accent-bg);border-color:var(--accent);color:var(--fg)}
+.note.info .note-title{color:var(--accent-fg)}
+
+/* ---------- Pills ---------- */
+.pill{
+  display:inline-block;font-size:11px;font-weight:640;letter-spacing:.03em;
+  padding:2px 8px;border-radius:20px;vertical-align:middle;white-space:nowrap;
+}
+.pill.red{background:var(--red-bg);color:var(--red)}
+.pill.orange{background:var(--orange-bg);color:var(--orange)}
+.pill.yellow{background:var(--yellow-bg);color:var(--yellow)}
+.pill.grey{background:var(--grey-bg);color:var(--grey)}
+.pill.accent{background:var(--accent-bg);color:var(--accent-fg)}
+
+/* ---------- Cards ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:18px 0}
+.card{
+  border:1px solid var(--border);border-radius:9px;padding:14px 16px;
+  background:var(--bg-alt);box-shadow:var(--shadow);
+}
+.card h4{margin:0 0 5px;font-size:14px}
+.card p{margin:0;font-size:13px;color:var(--fg-muted);line-height:1.55}
+
+/* ---------- Flow diagram ---------- */
+.flow{
+  font-family:var(--mono);font-size:12.5px;line-height:1.75;
+  background:var(--bg-code);border:1px solid var(--border);border-radius:8px;
+  padding:16px;overflow-x:auto;margin:16px 0;white-space:pre;
+}
+
+/* ---------- Steps ---------- */
+.steps{list-style:none;padding:0;margin:16px 0;counter-reset:s}
+.steps li{
+  counter-increment:s;position:relative;padding:8px 0 8px 42px;
+  border-bottom:1px solid var(--border);margin:0;
+}
+.steps li:last-child{border-bottom:0}
+.steps li::before{
+  content:counter(s);position:absolute;left:0;top:9px;
+  width:26px;height:26px;border-radius:50%;
+  background:var(--accent-bg);color:var(--accent-fg);
+  font-size:11.5px;font-weight:660;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);
+}
+.steps .st{font-weight:560}
+.steps .fn{font-family:var(--mono);font-size:12.4px;color:var(--fg-muted);display:block;margin-top:1px}
+
+.footer{
+  border-top:1px solid var(--border);margin-top:60px;padding-top:20px;
+  font-size:12.5px;color:var(--fg-faint);
+}
+
+@media (max-width:900px){
+  .sidebar{
+    position:fixed;left:0;top:0;z-index:40;transform:translateX(-100%);
+    transition:transform .2s ease;box-shadow:var(--shadow);
+  }
+  .sidebar.open{transform:translateX(0)}
+  .menu-btn{display:block}
+  .wrap{padding:0 18px}
+  .topbar{padding:11px 18px}
+  h2{font-size:22px}
+  .scrim{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:30;
+  }
+  .scrim.open{display:block}
+}
+@media print{
+  .sidebar,.topbar,.scrim{display:none}
+  .wrap{max-width:none;padding:0}
+  section{page-break-before:always}
+  section:first-of-type{page-break-before:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="scrim" id="scrim"></div>
+
+<div class="shell">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <h1>subscription-essential-e2e</h1>
+    <p>Tests E2E Playwright — parcours de souscription Essentiel</p>
+  </div>
+  <div class="search">
+    <input type="search" id="navSearch" placeholder="Filtrer la navigation…" aria-label="Filtrer la navigation">
+  </div>
+  <nav id="nav">
+    <div class="grp">Démarrer</div>
+    <ul>
+      <li><a href="#vue-ensemble">Vue d'ensemble</a></li>
+      <li><a href="#installation" class="sub">Installation &amp; exécution</a></li>
+      <li><a href="#env" class="sub">Variables d'environnement</a></li>
+      <li><a href="#config" class="sub">Configuration Playwright</a></li>
+      <li><a href="#structure" class="sub">Structure du projet</a></li>
+    </ul>
+    <div class="grp">Concevoir</div>
+    <ul>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#canaux" class="sub">Les 4 canaux d'entrée</a></li>
+      <li><a href="#parcours" class="sub">Séquence du parcours</a></li>
+      <li><a href="#conventions" class="sub">Conventions POM</a></li>
+    </ul>
+    <div class="grp">Référence</div>
+    <ul>
+      <li><a href="#pom">Fonctions POM</a></li>
+      <li><a href="#pom-essentiel" class="sub">pom/essentiel</a></li>
+      <li><a href="#pom-autres" class="sub">simulateur · CL · mysof</a></li>
+      <li><a href="#api">Couche API</a></li>
+      <li><a href="#utils" class="sub">utils/Utils.js</a></li>
+      <li><a href="#donnees">Jeux de données</a></li>
+      <li><a href="#jdd" class="sub">datas/jdd</a></li>
+      <li><a href="#payloads" class="sub">Payloads API</a></li>
+      <li><a href="#identite" class="sub">Pièces d'identité &amp; Linxo</a></li>
+    </ul>
+    <div class="grp">Exploiter</div>
+    <ul>
+      <li><a href="#cicd">Pipeline CI/CD</a></li>
+      <li><a href="#ajouter">Ajouter un test</a></li>
+      <li><a href="#attention">Points d'attention</a></li>
+      <li><a href="#secrets" class="sub">Secrets en clair</a></li>
+      <li><a href="#defauts" class="sub">Défauts fonctionnels</a></li>
+      <li><a href="#dette" class="sub">Dette &amp; nettoyage</a></li>
+    </ul>
+  </nav>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+
+<div class="topbar">
+  <button class="btn menu-btn" id="menuBtn" aria-label="Ouvrir la navigation">☰</button>
+  <span class="crumb" id="crumb">Vue d'ensemble</span>
+  <button class="btn" id="themeBtn">Thème</button>
+  <button class="btn" onclick="window.print()">Imprimer</button>
+</div>
+
+<div class="wrap">
+
+<!-- ================= VUE D'ENSEMBLE ================= -->
+<section id="vue-ensemble">
+<h2>Vue d'ensemble<a class="anchor" href="#vue-ensemble">#</a></h2>
+<p class="lede">Tests end-to-end <strong>Playwright</strong> du parcours de souscription <strong>Essentiel</strong> de Sofinco / CA Consumer Finance. Le projet couvre l'ensemble des points d'entrée du parcours — site Sofinco, Credit Launcher partenaire, Ceasy, espace client MySof — jusqu'à la signature électronique, en environnement de <strong>recette (RCT)</strong>.</p>
+
+<div class="cards">
+  <div class="card"><h4>4 canaux d'entrée</h4><p>Crédit Conso direct, Ceasy enseigne, Credit Launcher partenaire, espace client MySof.</p></div>
+  <div class="card"><h4>7 enseignes Ceasy</h4><p>FNAC, DARTY, IKEA, Maisons du Monde, Electro Market, Castorama, Printemps.</p></div>
+  <div class="card"><h4>3 produits</h4><p>CRA (crédit renouvelable amortissable), VAC (vente à crédit), CRS (crédit renouvelable simple).</p></div>
+  <div class="card"><h4>Mobile-first</h4><p>Un seul projet Playwright actif : <em>Mobile Chrome</em>, émulation Pixel 5. Tous les sélecteurs en dépendent.</p></div>
+</div>
+
+<div class="note info">
+  <span class="note-title">À lire avant toute exécution</span>
+  <p>Le dépôt contient des <strong>secrets en clair</strong> et plusieurs comportements silencieux (erreurs avalées, <code>|| true</code> en CI) qui peuvent masquer un échec. Voir <a href="#attention">Points d'attention</a>.</p>
+</div>
+
+<h3 id="installation">Installation &amp; exécution<a class="anchor" href="#installation">#</a></h3>
+<p><strong>Prérequis</strong> — Node.js 18+, accès réseau aux environnements de recette CACF (proxy d'entreprise requis hors CI), Playwright <code>1.59.1</code> (version fixée, non en <code>^</code>).</p>
+
+<pre><code>cd subscription-essential-e2e
+npm install
+npx playwright install --with-deps</code></pre>
+
+<pre><code># Tous les tests (headless, projet Mobile Chrome)
+npx playwright test
+
+# Mode UI interactif (script npm fourni)
+npm run ui
+
+# Un fichier précis
+npx playwright test tests/CEASY/FNAC/FNAC.ts
+
+# Par tag
+npx playwright test --grep @sanity
+npx playwright test --grep @tnr
+
+# Avec la signature électronique activée
+se=oui npx playwright test --grep @sanity
+
+# Rapport HTML
+npx playwright show-report</code></pre>
+
+<h4>Tags disponibles</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Tag</th><th>Usage</th></tr></thead>
+<tbody>
+<tr><td><code>@sanity</code></td><td>Sous-ensemble de non-régression rapide — <strong>valeur par défaut du pipeline CI</strong></td></tr>
+<tr><td><code>@tnr</code></td><td>Campagne de non-régression complète</td></tr>
+<tr><td><code>@cr</code> <code>@assurance</code> <code>@sans-assurance</code> <code>@sans-carte</code> <code>@nominal</code></td><td>Tags portés par les jeux de données (<code>datas/jdd/*.json</code>), utilisés par les tests data-driven</td></tr>
+</tbody></table></div>
+
+<div class="note yellow">
+  <span class="note-title">Un test sans tag ne tourne jamais en CI</span>
+  <p>Le pipeline exécute <code>--grep "$SELECTED_TESTS"</code> avec la valeur <code>sanity</code>. Un test non taggé, ou dont le tag comporte une faute, est silencieusement absent de la campagne.</p>
+</div>
+
+<h3 id="env">Variables d'environnement<a class="anchor" href="#env">#</a></h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Variable</th><th>Défaut</th><th>Rôle</th></tr></thead>
+<tbody>
+<tr><td><code>ENV</code></td><td><code>https://recette.esigate.sofinco.fr</code></td><td>Base URL du parcours Essentiel (<code>pom/essentiel/index.js</code>)</td></tr>
+<tr><td><code>MYSOF_ENV</code></td><td><code>https://rct.mon-espace-client.sofinco.fr</code></td><td>Base URL de l'espace client (<code>pom/mysof/index.js</code>)</td></tr>
+<tr><td><code>se</code></td><td><em>non défini</em></td><td><code>oui</code> active la saisie de l'OTP et la signature électronique. Toute autre valeur → l'étape est ignorée</td></tr>
+<tr><td><code>assurance</code></td><td><em>non défini</em></td><td><code>non</code> sélectionne « Je ne souhaite pas » + case de renoncement. Sinon assurance recommandée / essentielle</td></tr>
+<tr><td><code>SELECTED_TESTS</code></td><td><code>sanity</code></td><td>Tag passé à <code>--grep</code> par le pipeline</td></tr>
+<tr><td><code>SERVER_PROXY</code><br><code>USERNAME_PROXY</code><br><code>PASSWORD_PROXY</code></td><td><em>non défini</em></td><td>Proxy navigateur configuré dans <code>playwright.config.ts</code></td></tr>
+<tr><td><code>CI_JOB_NAME</code></td><td><em>GitLab</em></td><td>Nom du fichier de traçabilité <code>dossiers/&lt;CI_JOB_NAME&gt;.txt</code>. Hors CI → <code>dossiers/undefined.txt</code></td></tr>
+</tbody></table></div>
+
+<h3 id="config">Configuration Playwright<a class="anchor" href="#config">#</a></h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Réglage</th><th>Valeur</th></tr></thead>
+<tbody>
+<tr><td><code>testDir</code> / <code>testMatch</code></td><td><code>./tests</code> / <code>**/*.ts</code></td></tr>
+<tr><td>Projet</td><td><strong>Mobile Chrome</strong> (émulation Pixel 5) — un seul projet actif, <code>Tablette</code> est commenté</td></tr>
+<tr><td><code>workers</code></td><td><code>5</code></td></tr>
+<tr><td><code>retries</code></td><td><code>1</code></td></tr>
+<tr><td><code>timeout</code> (test)</td><td><code>600 000 ms</code> (10 min)</td></tr>
+<tr><td><code>expect.timeout</code> / <code>actionTimeout</code></td><td><code>60 000 ms</code></td></tr>
+<tr><td><code>video</code> / <code>trace</code></td><td><code>on-first-retry</code> / <code>retain-on-first-failure</code></td></tr>
+<tr><td><code>ignoreHTTPSErrors</code></td><td><code>true</code></td></tr>
+<tr><td>Reporters</td><td><code>blob</code>, <code>html</code>, <code>line</code>, <code>json</code> → <code>test-results.json</code></td></tr>
+</tbody></table></div>
+<p>Le parcours étant conçu mobile-first, <strong>tous les sélecteurs POM supposent le viewport Pixel 5</strong>.</p>
+
+<h3 id="structure">Structure du projet<a class="anchor" href="#structure">#</a></h3>
+<div class="flow">subscription-essential-e2e/
+├── api/                    # Appels API (génération de liens, OTP)
+│   ├── Ceasy.js            # Token, simulations CRA/VAC/CRS, getUrl  ← utilisé par les tests
+│   ├── Ceasy2.ts           # Refonte typée du même périmètre (non branchée)
+│   ├── CL.ts               # Credit Launcher : /creditlauncher/data-transfert
+│   └── getMyMFA.ts         # Récupération du dernier code OTP (GetMyMFA)
+│
+├── pom/                    # Page Object Model, une fonction = une étape
+│   ├── essentiel/          # Cœur du parcours (PID, MiTrust, Linxo, CSP, adresse…)
+│   ├── CL/                 # Entrée Credit Launcher partenaire
+│   ├── simulateur/         # Cookies, simulation, sites vitrines partenaires
+│   └── mysof/              # Espace client Sofinco
+│
+├── tests/
+│   ├── CC/                 # Crédit Conso direct — PROSPECT et CONNU_CREDIT
+│   ├── CEASY/              # Parcours Ceasy par enseigne
+│   ├── CL/                 # Parcours Credit Launcher web par enseigne
+│   ├── MYSOF/              # Espace client (WEB / MOBILE)
+│   ├── T2/                 # Parcours à deux emprunteurs
+│   └── RECORD_TEST.ts      # Bac à sable d'enregistrement manuel
+│
+├── datas/
+│   ├── jdd/                # Jeux de données fonctionnels
+│   ├── ceasy/              # Payloads API simulation / génération de lien
+│   ├── CL/                 # Payloads Credit Launcher
+│   ├── identite/           # CNI recto/verso générées + passeport
+│   └── mytrust1.json       # Identité numérique injectée dans MiTrust
+│
+├── dossiers/               # Traçabilité : n° dossier / n° client capturés
+└── utils/Utils.js          # Navigateur, interception n° dossier, Slack</div>
+
+<h4>Traçabilité des dossiers créés</h4>
+<p><code>utils.interceptNumDossier(page)</code> intercepte la route <code>**/subscribe</code>, extrait l'identifiant de dossier et l'identifiant client depuis l'URL, les stocke dans la classe statique <code>Dossier</code> et les ajoute à <code>dossiers/&lt;CI_JOB_NAME&gt;.txt</code>.</p>
+<p>Ce fichier est publié en artefact GitLab — c'est le moyen de retrouver les dossiers créés par une campagne pour les rejouer ou les signer manuellement.</p>
+
+<h4>Serveur MCP (VS Code)</h4>
+<p><code>.vscode/mcp.json</code> déclare le serveur <code>aisquare-playwright</code> (<code>npx aisquare-playwright-mcp@latest</code>), utilisé pour l'assistance à l'écriture de tests dans l'IDE.</p>
+</section>
+
+<!-- ================= ARCHITECTURE ================= -->
+<section id="architecture">
+<h2>Architecture<a class="anchor" href="#architecture">#</a></h2>
+<p class="lede">Le framework est organisé en quatre couches. Principe directeur : <strong>un test ne contient aucun sélecteur</strong> — il déclare une séquence d'appels POM lisible comme un scénario fonctionnel.</p>
+
+<div class="flow">┌──────────────────────────────────────────────────────────────┐
+│  tests/          Scénarios : enchaînement d'étapes métier     │
+├──────────────────────────────────────────────────────────────┤
+│  pom/            Étapes du parcours (1 fonction = 1 écran)    │
+│                  Sélecteurs centralisés dans LOCATORS         │
+├──────────────────────────────────────────────────────────────┤
+│  api/            Préparation de la donnée : token, simulation,│
+│                  génération du lien d'entrée, récupération OTP│
+├──────────────────────────────────────────────────────────────┤
+│  datas/ utils/   Jeux de données, payloads, PID, traçabilité  │
+└──────────────────────────────────────────────────────────────┘</div>
+
+<h3 id="canaux">Les quatre canaux d'entrée<a class="anchor" href="#canaux">#</a></h3>
+<p>Le parcours Essentiel est atteint par quatre chemins différents. C'est ce qui structure l'arborescence <code>tests/</code>.</p>
+
+<h4>1. <code>tests/CC/</code> — Crédit Conso direct (site Sofinco)</h4>
+<p><strong><code>PROSPECT/</code></strong> — client inconnu. Le test attaque directement une URL de souscription paramétrée :</p>
+<pre><code>await page.goto('https://rct.souscription.sofinco.fr/essentiel/?q6=web_sofinco&amp;amount=3200&amp;dueNumber=36&amp;productId=RESERVE&amp;projectLabel=FAMILY_MOVING&amp;x1=crs&amp;sourceId=NEOURL02')</code></pre>
+<p>Puis : cookies → <code>fastSimulation</code> → mini-formulaire → parcours Essentiel complet.</p>
+
+<p><strong><code>CONNU_CREDIT/</code></strong> — client déjà porteur. Entrée par autologin sur l'espace client :</p>
+<pre><code>await utils.launchBrowser(chromium, `${mysof.env}/auth/autologin?uid=${idClient}`)
+await mysof.startFinancementFromMySof(page)</code></pre>
+<p>L'identifiant client est <strong>codé en dur en tête de fichier</strong> (<code>const idClient = "92398286246"</code>).</p>
+<p>Variantes couvertes : montant <code>&lt; 3000 €</code> / <code>&gt; 3000 €</code>, avec ou sans carte, avec ou sans assurance, projet Auto, prêt personnel (<code>PB</code>), apporteurs tiers (Amundi, BforBank, Attijariwafa), authentification passive.</p>
+
+<h4>2. <code>tests/CEASY/</code> — Parcours Ceasy (magasin / e-commerce enseigne)</h4>
+<p>Le lien d'entrée est <strong>fabriqué par API</strong> avant toute action navigateur :</p>
+<pre><code>const token        = await api.getToken()
+const simulationId = await api.getSimulationCra("cra_fnac_simulation.json", "pdv_fnac", token)
+const link         = await api.getUrl(token, simulationId, "cra_fnac_credit.json", "web_fnac", "cra_wis")
+await page.goto(link)</code></pre>
+<div class="table-wrap"><table>
+<thead><tr><th>Appel</th><th>Endpoint</th><th>Rôle</th></tr></thead>
+<tbody>
+<tr><td><code>getToken()</code></td><td><code>POST rct-api.sofinco.fr/token</code></td><td>OAuth2 <code>client_credentials</code></td></tr>
+<tr><td><code>getSimulationXxx()</code></td><td><code>.../revolvingSimulation/v3/…</code><br><code>.../creditSaleSimulation/v1/…</code></td><td>Calcule une simulation, retourne son <code>id</code></td></tr>
+<tr><td><code>getUrl()</code></td><td><code>POST .../partnerDataExchange/v1/links/</code></td><td>Retourne le <code>link</code> de souscription pré-alimenté</td></tr>
+</tbody></table></div>
+<p>Enseignes : FNAC, DARTY, IKEA, MM (Maisons du Monde), EM (Electro Market), CASTORAMA, PRINTEMPS. Produits : <strong>CRA</strong>, <strong>VAC</strong>, <strong>CRS</strong>.</p>
+
+<h4>3. <code>tests/CL/</code> — Credit Launcher (web partenaire)</h4>
+<pre><code>await cl.generateCL(page, "cra", "web_cl", "web_cl.json")
+// → POST rct-creditpartner.ca-cf.gca/creditlauncher/data-transfert
+// → page.goto('https://rct.creditpartner.fr/simulateur/?Q6=&lt;partenaire&gt;&amp;X1=&lt;contrat&gt;&amp;token=&lt;token&gt;')</code></pre>
+<p><code>generateNxcb</code> est la variante paiement fractionné (<code>rct.splitpayment.creditpartner.fr</code>).</p>
+
+<h4>4. <code>tests/MYSOF/</code> — Espace client</h4>
+<p>Tests autonomes (ne passent pas par le parcours Essentiel) : utilisation du disponible, résiliation d'assurance, changement de mot de passe, en déclinaison WEB et MOBILE. Authentification basique dans l'URL et autologin par <code>uid</code>.</p>
+
+<h4>Cas particulier : <code>tests/T2/</code> — deux emprunteurs</h4>
+<p>Le test pilote <strong>deux pages en parallèle</strong> dans le même scénario : l'emprunteur principal invite le co-emprunteur, le lien est récupéré depuis le presse-papier (<code>context.grantPermissions(['clipboard-read','clipboard-write'])</code> puis <code>navigator.clipboard.readText()</code>), et un second navigateur est lancé sur ce lien. Les étapes sont ensuite jouées alternativement sur <code>page</code> et <code>coemprunteurPage</code>.</p>
+
+<h3 id="parcours">Séquence canonique du parcours Essentiel<a class="anchor" href="#parcours">#</a></h3>
+<p>Une fois sur le parcours, quel que soit le canal d'entrée, l'ordre des étapes est le suivant. Toutes les étapes ne s'appliquent pas à tous les canaux.</p>
+
+<ol class="steps">
+<li><span class="st">Bandeau cookies</span><span class="fn">simulateur.acceptPopupCookies</span></li>
+<li><span class="st">Simulation (montant, projet, offre)</span><span class="fn">simulateur.fastSimulation / fastSimulationAuto</span></li>
+<li><span class="st">Mini-formulaire (profession, revenus, situation, charges)</span><span class="fn">essentiel.fillForm</span></li>
+<li><span class="st">Coordonnées (email, téléphone, date de naissance)</span><span class="fn">essentiel.setInfos · cl.setEmailTelAndValidate*</span></li>
+<li><span class="st">Opt-in offres et bons plans</span><span class="fn">essentiel.valider_recevez_offres_et_bon_plan</span></li>
+<li><span class="st">Pédagogie d'introduction</span><span class="fn">essentiel.skipIntro / skipIntroConnuCredit</span></li>
+<li><span class="st">Pièce d'identité (CNI recto/verso ou passeport)</span><span class="fn">essentiel.selectAndUpload</span></li>
+<li><span class="st">Lieu et date de naissance</span><span class="fn">essentiel.confirmLieuNaissance</span></li>
+<li><span class="st">Statut marital</span><span class="fn">essentiel.setStatutMarital</span></li>
+<li><span class="st">Justificatif bancaire — trois voies alternatives</span><span class="fn">miTrust_se_connecter | connectLinxoAccount + selectFirstAccount | setRib</span></li>
+<li><span class="st">Profession et revenus</span><span class="fn">essentiel.setCsp</span></li>
+<li><span class="st">Adresse et logement</span><span class="fn">essentiel.setAdresse</span></li>
+<li><span class="st">Assurance emprunteur</span><span class="fn">essentiel.setAssurance</span></li>
+<li><span class="st">Interception du n° de dossier</span><span class="fn">utils.interceptNumDossier</span></li>
+<li><span class="st">Récapitulatif des informations</span><span class="fn">essentiel.acceptRecapitulatifInfos</span></li>
+<li><span class="st">Récapitulatif du financement</span><span class="fn">essentiel.acceptRecapitulatifFinancement</span></li>
+<li><span class="st">Notice de signature électronique</span><span class="fn">essentiel.acceptNoticeSE — actuellement vide</span></li>
+<li><span class="st">Acceptation des conditions</span><span class="fn">essentiel.acceptConditons / acceptConditonsSeCeasy</span></li>
+<li><span class="st">Saisie OTP et signature</span><span class="fn">essentiel.setOtpAndValidate / setOtpAndValidateCeasy</span></li>
+</ol>
+
+<h4>Étape 10 : les trois voies du justificatif bancaire</h4>
+<p>C'est le point de variation le plus important entre scénarios.</p>
+<ul>
+<li><strong>MiTrust</strong> — identité numérique. <code>skipPedagogieMiTrust</code> puis <code>miTrust_se_connecter(page, "mytrust1.json")</code> : choix du mode JSON, consentement, upload du fichier, autorisation.</li>
+<li><strong>Linxo</strong> — agrégation bancaire. <code>connectLinxoAccount(page, "ESSENTIEL_OK_2")</code> se connecte à <em>Linxo Test Bank</em> (<code>dev</code>/<code>dev</code>) et pointe un fichier de comptes daté du jour sur S3, puis <code>selectFirstAccount</code> choisit le premier compte.</li>
+<li><strong>RIB manuel</strong> — <code>setRib(page)</code> saisit un IBAN fixe.</li>
+</ul>
+<p>Les tests Ceasy gèrent l'aiguillage dynamiquement, l'écran affiché dépendant de la configuration serveur :</p>
+<pre><code>try {
+  await page.getByText("Commencer").click();
+  await essentiel.setRib(page);
+} catch (error) {
+  await page.getByText("Continuer").or(page.getByText("Suivant")).click();
+  await essentiel.connectLinxoAccount(page, data.linxo.account);
+  await essentiel.selectFirstAccount(page);
+}</code></pre>
+
+<h4>Étape 19 : la signature électronique</h4>
+<p>Elle n'est jouée que si <code>process.env.se === "oui"</code>. Le code OTP est lu via l'API <strong>GetMyMFA</strong> : appel <code>curl</code> sur <code>programmatic-api.client.get.mymfa.io/v1/&lt;PHONE_ID&gt;/mfa/latest</code>, d'abord sans proxy, puis avec proxy NTLM en repli.</p>
+<p>Deux implémentations de saisie coexistent :</p>
+<ul>
+<li><code>SE.setOtpAndValidate</code> — champ unique <code>#psm_otp_code</code>, bouton <code>#signBtn</code></li>
+<li><code>AuthPassive.setOtpAndValidate</code> — pavé à 6 champs <code>#codeOTPKeypadInput0..5</code>, bouton « Valider »</li>
+</ul>
+
+<h3 id="conventions">Conventions POM<a class="anchor" href="#conventions">#</a></h3>
+<pre><code>import { Page, test } from '@playwright/test';
+
+const LOCATORS = {
+  submitButton: "//button[@type='submit']",
+  // …
+};
+
+export async function setXxx(page: Page, ...args) {
+  await test.step("Etape: Xxx", async () =&gt; {
+    // interactions
+  });
+}</code></pre>
+<ul>
+<li><strong><code>LOCATORS</code></strong> — objet en tête de fichier, sélecteurs majoritairement XPath. Un changement d'IHM se corrige à un seul endroit.</li>
+<li><strong><code>test.step</code></strong> — chaque étape est nommée <code>"Etape: …"</code>, ce qui produit un rapport HTML lisible et une trace exploitable.</li>
+<li><strong><code>index.js</code></strong> — chaque dossier POM ré-exporte ses fonctions à plat, permettant l'import unique <code>import * as essentiel from '../../pom/essentiel'</code>.</li>
+<li><strong>Attentes explicites</strong> — le code s'appuie beaucoup sur <code>waitForTimeout</code> plutôt que sur des attentes conditionnelles. C'est la principale cause de flakiness du projet.</li>
+</ul>
+
+<h4>Modèle de nommage des tests</h4>
+<div class="flow">SOF-150935 CEASY-FNAC | CRA | CREDIT
+└────┬───┘ └────┬────┘  └┬┘   └──┬─┘
+  ticket    canal-enseigne produit variante</div>
+<p>Le préfixe <code>SOF-xxxxxx</code> référence le ticket Jira couvert. Il permet de relier l'exécution au référentiel de tests.</p>
+</section>
+
+<!-- ================= POM ================= -->
+<section id="pom">
+<h2>Référence des fonctions POM<a class="anchor" href="#pom">#</a></h2>
+<p class="lede">Toutes les signatures sont données telles qu'exportées. Les fonctions marquées <span class="pill grey">non exportée</span> ne sont pas ré-exportées par l'<code>index.js</code> de leur dossier : il faut les importer depuis leur fichier.</p>
+
+<h3 id="pom-essentiel">pom/essentiel — cœur du parcours<a class="anchor" href="#pom-essentiel">#</a></h3>
+<p>Import : <code>import * as essentiel from '../../pom/essentiel'</code><br>
+Constante exportée : <code>essentiel.env</code> → <code>process.env.ENV || "https://recette.esigate.sofinco.fr"</code></p>
+
+<h4>Coordonnées — <code>Coordonees.ts</code></h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>setInfos</code></td><td><code>(page, mail, tel, dateNaissance)</code></td><td>Remplit <code>#input-email</code>, <code>#input-telephone</code>, <code>#birthDate</code>. Si <code>mail === "RANDOM"</code>, génère <code>random&lt;timestamp&gt;@test-auto.fr</code></td></tr>
+</tbody></table></div>
+
+<h4>Mini-formulaire et pédagogie — <code>Mini-Formulaire.ts</code></h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>fillForm</code></td><td><code>(page, salaire, depuis, coemprunteur)</code></td><td>Profession (<code>#profession-7</code>), revenus (<code>#revenue-9</code>), situation maritale (<code>#marital-status-code-0</code>), charges (<code>#householdExpenses-1</code>), puis « Valider ». Selon <code>coemprunteur</code> : « Continuer en empruntant seul » ou « Souscrire avec un co-emprunteur ». <strong>⚠ <code>salaire</code> et <code>depuis</code> sont ignorés</strong> (lignes commentées) : les valeurs viennent des listes déroulantes</td></tr>
+<tr><td><code>skipIntro</code></td><td><code>(page)</code></td><td>Passe les 3 écrans de pédagogie, en démarrant par « Commencez votre souscription »</td></tr>
+<tr><td><code>skipIntroConnuCredit</code></td><td><code>(page)</code></td><td>Même chose sans l'écran d'accroche initial (client connu)</td></tr>
+</tbody></table></div>
+
+<h4>Pièce d'identité — <code>Identite.ts</code></h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>selectAndUpload</code></td><td><code>(page, document, docRecto, docVerso)</code></td><td><code>document === "Passeport"</code> → sélection passeport + upload d'un seul fichier. Sinon → CNI recto/verso. Fichiers lus dans <code>datas/identite/</code></td></tr>
+<tr><td><code>selectAndUploadV2</code></td><td><code>(page, document, docRecto, docVerso)</code></td><td>Variante utilisant <code>selectCIv2</code> (nouvel écran « Je photographie ma pièce d'identité »)</td></tr>
+<tr><td><code>confirmLieuNaissance</code></td><td><code>(page, pays, ville)</code></td><td><strong>⚠ Les paramètres sont ignorés</strong> : le code force <code>FRANCE</code> / <code>LILLE (59000)</code> en dur, et une date de naissance aléatoire <code>20/01/&lt;1976+rand(30)&gt;</code></td></tr>
+<tr><td><code>validerRecevezOffresEtBonPlan</code></td><td><code>(page)</code></td><td>Exporté sous le nom <strong><code>valider_recevez_offres_et_bon_plan</code></strong>. Attend 3 s puis valide</td></tr>
+<tr><td><code>skipIntroPid</code> <span class="pill grey">non exportée</span></td><td><code>(page)</code></td><td>Enchaîne les écrans pédagogiques avant le PID</td></tr>
+<tr><td><code>selectPasseport</code> <code>selectCI</code> <code>selectCIv2</code> <code>uploadDoc</code> <code>uploadCI</code> <code>uploadRandomCI</code> <span class="pill grey">non exportées</span></td><td>—</td><td>Briques utilisées par <code>selectAndUpload</code></td></tr>
+</tbody></table></div>
+
+<h4>Statut marital — <code>StatutMarital.ts</code></h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>setStatutMarital</code></td><td><code>(page)</code></td><td>Sélectionne systématiquement la première option (<code>#marital-status-0</code>)</td></tr>
+</tbody></table></div>
+
+<h4>Justificatif bancaire — <code>Linxo.ts</code></h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>connectLinxoAccount</code></td><td><code>(page, fichier)</code></td><td>Recherche « Linxo », sélectionne <em>Linxo Test Bank</em>, s'authentifie <code>dev</code>/<code>dev</code>, puis renseigne l'URL du fichier de comptes :<br><code>https://linxo-test-bank.s3.amazonaws.com/B2B/QyHEv57N954fehyc22/&lt;YYYY_MM_DD&gt;/&lt;fichier&gt;.txt</code><br><strong>⚠ La date est celle du jour d'exécution</strong> : le fichier doit exister côté S3</td></tr>
+<tr><td><code>selectFirstAccount</code></td><td><code>(page)</code></td><td>Sélectionne le premier compte (timeout 180 s, l'agrégation étant lente)</td></tr>
+<tr><td><code>setRib</code></td><td><code>(page)</code></td><td>Saisit l'IBAN fixe <code>FR76 3000 6000 0112 3456 7890 189</code></td></tr>
+</tbody></table></div>
+
+<h4>MiTrust — <code>MiTrust.ts</code></h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>skipPedagogieMiTrust</code></td><td><code>(page)</code></td><td>Deux écrans « Continuer »</td></tr>
+<tr><td><code>miTrust_se_connecter</code></td><td><code>(page, jsonMitrust)</code></td><td>« Se connecter » → mode JSON → consentement → upload de <code>datas/&lt;jsonMitrust&gt;</code> → autorisation</td></tr>
+</tbody></table></div>
+
+<h4>Revenus et adresse</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Fichier</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>setCsp</code></td><td><code>Csp.ts</code></td><td><code>(page, salaire, depuis)</code></td><td>CSP forcée sur <code>#select-csp-7</code>, date d'ancienneté = <code>depuis</code>, salaire = <code>salaire</code></td></tr>
+<tr><td><code>setAdresse</code></td><td><code>Adresse.ts</code></td><td><code>(page, adresse, zipcode, rent, movingDate, mitrust)</code></td><td>Si <code>mitrust === true</code>, l'adresse et le code postal sont <strong>pré-remplis par MiTrust</strong> et donc non saisis. Type de logement forcé sur « Logé par la famille ». <strong>⚠ <code>rent</code> est ignoré</strong> (ligne commentée)</td></tr>
+</tbody></table></div>
+
+<h4>Assurance — <code>Assurance.ts</code></h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>setAssurance</code></td><td><code>(page, assurance)</code></td><td><strong>⚠ Le paramètre <code>assurance</code> est ignoré.</strong> Le choix dépend de <code>process.env.assurance</code> : <code>"non"</code> → refus + case « agree-no-coverage » ; sinon → première option trouvée entre « Assurance recommandée » et « Assurance essentielle »</td></tr>
+</tbody></table></div>
+
+<h4>Récapitulatifs et signature</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Fichier</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>acceptRecapitulatifInfos</code></td><td><code>Recapitulatif.ts</code></td><td><code>(page)</code></td><td>Ouvre « Votre récapitulatif » puis « Confirmer »</td></tr>
+<tr><td><code>acceptRecapitulatifFinancement</code></td><td><code>Recapitulatif.ts</code></td><td><code>(page)</code></td><td>Coche « Je reconnais avoir… » puis « Valider »</td></tr>
+<tr><td><code>acceptNoticeSE</code></td><td><code>NoticeSE.ts</code></td><td><code>(page)</code></td><td><strong>⚠ Corps entièrement commenté</strong> — no-op conservé pour la lisibilité des scénarios</td></tr>
+<tr><td><code>acceptConditons</code></td><td><code>SE.ts</code></td><td><code>(page, contrat, carte)</code></td><td>Coche <code>custom_cb-0/1/3</code>, plus <code>custom_cb-2</code> si <code>carte === "oui"</code>. ⚠ <code>contrat</code> est inutilisé ; toutes les erreurs sont avalées</td></tr>
+<tr><td><code>acceptConditonsSeCeasy</code></td><td><code>SE.ts</code></td><td><code>(page)</code></td><td>Variante Ceasy : <code>checkbox1</code>, <code>checkbox2</code>, <code>checkbox4</code></td></tr>
+<tr><td><code>setOtpAndValidate</code></td><td><code>SE.ts</code></td><td><code>(page)</code></td><td><strong>Uniquement si <code>process.env.se === "oui"</code>.</strong> Attend 15 s, lit l'OTP via GetMyMFA, saisit, clique <code>#signBtn</code>, attend 30 s</td></tr>
+<tr><td><code>setOtpAndValidateCeasy</code></td><td><code>SE.ts</code></td><td><code>(page)</code></td><td>Même chose avec le bouton <code>.btn.btn-otp</code></td></tr>
+</tbody></table></div>
+
+<h4>Authentification passive — <code>AuthPassive.ts</code></h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Export</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>skipPedago</code></td><td><code>essentiel.skipPedago</code></td><td>Clique le bouton « par SMS »</td></tr>
+<tr><td><code>setOtpAndValidate</code></td><td><code>essentiel.setOtpAndValidateAuthPassive</code></td><td>Saisit l'OTP caractère par caractère dans le pavé <code>#codeOTPKeypadInput0..5</code> puis « Valider »</td></tr>
+</tbody></table></div>
+
+<h4>Divers</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Fichier</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>validateInfos</code></td><td><code>Informations.ts</code></td><td>Simple clic sur le bouton submit</td></tr>
+<tr><td><code>nextPedagogieId</code></td><td><code>Pedagogie.ts</code></td><td>Ferme la story (<code>#story-x</code>) et continue</td></tr>
+</tbody></table></div>
+
+<h3 id="pom-autres">simulateur · CL · mysof<a class="anchor" href="#pom-autres">#</a></h3>
+
+<h4>pom/simulateur</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>acceptPopupCookies</code></td><td><code>(page)</code></td><td>Clique « Accepter » (timeout 20 s) — <code>Home.ts</code></td></tr>
+<tr><td><code>fastSimulation</code></td><td><code>(page, montant, carte, contrat)</code></td><td><strong>⚠ Corps intégralement commenté</strong> : la fonction ne fait plus rien. Les tests passent désormais les paramètres de simulation directement dans l'URL (<code>?amount=…&amp;dueNumber=…&amp;productId=…</code>)</td></tr>
+<tr><td><code>fastSimulationAuto</code></td><td><code>(page, montant, carte, contrat)</code></td><td>Toujours active : projet AUTO → motorisation thermique → montant → « Découvrir les offres » → « Continuer avec cette offre »</td></tr>
+<tr><td><code>goToAtijariwafaSimulation</code><br><code>goToAmundi</code><br><code>goToCrPremium</code></td><td><code>(page)</code></td><td>Entrées depuis les sites vitrines partenaires</td></tr>
+<tr><td><code>goToBforbank</code> <span class="pill grey">non exportée</span></td><td><code>(page)</code></td><td>Non ré-exportée par <code>index.js</code></td></tr>
+</tbody></table></div>
+
+<h4>pom/CL — Credit Launcher</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>generateCL</code></td><td><code>(page, contrat, partenaire, payload)</code></td><td>Appelle l'API Credit Launcher puis ouvre <code>https://rct.creditpartner.fr/simulateur/?Q6=…&amp;X1=…&amp;token=…</code></td></tr>
+<tr><td><code>generateNxcb</code></td><td><code>(page, contrat, partenaire, payload)</code></td><td>Variante paiement fractionné → <code>rct.splitpayment.creditpartner.fr</code></td></tr>
+<tr><td><code>setEmailTelAndValidate</code></td><td><code>(page, mail, tel)</code></td><td>Email + téléphone (accepte <code>#input-telephone</code> <strong>ou</strong> <code>#input-mobileNumber</code>)</td></tr>
+<tr><td><code>setEmailTelAndValidate2</code></td><td><code>(page, mail, tel)</code></td><td>Variante forçant <code>#input-mobileNumber</code></td></tr>
+<tr><td><code>setEmailTelAndValidateCeasy</code></td><td><code>(page, mail, tel)</code></td><td>Variante Ceasy, renseigne aussi <code>#birthDate</code> (<code>10/06/1990</code>) s'il est présent. <strong>⚠ Le test <code>isVisible()</code> n'est pas <code>await</code>é</strong> : la condition est toujours vraie</td></tr>
+<tr><td><code>continuerAvecCetteOffre</code></td><td><code>(page)</code></td><td>Premier bouton « Continuer »</td></tr>
+<tr><td><code>continuer</code></td><td><code>(page)</code></td><td>Bouton <code>[data-testid='continue-button']</code></td></tr>
+<tr><td><code>setCard</code></td><td><code>(page, card)</code></td><td>Si <code>card</code> est falsy, coche « pas de carte » (<code>[for='none']</code>)</td></tr>
+<tr><td><code>je_souscris_a_la_carte</code></td><td><code>(page)</code></td><td>Bouton d'accroche carte</td></tr>
+</tbody></table></div>
+
+<h4>pom/mysof — espace client</h4>
+<p>Constante exportée : <code>mysof.env</code> → <code>process.env.MYSOF_ENV || "https://rct.mon-espace-client.sofinco.fr"</code></p>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>startFinancementFromMySof</code></td><td><code>(page)</code></td><td>Menu burger → « Financer un projet » → « Je simule mon projet »</td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ================= API ================= -->
+<section id="api">
+<h2>Couche API<a class="anchor" href="#api">#</a></h2>
+
+<h3>api/Ceasy.js — génération des liens Ceasy</h3>
+<p>Import : <code>import * as api from '../../api/Ceasy'</code></p>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Endpoint / retour</th></tr></thead>
+<tbody>
+<tr><td><code>getToken()</code></td><td>—</td><td><code>POST rct-api.sofinco.fr/token</code> → <code>access_token</code> (application Ceasy)</td></tr>
+<tr><td><code>getTokenCl()</code></td><td>—</td><td>Idem avec les identifiants Credit Partner</td></tr>
+<tr><td><code>getSimulationCra</code></td><td><code>(file, partner, token)</code></td><td><code>rct-gw-intranet-api.ca-cf.gca/revolvingSimulation/v3/partners/&lt;partner&gt;/campaigns/cr_essentiel/…</code> → <code>id</code>.<br><strong>⚠ Seule fonction pointant l'API intranet</strong> : nécessite le réseau interne</td></tr>
+<tr><td><code>getSimulationVac</code></td><td><code>(file, partner, token)</code></td><td><code>.../creditSaleSimulation/v1/partners/&lt;partner&gt;/campaigns/vac/…</code> → <code>id</code></td></tr>
+<tr><td><code>getSimulationCrs</code></td><td><code>(file, token)</code></td><td><code>.../revolvingSimulation/v3/partners/web_fnac/campaigns/crs/…</code> → <code>id</code></td></tr>
+<tr><td><code>getSimulationCraIkea</code><br><code>getSimulationVacIkea</code></td><td><code>(file, partner, token)</code></td><td>Partenaire <strong>forcé</strong> à <code>web_ikea</code> malgré le paramètre</td></tr>
+<tr><td><code>getSimulationCraCastorama</code></td><td><code>(file, token)</code></td><td>Partenaire <code>web_castorama</code></td></tr>
+<tr><td><code>getSimulationCraPrintemps</code></td><td><code>(file, token)</code></td><td>Partenaire <code>web_printemps</code></td></tr>
+<tr><td><code>getSimulationCraEm</code></td><td><code>(file, partner, token)</code></td><td>Partenaire <strong>forcé</strong> à <code>web_em</code></td></tr>
+<tr><td><code>getSimulationRedoute</code></td><td><code>(file, partner, token)</code></td><td><strong>⚠ Retourne <code>data.access_token</code></strong> (inexistant dans la réponse) au lieu de <code>data.id</code> — voir <a href="#defauts">Défauts fonctionnels</a></td></tr>
+<tr><td><code>getUrl</code></td><td><code>(token, simulationId, file, partenaire, contrat)</code></td><td><code>POST .../partnerDataExchange/v1/links/</code> avec <code>Context-Applicationid: ceasy</code> → <code>link</code></td></tr>
+<tr><td><code>getUrlCl</code></td><td><code>(token, simulationId, file, partenaire, contrat)</code></td><td>Idem avec <code>Context-Applicationid: creditPartner</code></td></tr>
+</tbody></table></div>
+<p>Les payloads sont lus dans <code>datas/ceasy/&lt;file&gt;</code> et les placeholders <code>{{simulationId}}</code> / <code>{{orderId}}</code> y sont substitués.</p>
+
+<h3>api/Ceasy2.ts — refonte typée (non branchée)</h3>
+<p>Réécriture factorisée du même périmètre : <code>apiPost&lt;T&gt;</code> générique, options nommées, gestion du proxy, support du co-emprunteur via le placeholder <code>{{t2}}</code> alimenté par <code>datas/ceasy/coborrower.json</code>.</p>
+<div class="note yellow">
+  <span class="note-title">Aucun test ne l'importe aujourd'hui</span>
+  <p>Deux implémentations concurrentes coexistent. Les signatures diffèrent de <code>Ceasy.js</code> (objets nommés au lieu d'arguments positionnels, <code>getToken(auth)</code> prend l'en-tête Basic en paramètre) : une bascule demande une reprise des appels côté tests.</p>
+</div>
+
+<h3>api/CL.ts — Credit Launcher</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Signature</th><th>Endpoint</th></tr></thead>
+<tbody>
+<tr><td><code>CL</code></td><td><code>(payload)</code></td><td><code>POST rct-creditpartner.ca-cf.gca/creditlauncher/data-transfert</code>, payload lu dans <code>datas/CL/&lt;payload&gt;</code>, <code>{{orderId}}</code> remplacé par <code>Date.now().substring(4,9)</code></td></tr>
+</tbody></table></div>
+
+<h3>api/getMyMFA.ts — récupération de l'OTP</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>fetchLatestMFA()</code></td><td>Exécute un <code>curl</code> (via <code>execSync</code>) sur <code>programmatic-api.client.get.mymfa.io/v1/&lt;PHONE_ID&gt;/mfa/latest</code>. Tente d'abord <strong>sans proxy</strong>, puis <strong>avec proxy NTLM</strong> en repli. Retourne le JSON parsé, dont <code>mfaCode</code></td></tr>
+</tbody></table></div>
+
+<h3 id="utils">utils/Utils.js<a class="anchor" href="#utils">#</a></h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Export</th><th>Signature</th><th>Comportement</th></tr></thead>
+<tbody>
+<tr><td><code>launchBrowser</code></td><td><code>(chromium, url, testTitle)</code></td><td>Lance un Chromium <strong><code>headless: false</code></strong> en viewport 428×928 <code>isMobile</code>, ouvre <code>url</code> et retourne la <code>page</code>. Utilisé par les tests qui ont besoin d'un second navigateur (co-emprunteur) ou d'un autologin</td></tr>
+<tr><td><code>interceptNumDossier</code></td><td><code>(page)</code></td><td>Intercepte <code>**/subscribe</code>, extrait le n° de dossier et le n° client de l'URL, les stocke dans <code>Dossier</code> et les ajoute à <code>dossiers/&lt;CI_JOB_NAME&gt;.txt</code>. <strong>À appeler avant</strong> l'étape qui déclenche la création du dossier</td></tr>
+<tr><td><code>Dossier</code></td><td>classe statique</td><td>Champs <code>dossier</code> et <code>client</code> (init. <code>"?"</code>), méthode <code>sendDossierToSlack()</code></td></tr>
+<tr><td><code>generateRandomEmail</code></td><td>—</td><td><code>testauto&lt;timestamp&gt;@sofinco.fr</code></td></tr>
+<tr><td><code>sendToSlack</code></td><td><code>(message, data)</code></td><td><strong>⚠ Non fonctionnel</strong> — voir <a href="#defauts">Défauts fonctionnels</a></td></tr>
+</tbody></table></div>
+</section>
+
+<!-- ================= DONNEES ================= -->
+<section id="donnees">
+<h2>Jeux de données<a class="anchor" href="#donnees">#</a></h2>
+<p class="lede">Le dossier <code>datas/</code> regroupe quatre familles de données de nature très différente.</p>
+
+<div class="flow">datas/
+├── jdd/        Données fonctionnelles consommées par les tests
+├── ceasy/      Payloads JSON des API simulation et génération de lien
+├── CL/         Payloads JSON de l'API Credit Launcher
+├── identite/   Images de pièces d'identité
+└── mytrust1.json   Fichier d'identité numérique MiTrust</div>
+
+<h3 id="jdd">1. datas/jdd — jeux de données fonctionnels<a class="anchor" href="#jdd">#</a></h3>
+<p>Un fichier par scénario métier. Structure commune :</p>
+<pre><code>{
+  "datas": [
+    {
+      "title": "CR &gt; 3000€ - Avec Assurance",
+      "tags": ["@cr", "@tnr", "@assurance", "@nominal"],
+      "customerId": "",
+      "simulation": { "amount": "3200", "carte": "oui", "type": "CR" },
+      "user":       { "email": "RANDOM", "phone": "0757592585", "birthDate": "01/06/1995" },
+      "documents":  { "type": "CI", "front": "cni-recto6.png", "back": "cni-verso6.png" },
+      "birthPlace": { "country": "FRANCE", "city": "TOURCOING" },
+      "miTrust":    { "file": "mytrust1.json" },
+      "linxo":      { "account": "ESSENTIEL_OK_2" },
+      "csp":        { "amount": "10000", "date": "01/2020" },
+      "address":    { "street": "5 RUE DE DOUAI", "zipCode": "59000",
+                      "loyer": "500", "date": "01/2020", "miTrust": true },
+      "assurance":  { "type": "Assurance recommandée" },
+      "conditions": { "step": 4 }
+    }
+  ]
+}</code></pre>
+
+<h4>Champs</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Champ</th><th>Consommé par</th><th>Remarque</th></tr></thead>
+<tbody>
+<tr><td><code>title</code></td><td><code>test(jdd.datas[i].title, …)</code></td><td>Devient le nom du test</td></tr>
+<tr><td><code>tags</code></td><td><code>{ tag: jdd.datas[i].tags }</code></td><td>Permet le filtrage <code>--grep</code></td></tr>
+<tr><td><code>simulation.amount</code></td><td><code>fastSimulationAuto</code></td><td>Montant du projet</td></tr>
+<tr><td><code>simulation.carte</code></td><td><code>acceptConditons(page, "CR", …)</code></td><td><code>"oui"</code> → coche la case carte supplémentaire</td></tr>
+<tr><td><code>simulation.type</code></td><td><code>fastSimulation*</code></td><td><code>CR</code>, <code>PB</code></td></tr>
+<tr><td><code>user.email</code></td><td><code>setInfos</code></td><td><code>"RANDOM"</code> → email généré à l'exécution</td></tr>
+<tr><td><code>user.phone</code></td><td><code>setInfos</code></td><td>Numéro rattaché au compte GetMyMFA pour la réception de l'OTP</td></tr>
+<tr><td><code>user.birthDate</code></td><td><code>setInfos</code></td><td>Format <code>JJ/MM/AAAA</code></td></tr>
+<tr><td><code>documents.*</code></td><td>—</td><td><strong>⚠ Non utilisé</strong> : les tests tirent une CNI au hasard</td></tr>
+<tr><td><code>birthPlace.*</code></td><td><code>confirmLieuNaissance</code></td><td><strong>⚠ Passé en argument mais ignoré</strong> — la fonction force <code>FRANCE</code> / <code>LILLE</code></td></tr>
+<tr><td><code>miTrust.file</code></td><td><code>miTrust_se_connecter</code></td><td>Chemin relatif à <code>datas/</code></td></tr>
+<tr><td><code>linxo.account</code></td><td><code>connectLinxoAccount</code></td><td>Nom du fichier de comptes sur S3, sans extension</td></tr>
+<tr><td><code>csp.amount</code> / <code>csp.date</code></td><td><code>setCsp</code></td><td>Salaire et date d'ancienneté (<code>MM/AAAA</code>)</td></tr>
+<tr><td><code>address.miTrust</code></td><td><code>setAdresse</code></td><td><code>true</code> → adresse déjà pré-remplie par MiTrust, non saisie</td></tr>
+<tr><td><code>address.loyer</code></td><td><code>setAdresse</code></td><td><strong>⚠ Non utilisé</strong> (ligne commentée dans le POM)</td></tr>
+<tr><td><code>assurance.type</code></td><td><code>setAssurance</code></td><td><strong>⚠ Ignoré</strong> : c'est <code>process.env.assurance</code> qui décide</td></tr>
+<tr><td><code>conditions.step</code></td><td>—</td><td><strong>⚠ Non utilisé</strong></td></tr>
+</tbody></table></div>
+
+<h4>Fichiers disponibles</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Fichier</th><th>Scénario</th></tr></thead>
+<tbody>
+<tr><td><code>cr+3000.json</code></td><td>Crédit renouvelable &gt; 3000 € — 3 variantes (avec assurance, sans assurance, sans carte)</td></tr>
+<tr><td><code>cr+3000-auto.json</code></td><td>CR &gt; 3000 € projet automobile</td></tr>
+<tr><td><code>cr-3000.json</code></td><td>Crédit renouvelable &lt; 3000 €</td></tr>
+<tr><td><code>pb.json</code></td><td>Prêt personnel</td></tr>
+<tr><td><code>ceasy.json</code></td><td>Parcours Ceasy générique</td></tr>
+<tr><td><code>amundi.json</code> <code>bforbank.json</code> <code>attijariwafa.json</code></td><td>Entrées par site vitrine partenaire</td></tr>
+<tr><td><code>autpassive.json</code></td><td>Authentification passive</td></tr>
+<tr><td><code>cra-fnac</code> <code>cra-darty</code> <code>crs-fnac</code> <code>crs-darty</code> <code>crs-ikea</code> <code>vac-fnac</code> <code>vac-darty</code> <code>vac-ikea</code> <code>cravac-fnac</code> <code>cravac-darty</code></td><td>Déclinaisons produit × enseigne</td></tr>
+</tbody></table></div>
+
+<h3 id="payloads">2. Payloads API<a class="anchor" href="#payloads">#</a></h3>
+<h4>datas/ceasy — payloads des API Ceasy</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Type</th><th>Exemple</th><th>Consommé par</th><th>Contenu</th></tr></thead>
+<tbody>
+<tr><td><strong>Simulation</strong></td><td><code>cra_fnac_simulation.json</code></td><td><code>getSimulationCra/Vac/Crs</code></td><td>Paramètres de calcul de l'offre</td></tr>
+<tr><td><strong>Lien</strong></td><td><code>cra_fnac_credit.json</code></td><td><code>getUrl</code></td><td>Contexte complet de souscription</td></tr>
+</tbody></table></div>
+
+<h4>Placeholders</h4>
+<div class="table-wrap"><table>
+<thead><tr><th>Placeholder</th><th>Remplacé par</th><th>Où</th></tr></thead>
+<tbody>
+<tr><td><code>{{simulationId}}</code></td><td>L'<code>id</code> retourné par l'appel simulation</td><td><code>getUrl</code> / <code>getUrlCl</code></td></tr>
+<tr><td><code>{{orderId}}</code></td><td><code>"testauto" + rand(30000)</code> (<code>getUrl</code>) ou <code>"TestAuto" + rand(30000000)</code> (<code>getUrlCl</code>)</td><td>Toutes occurrences</td></tr>
+<tr><td><code>{{t2}}</code></td><td>Contenu de <code>coborrower.json</code>, ou <code>{}</code> si mono-emprunteur</td><td><code>Ceasy2.ts</code> uniquement</td></tr>
+</tbody></table></div>
+
+<h4>Structure d'un payload de lien</h4>
+<pre><code>{
+  "customer":  { "firstName": "…", "lastName": "…", "emailAddress": "…" },
+  "order":     { "id": "{{orderId}}", "businessProviderId": "…", "amount": 600 },
+  "businessContext": "&lt;JSON échappé sous forme de chaîne&gt;",
+  "tokenFormat": "OPAQUE",
+  "tokenDuration": 3600
+}</code></pre>
+<div class="note orange">
+  <span class="note-title">businessContext est un JSON sérialisé dans une chaîne</span>
+  <p>Guillemets échappés. Il contient les blocs <code>offerContext</code>, <code>customerContext</code>, <code>providerContext</code> et <code>simulationContext</code>. Toute modification demande de respecter l'échappement — une erreur ici produit un <code>HTTP 400</code> peu explicite côté API.</p>
+</div>
+
+<h4>Convention de nommage</h4>
+<div class="flow">&lt;produit&gt;_&lt;enseigne&gt;[_&lt;variante&gt;].json
+   cra          fnac       simulation
+   vac          darty      credit / comptant / t2
+   crs          ikea …</div>
+
+<h4>datas/CL — payloads Credit Launcher</h4>
+<p>Un fichier par partenaire (<code>fnac.json</code>, <code>darty.json</code>, <code>ikea.json</code>, <code>printemps.json</code>, <code>redoute.json</code>, <code>em.json</code>, <code>web_cl.json</code>, <code>web_mm.json</code>, <code>nxcb_darty.json</code>, <code>fnac-vacr.json</code>). Placeholder unique : <code>{{orderId}}</code>, remplacé par <code>Date.now().substring(4,9)</code>.</p>
+
+<h3 id="identite">3. Pièces d'identité &amp; Linxo<a class="anchor" href="#identite">#</a></h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Ensemble</th><th>Fichiers</th><th>Usage</th></tr></thead>
+<tbody>
+<tr><td>CNI générées</td><td><code>cn-template-recto-generated-0..49.png</code><br><code>cn-template-verso-generated-0..49.png</code></td><td>Tirage aléatoire dans les tests</td></tr>
+<tr><td>CNI fixes</td><td><code>cni-recto.png</code> … <code>cni-recto7.png</code><br><code>cni-verso.png</code> … <code>cni-verso6.png</code></td><td>Référencées explicitement par certains tests</td></tr>
+<tr><td>Passeport</td><td><code>passeporttest.jpg</code></td><td>Parcours passeport</td></tr>
+</tbody></table></div>
+<p>Chaque test tire un couple recto/verso au hasard pour éviter les rejets pour doublon d'identité côté KYC :</p>
+<pre><code>const random   = Math.floor(Math.random() * 48) + 1
+const idRecto  = "cn-template-recto-generated-" + random + ".png"
+const idVerso  = "cn-template-verso-generated-" + random + ".png"</code></pre>
+<blockquote><p>Les fichiers <code>…-0.png</code> et <code>…-49.png</code> ne sont jamais tirés : la plage effective est <code>1..48</code>.</p></blockquote>
+
+<h4>Fichiers de comptes Linxo</h4>
+<p>Ils ne sont <strong>pas dans le dépôt</strong> : <code>connectLinxoAccount</code> pointe une URL S3 construite dynamiquement.</p>
+<pre><code>https://linxo-test-bank.s3.amazonaws.com/B2B/QyHEv57N954fehyc22/&lt;YYYY_MM_DD&gt;/&lt;account&gt;.txt</code></pre>
+<div class="note orange">
+  <span class="note-title">Cause fréquente d'échec en début de journée</span>
+  <p><code>&lt;YYYY_MM_DD&gt;</code> est la <strong>date du jour d'exécution</strong>. Si le fichier n'a pas été déposé sur S3, l'étape échoue ou le compte n'apparaît pas. <code>selectFirstAccount</code> prévoit d'ailleurs un timeout de 180 s pour absorber la latence d'agrégation. Le compte usuel est <code>ESSENTIEL_OK_2</code>.</p>
+</div>
+
+<h4>datas/mytrust1.json</h4>
+<p>Fichier d'identité numérique injecté dans l'écran MiTrust via <code>page.setInputFiles</code>. Il porte l'identité et l'adresse du client, ce qui explique que <code>setAdresse</code> saute la saisie d'adresse lorsque <code>address.miTrust === true</code>.</p>
+</section>
+
+<!-- ================= CI/CD ================= -->
+<section id="cicd">
+<h2>Pipeline CI/CD<a class="anchor" href="#cicd">#</a></h2>
+<p class="lede">Défini dans <code>gitlab-ci.yml</code>, <strong>à la racine du dépôt parent</strong> (un niveau au-dessus de <code>subscription-essential-e2e/</code>). Chaque job fait donc <code>cd subscription-essential-e2e</code> avant d'agir.</p>
+
+<div class="flow">instal ──▶ test (×5 shards) ──▶ merge_reports ──▶ deploy (pages)</div>
+<p>Tous les jobs tournent sur le runner taggé <code>k8s</code>.</p>
+
+<h3>instal</h3>
+<ul>
+<li>Image : <code>cacf-node-ci:1.8.0</code></li>
+<li><code>npm install</code></li>
+<li>Publie <code>node_modules/**</code> en artefact (rétention 2 semaines) pour les jobs suivants</li>
+</ul>
+
+<h3>test_shard (parallel: 5)</h3>
+<ul>
+<li>Image : <code>${PLAYWRIGHT_IMAGE}</code> = <code>playwright:1.0.1</code> du registry interne</li>
+</ul>
+<pre><code>PLAYWRIGHT_JSON_OUTPUT_NAME=results.json \
+  npx playwright test --grep "$SELECTED_TESTS" \
+  --reporter blob,html,json \
+  --shard=$CI_NODE_INDEX/$CI_NODE_TOTAL || true</code></pre>
+<p>Artefacts : <code>playwright-report/</code>, <code>blob-report/</code>, <code>results.json</code>, <code>dossiers.txt</code></p>
+
+<div class="note orange">
+  <span class="note-title">Le job réussit toujours</span>
+  <p>Le <code>|| true</code> final fait que le job est vert même si des tests échouent. Le pipeline ne peut donc pas servir de porte de qualité ; le verdict se lit uniquement dans le rapport HTML fusionné.</p>
+</div>
+<div class="note yellow">
+  <span class="note-title">Artefact dossiers.txt non remonté</span>
+  <p>Le job déclare <code>subscription-essential-e2e/dossiers.txt</code>, alors que <code>interceptNumDossier</code> écrit dans <code>subscription-essential-e2e/dossiers/&lt;CI_JOB_NAME&gt;.txt</code>. Le fichier de traçabilité ne remonte qu'au job <code>merge_reports</code>, qui publie bien <code>dossiers/**</code>.</p>
+</div>
+
+<h3>merge_reports</h3>
+<pre><code>PLAYWRIGHT_JSON_OUTPUT_NAME=test-results-merged.json \
+  npx playwright merge-reports --reporter html,json ./blob-report</code></pre>
+<p>Fusionne les rapports <code>blob</code> des 5 shards en un rapport HTML unique. Artefacts : <code>playwright-report/**</code>, <code>test-results-merged.json</code>, <code>dossiers/**</code>.</p>
+<p>C'est le rapport à consulter en fin de campagne. Le reporter <code>blob</code> déclaré dans <code>playwright.config.ts</code> existe précisément pour permettre cette fusion.</p>
+
+<h3>pages</h3>
+<p>Job de déploiement GitLab Pages (branche <code>develop</code> uniquement) : <code>npm i &amp;&amp; npm run build</code>, copie de <code>dist/index.html</code> en <code>404.html</code>, puis <code>mv dist public</code>.</p>
+<div class="note yellow">
+  <span class="note-title">Ce job ne cible pas les tests</span>
+  <p>Il s'exécute à la racine du dépôt, pas dans <code>subscription-essential-e2e/</code>. Le <code>package.json</code> des tests ne définit pas de script <code>build</code> — ce job vise un autre projet du monorepo, vraisemblablement une IHM React de restitution des résultats.</p>
+</div>
+
+<h3>Variables du pipeline</h3>
+<p>Déclarées avec une <code>description</code>, elles apparaissent dans le formulaire « Run pipeline » de GitLab :</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Variable</th><th>Défaut</th><th>Effet</th></tr></thead>
+<tbody>
+<tr><td><code>SELECTED_TESTS</code></td><td><code>sanity</code></td><td>Tag passé à <code>--grep</code>. Valeurs usuelles : <code>sanity</code>, <code>tnr</code></td></tr>
+<tr><td><code>se</code></td><td><code>non</code></td><td>Signature électronique. <code>oui</code> → l'OTP est saisi et le dossier est signé</td></tr>
+<tr><td><code>assurance</code></td><td><code>oui</code></td><td><code>non</code> → parcours sans assurance emprunteur</td></tr>
+<tr><td><code>ENV</code></td><td><code>CI</code></td><td><strong>⚠ Écrase <code>process.env.ENV</code></strong>, lu par <code>pom/essentiel/index.js</code> comme une URL de base. <code>essentiel.env</code> vaut donc littéralement <code>"CI"</code> en pipeline</td></tr>
+<tr><td><code>PLAYWRIGHT_IMAGE</code></td><td><code>playwright:1.0.1</code></td><td>Image des jobs de test</td></tr>
+</tbody></table></div>
+
+<h3>Proxy</h3>
+<pre><code>HTTPS_PROXY: http://$CI_PROXY_HOST:$CI_PROXY_PORT
+NO_PROXY: .gca</code></pre>
+<p>Le domaine <code>.gca</code> (APIs intranet CACF, dont <code>rct-gw-intranet-api.ca-cf.gca</code> utilisé par <code>getSimulationCra</code>) est exclu du proxy.</p>
+<p>Côté navigateur, le proxy est configuré séparément dans <code>playwright.config.ts</code> via <code>SERVER_PROXY</code> / <code>USERNAME_PROXY</code> / <code>PASSWORD_PROXY</code>. Ces variables ne sont pas définies dans le <code>gitlab-ci.yml</code> : elles doivent être fournies au niveau du projet GitLab si le proxy navigateur est nécessaire.</p>
+
+<h3>Exécution locale équivalente au pipeline</h3>
+<pre><code>cd subscription-essential-e2e
+SELECTED_TESTS=sanity se=non assurance=oui \
+  npx playwright test --grep "$SELECTED_TESTS" --reporter blob,html,json
+npx playwright merge-reports --reporter html ./blob-report
+npx playwright show-report</code></pre>
+
+<h3>Notifications Slack</h3>
+<p><code>utils.sendToSlack</code> et <code>Dossier.sendDossierToSlack</code> postent sur un webhook Slack codé en dur. <code>sendToSlack</code> est <strong>non fonctionnelle en l'état</strong> : aucune notification n'est réellement émise par ce chemin.</p>
+</section>
+
+<!-- ================= AJOUTER UN TEST ================= -->
+<section id="ajouter">
+<h2>Ajouter un test<a class="anchor" href="#ajouter">#</a></h2>
+
+<h3>1. Choisir l'emplacement</h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Le test entre par…</th><th>Dossier</th></tr></thead>
+<tbody>
+<tr><td>Une URL de souscription Sofinco (prospect)</td><td><code>tests/CC/PROSPECT/</code></td></tr>
+<tr><td>L'espace client d'un porteur existant</td><td><code>tests/CC/CONNU_CREDIT/</code></td></tr>
+<tr><td>Un lien Ceasy généré par API</td><td><code>tests/CEASY/&lt;ENSEIGNE&gt;/</code></td></tr>
+<tr><td>Le Credit Launcher partenaire</td><td><code>tests/CL/&lt;ENSEIGNE&gt;/</code></td></tr>
+<tr><td>L'espace client seul (hors souscription)</td><td><code>tests/MYSOF/WEB/</code> ou <code>tests/MYSOF/MOBILE/</code></td></tr>
+<tr><td>Un parcours à deux emprunteurs</td><td><code>tests/T2/</code></td></tr>
+</tbody></table></div>
+<p><code>testMatch</code> vaut <code>**/*.ts</code> : tout fichier <code>.ts</code> sous <code>tests/</code> est collecté. Les fichiers mis de côté doivent être renommés avec une autre extension (<code>.txt</code>, <code>.sav</code>) — c'est ce qui a été fait pour <code>tests/CL/CR_PROSPECT_Attijariwafa_-3000e.txt</code> et <code>tests/CEASY copy/Zone.sav</code>.</p>
+
+<h3>2. Nommer le test</h3>
+<pre><code>SOF-&lt;ticket&gt; | &lt;CANAL&gt;-&lt;ENSEIGNE&gt; | &lt;PRODUIT&gt; | &lt;VARIANTE&gt;</code></pre>
+<p>Exemples réels : <code>SOF-150935 CEASY-FNAC | CRA | CREDIT</code>, <code>SOF-148815 | CR&gt;3000 prospect sans carte</code>, <code>SOF-155841 | WEB-FNAC-CRS</code>.</p>
+
+<h3>3. Taguer</h3>
+<pre><code>test('SOF-160000 | CEASY-FNAC | VAC', { tag: ['@sanity', '@tnr'] }, async ({ page }) =&gt; { … })</code></pre>
+<ul>
+<li><code>@sanity</code> → intégré à la campagne quotidienne (défaut CI). À réserver aux parcours nominaux stables.</li>
+<li><code>@tnr</code> → campagne de non-régression complète.</li>
+<li><strong>Sans tag, le test ne tournera jamais en CI.</strong></li>
+</ul>
+
+<h3>4. Squelette — parcours Ceasy</h3>
+<pre><code>import { test } from '@playwright/test';
+import * as api from '../../../api/Ceasy';
+import * as cl from '../../../pom/CL';
+import * as simulateur from '../../../pom/simulateur';
+import * as essentiel from '../../../pom/essentiel';
+import * as utils from '../../../utils/Utils';
+import jdd from '../../../datas/jdd/ceasy.json';
+
+test.describe.configure({ mode: 'parallel' });
+
+test('SOF-XXXXXX | CEASY-&lt;ENSEIGNE&gt; | &lt;PRODUIT&gt;', { tag: ['@sanity', '@tnr'] }, async ({ page }) =&gt; {
+  const data       = jdd.datas[0];
+  const random     = Math.floor(Math.random() * 48) + 1;
+  const idRecto    = `cn-template-recto-generated-${random}.png`;
+  const idVerso    = `cn-template-verso-generated-${random}.png`;
+  const mailrandom = `random${Date.now()}@test-auto.fr`;
+  const tel        = "0757592585";
+
+  // 1. Préparation API : token → simulation → lien d'entrée
+  const token        = await api.getToken();
+  const simulationId = await api.getSimulationCra("cra_&lt;enseigne&gt;_simulation.json", "pdv_&lt;enseigne&gt;", token);
+  const link         = await api.getUrl(token, simulationId, "cra_&lt;enseigne&gt;_credit.json", "web_&lt;enseigne&gt;", "cra_wis");
+
+  // 2. Parcours
+  await page.goto(link);
+  await simulateur.acceptPopupCookies(page);
+  await cl.setEmailTelAndValidateCeasy(page, mailrandom, tel);
+  await essentiel.valider_recevez_offres_et_bon_plan(page);
+  await page.getByText("Continuer").or(page.getByText("Suivant")).click();
+  await essentiel.selectAndUpload(page, "CN", idRecto, idVerso);
+  await essentiel.confirmLieuNaissance(page, data.birthPlace.country, data.birthPlace.city);
+  await essentiel.setStatutMarital(page);
+
+  // 3. Justificatif bancaire : RIB si proposé, sinon agrégation Linxo
+  try {
+    await page.getByText("Commencer").click();
+    await essentiel.setRib(page);
+  } catch (error) {
+    await page.getByText("Continuer").or(page.getByText("Suivant")).click();
+    await essentiel.connectLinxoAccount(page, data.linxo.account);
+    await essentiel.selectFirstAccount(page);
+  }
+
+  // 4. Suite du parcours
+  await essentiel.setCsp(page, data.csp.amount, data.csp.date);
+  await essentiel.setAdresse(page, data.address.street, data.address.zipCode,
+                             data.address.loyer, data.address.date, data.address.miTrust);
+  await essentiel.setAssurance(page, data.assurance.type);
+
+  await utils.interceptNumDossier(page);          // AVANT la création du dossier
+
+  await essentiel.acceptRecapitulatifInfos(page);
+  await essentiel.acceptRecapitulatifFinancement(page);
+  await essentiel.acceptNoticeSE(page);
+  await essentiel.acceptConditonsSeCeasy(page);
+  await essentiel.setOtpAndValidateCeasy(page);   // no-op si se != "oui"
+});</code></pre>
+
+<h3>5. Squelette — test data-driven</h3>
+<p>Pour couvrir plusieurs variantes avec un seul scénario, boucler sur le JDD :</p>
+<pre><code>async function runTest(page: Page, data: any) {
+  // … enchaînement des étapes …
+}
+
+for (let i = 0; i &lt; jdd.datas.length; i++) {
+  test(jdd.datas[i].title, { tag: jdd.datas[i].tags }, async () =&gt; {
+    const page: Page = await utils.launchBrowser(chromium, `${mysof.env}/auth/autologin?uid=${idClient}`);
+    await runTest(page, jdd.datas[i]);
+  });
+}</code></pre>
+<p>Les tags viennent alors du JDD (<code>tags</code>), pas du code. Ajouter une variante = ajouter une entrée dans <code>datas/jdd/&lt;fichier&gt;.json</code>, sans toucher au test.</p>
+<div class="note yellow">
+  <span class="note-title">launchBrowser sort du contrôle de Playwright</span>
+  <p>Ce schéma lance un navigateur <code>headless: false</code> hors des fixtures : ni trace, ni vidéo, ni capture d'écran en cas d'échec. Préférer la fixture <code>{ page }</code> quand le scénario le permet.</p>
+</div>
+
+<h3>6. Créer un nouveau jeu de données</h3>
+<ol>
+<li>Dupliquer un fichier proche dans <code>datas/jdd/</code>.</li>
+<li>Adapter <code>title</code>, <code>tags</code>, <code>simulation</code>, <code>csp</code>, <code>address</code>.</li>
+<li>Vérifier que <code>linxo.account</code> correspond à un fichier déposé sur S3 <strong>à la date d'exécution</strong>.</li>
+<li>Si le parcours passe par MiTrust, positionner <code>address.miTrust: true</code> (l'adresse est alors pré-remplie et non saisie).</li>
+</ol>
+<p>Pour un nouveau partenaire Ceasy, ajouter en plus :</p>
+<ul>
+<li><code>datas/ceasy/&lt;produit&gt;_&lt;enseigne&gt;_simulation.json</code> — payload de simulation</li>
+<li><code>datas/ceasy/&lt;produit&gt;_&lt;enseigne&gt;.json</code> — payload de lien, avec <code>{{simulationId}}</code> et <code>{{orderId}}</code></li>
+<li>Si aucune fonction <code>getSimulationXxx</code> existante ne cible le bon partenaire, en ajouter une dans <code>api/Ceasy.js</code> (plusieurs fonctions existantes ont le partenaire codé en dur malgré leur paramètre <code>partner</code>)</li>
+</ul>
+
+<h3>7. Ajouter une étape POM</h3>
+<pre><code>import { Page, test } from '@playwright/test';
+
+const LOCATORS = {
+  submitButton: "//button[@type='submit']",
+  monChamp: "//input[@id='mon-champ']"
+};
+
+export async function setMonEtape(page: Page, valeur: string) {
+  await test.step("Etape: Mon étape", async () =&gt; {
+    await page.fill(LOCATORS.monChamp, valeur);
+    await page.click(LOCATORS.submitButton);
+  });
+}</code></pre>
+<p>Puis l'exposer dans <code>pom/essentiel/index.js</code> :</p>
+<pre><code>setMonEtape: require('./MonEtape').setMonEtape,</code></pre>
+<p><strong>Règles à respecter :</strong></p>
+<ul>
+<li>Aucun sélecteur en dehors de <code>LOCATORS</code>.</li>
+<li>Un <code>test.step</code> nommé <code>"Etape: …"</code> par fonction — c'est ce qui rend le rapport HTML lisible.</li>
+<li>Ne pas avaler les erreurs par un <code>try/catch</code> vide sauf si l'étape est réellement optionnelle ; sinon l'échec devient invisible et le test casse plus loin, sans indice.</li>
+<li>Préférer <code>expect(...).toBeVisible()</code> ou <code>waitForSelector</code> à <code>waitForTimeout</code>.</li>
+</ul>
+
+<h3>8. Vérifier avant de pousser</h3>
+<pre><code>npx playwright test tests/&lt;CHEMIN&gt;/&lt;FICHIER&gt;.ts --headed
+npx playwright test tests/&lt;CHEMIN&gt;/&lt;FICHIER&gt;.ts --repeat-each=3   # contrôle de stabilité
+npx playwright test --grep @sanity --list                          # le test est-il bien collecté ?</code></pre>
+<p>Le dernier point est le piège le plus courant : un test sans tag, ou avec une faute dans le tag, est silencieusement absent de la campagne.</p>
+</section>
+
+<!-- ================= POINTS D'ATTENTION ================= -->
+<section id="attention">
+<h2>Points d'attention<a class="anchor" href="#attention">#</a></h2>
+<p class="lede">Comportements du dépôt à connaître avant d'exécuter, de déboguer ou de faire évoluer les tests. Classés par criticité.</p>
+
+<h3 id="secrets"><span class="pill red">CRITIQUE</span> Secrets en clair dans le dépôt<a class="anchor" href="#secrets">#</a></h3>
+<div class="table-wrap"><table>
+<thead><tr><th>Secret</th><th>Emplacement</th></tr></thead>
+<tbody>
+<tr><td>Identifiants OAuth API Sofinco (Basic, base64)</td><td><code>api/Ceasy.js:31</code> (<code>getToken</code>) et <code>api/Ceasy.js:71</code> (<code>getTokenCl</code>)</td></tr>
+<tr><td>Clé d'API GetMyMFA (<code>x-api-key</code>) et identifiant de téléphone</td><td><code>api/getMyMFA.ts:3-4</code></td></tr>
+<tr><td>Identifiants proxy NTLM <strong>nominatifs</strong> (compte + mot de passe personnel)</td><td><code>api/getMyMFA.ts:11</code></td></tr>
+<tr><td>URL de webhook Slack</td><td><code>utils/Utils.js:5</code> et <code>utils/Utils.js:147</code></td></tr>
+<tr><td>Authentification basique de l'espace client dans l'URL</td><td><code>tests/MYSOF/WEB/UilisationDisponible.ts:18</code></td></tr>
+</tbody></table></div>
+<div class="note red">
+  <span class="note-title">Correction attendue</span>
+  <p>Ces valeurs sont exploitables telles quelles par quiconque a accès au dépôt. Le mot de passe NTLM est en outre un identifiant nominatif : sa rotation cassera les exécutions.</p>
+  <p>Externaliser en variables CI/CD GitLab masquées, lues via <code>process.env</code>, et faire tourner tous les secrets exposés.</p>
+</div>
+
+<h3 id="defauts"><span class="pill orange">MAJEUR</span> Défauts fonctionnels<a class="anchor" href="#defauts">#</a></h3>
+
+<h4>sendToSlack n'envoie rien</h4>
+<p><code>utils/Utils.js:3-73</code> — trois problèmes cumulés :</p>
+<ol>
+<li><code>body</code> reçoit un <strong>objet JavaScript</strong> au lieu d'une chaîne JSON (pas de <code>JSON.stringify</code>), contrairement à <code>Dossier.sendDossierToSlack</code> qui le fait correctement.</li>
+<li>Le <code>fetch</code> n'est ni <code>await</code>é ni sa réponse vérifiée.</li>
+<li>Le <code>catch</code> est vide.</li>
+</ol>
+<p>Par ailleurs, les tests <code>tests/CC/PROSPECT/*</code> l'appellent avec <strong>un seul argument</strong> :</p>
+<pre><code>await utils.sendToSlack(line)     // data === undefined → data.test lève une TypeError</code></pre>
+<p>L'exception est avalée par le <code>catch</code> vide. Aucune notification n'est jamais émise, et rien ne le signale. Seul <code>tests/CL/WEB_CL/CRA.ts:53</code> passe les deux arguments attendus.</p>
+
+<h4>getSimulationRedoute retourne la mauvaise propriété</h4>
+<p><code>api/Ceasy.js:378</code> retourne <code>data.access_token</code> là où toutes les autres fonctions de simulation retournent <code>data.id</code>. La réponse ne contient pas ce champ → la fonction retourne <code>undefined</code>, et le <code>{{simulationId}}</code> du payload suivant est renseigné avec <code>"undefined"</code>.</p>
+
+<h4>Date de naissance non entière</h4>
+<p><code>pom/essentiel/Identite.ts:108</code> :</p>
+<pre><code>await page.fill(LOCATORS.birthdate, "20/01/" + (1976 + (Math.random() * 30)))</code></pre>
+<p><code>Math.random() * 30</code> est un <strong>flottant</strong> : la valeur produite ressemble à <code>20/01/1993.4179856</code>. Il manque un <code>Math.floor</code>.</p>
+
+<h4>isVisible() non attendu</h4>
+<p><code>pom/CL/CL.js:41</code> :</p>
+<pre><code>if (page.locator("//input[@id='birthDate']").isVisible()) { … }</code></pre>
+<p><code>isVisible()</code> retourne une <code>Promise</code>, toujours truthy. La branche est donc <strong>toujours</strong> exécutée, y compris quand le champ est absent — auquel cas le <code>fill</code> part en timeout.</p>
+
+<h4>Import mort dans les index.js</h4>
+<p>Les quatre fichiers <code>pom/*/index.js</code> commencent par :</p>
+<pre><code>const { launchBrowserOnBrowserStack } = require('../../utils/Utils');</code></pre>
+<p>Cette fonction n'existe pas dans <code>utils/Utils.js</code>. La destructuration donne <code>undefined</code> sans erreur — vestige d'une exécution BrowserStack abandonnée (voir aussi le nom du package, <code>node-js-playwright-browserstack</code>).</p>
+
+<h3><span class="pill orange">MAJEUR</span> Le pipeline ne peut pas échouer</h3>
+<p><code>gitlab-ci.yml:52</code> termine la commande de test par <code>|| true</code>. Le job est toujours vert, quel que soit le nombre de tests en échec. Conséquence : la campagne ne peut pas servir de porte de qualité. Le verdict se lit uniquement dans le rapport HTML fusionné produit par <code>merge_reports</code>.</p>
+
+<h3><span class="pill orange">MAJEUR</span> ENV détourné en CI</h3>
+<p><code>pom/essentiel/index.js</code> lit <code>process.env.ENV</code> comme une <strong>URL de base</strong>. Le pipeline positionne <code>ENV: "CI"</code>. En CI, <code>essentiel.env</code> vaut donc la chaîne <code>"CI"</code>.</p>
+<p>Sans effet aujourd'hui (les tests actifs construisent leurs URLs autrement, la ligne <code>page.goto(`${essentiel.env}/parcours-simulateur`)</code> étant commentée), mais tout test qui s'appuiera sur <code>essentiel.env</code> échouera en pipeline et pas en local. Renommer l'une des deux variables.</p>
+
+<h3><span class="pill yellow">MINEUR</span> Paramètres acceptés mais ignorés</h3>
+<p>Plusieurs fonctions POM prennent des arguments qu'elles n'utilisent pas. Les tests semblent piloter par la donnée alors qu'ils jouent des valeurs figées.</p>
+<div class="table-wrap"><table>
+<thead><tr><th>Fonction</th><th>Argument ignoré</th><th>Valeur réellement appliquée</th></tr></thead>
+<tbody>
+<tr><td><code>confirmLieuNaissance</code></td><td><code>pays</code>, <code>ville</code></td><td><code>FRANCE</code> / <code>LILLE (59000)</code> en dur</td></tr>
+<tr><td><code>setAssurance</code></td><td><code>assurance</code></td><td>Décidé par <code>process.env.assurance</code></td></tr>
+<tr><td><code>setAdresse</code></td><td><code>rent</code></td><td>Non saisi (ligne commentée)</td></tr>
+<tr><td><code>fillForm</code></td><td><code>salaire</code>, <code>depuis</code></td><td>Non saisis ; options de listes déroulantes en dur</td></tr>
+<tr><td><code>setCsp</code></td><td>—</td><td>CSP forcée sur <code>#select-csp-7</code></td></tr>
+<tr><td><code>setStatutMarital</code></td><td>—</td><td>Première option en dur</td></tr>
+<tr><td><code>acceptConditons</code></td><td><code>contrat</code></td><td>Inutilisé</td></tr>
+<tr><td><code>getSimulationCraIkea</code><br><code>getSimulationVacIkea</code><br><code>getSimulationCraEm</code></td><td><code>partner</code></td><td>Partenaire codé en dur dans l'URL</td></tr>
+</tbody></table></div>
+<p>Côté JDD, les blocs <code>documents</code>, <code>conditions</code> et <code>birthPlace</code> ne produisent plus aucun effet.</p>
+
+<h3><span class="pill yellow">MINEUR</span> fastSimulation est vide</h3>
+<p><code>pom/simulateur/Simulation.ts:27-67</code> : le corps est intégralement commenté. La fonction est toujours appelée par les tests <code>CC/PROSPECT</code>, mais ne fait rien — la simulation est désormais portée par les paramètres de l'URL d'entrée (<code>?amount=3200&amp;dueNumber=36&amp;productId=RESERVE…</code>).</p>
+<p><code>fastSimulationAuto</code> reste, elle, opérationnelle. <code>acceptNoticeSE</code> est dans le même cas : entièrement commentée.</p>
+
+<h3><span class="pill yellow">MINEUR</span> Stabilité</h3>
+<ul>
+<li><strong>Attentes fixes.</strong> Le code utilise massivement <code>waitForTimeout</code> (3 s, 15 s, 30 s…) au lieu d'attentes conditionnelles. C'est la première cause de flakiness et d'allongement des durées — d'où le <code>timeout</code> de test à 10 minutes.</li>
+<li><strong><code>try/catch</code> vides.</strong> Nombreux dans <code>SE.ts</code>, <code>Identite.ts</code>, <code>Mini-Formulaire.ts</code>. Ils absorbent aussi bien la variabilité légitime des écrans que les vraies régressions ; l'échec se manifeste alors plusieurs étapes plus loin, sans lien apparent avec la cause.</li>
+<li><strong>Quasi-absence d'assertions.</strong> En dehors des tests <code>MYSOF</code>, les scénarios ne contiennent aucun <code>expect</code>. Un test « passe » dès lors que la séquence de clics aboutit, sans vérification de l'état final du dossier.</li>
+<li><strong>Dépendance à une donnée datée.</strong> Les fichiers de comptes Linxo sont adressés par la date du jour sur S3. Si le dépôt quotidien n'a pas eu lieu, toute la campagne échoue à l'étape bancaire.</li>
+<li><strong>Concurrence.</strong> <code>workers: 5</code> × <code>parallel: 5</code> shards = jusqu'à 25 navigateurs simultanés contre l'environnement de recette.</li>
+</ul>
+
+<h3><span class="pill yellow">MINEUR</span> launchBrowser court-circuite Playwright</h3>
+<p><code>utils/Utils.js:84</code> lance un Chromium en <code>headless: false</code>, hors des fixtures Playwright. Les tests qui l'utilisent (<code>CC/CONNU_CREDIT</code>, <code>T2</code>) perdent trace, vidéo, capture d'écran et le nettoyage automatique du contexte. Le <code>headless: false</code> empêche par ailleurs toute exécution en CI sans serveur X.</p>
+<p>Le paramètre <code>arguments:</code> passé à <code>chromium.launch()</code> n'est en outre pas une option valide — l'option attendue est <code>args:</code>. Les drapeaux <code>--no-sandbox</code> et consorts ne sont donc pas appliqués.</p>
+
+<h3 id="dette"><span class="pill grey">DETTE</span> Nettoyage<a class="anchor" href="#dette">#</a></h3>
+<ul>
+<li><strong><code>api/Ceasy2.ts</code></strong> est une refonte typée et factorisée de <code>api/Ceasy.js</code>, complète et de meilleure facture (gestion du co-emprunteur via <code>{{t2}}</code>, <code>apiPost&lt;T&gt;</code> générique). <strong>Aucun test ne l'importe.</strong> Deux implémentations concurrentes coexistent ; la bascule demande d'adapter les appels. <code>readFileWithReplace</code> y est définie mais inutilisée.</li>
+<li><strong><code>package.json</code></strong> — le nom <code>node-js-playwright-browserstack</code> ne correspond plus au projet. Les dépendances <code>fs</code> et <code>https</code> sont des <strong>paquets npm placeholders</strong> (<code>fs@0.0.1-security</code> est un squat de nom, sans code) : les modules Node natifs du même nom sont résolus indépendamment. <code>decompress</code>, <code>open</code>, <code>pkg</code> et <code>node-fetch</code> ne sont référencés nulle part. Seul <code>@playwright/test</code> est réellement nécessaire ; <code>@percy/playwright</code> est déclaré mais jamais importé.</li>
+<li><strong>Fichiers hors périmètre</strong> conservés dans <code>tests/</code> avec une extension neutralisante : <code>tests/CEASY copy/Zone.sav</code>, <code>tests/CL/CR_PROSPECT_Attijariwafa_-3000e.txt</code>.</li>
+<li><strong>Tests dupliqués et morts</strong> : <code>tests/CEASY/MM/MM.ts</code> et <code>tests/CEASY/EM/EM.ts</code> contiennent des tests nommés <code>'Ceasy | FNAC | VAC'</code> / <code>'Ceasy | FNAC | CRS'</code> — copies non renommées. <code>tests/CEASY/FNAC/FNAC.ts</code> conserve environ 90 lignes de tests commentés. <code>tests/CEASY/DARTY/DARTY.ts</code> et <code>tests/T2/CEASY_DARTY_T2.ts</code> portent le même test <code>'CR-3000-T2-DARTY VAC'</code>.</li>
+<li><strong>Titres non uniques</strong> : trois tests s'appellent <code>'Résiliation assurance'</code> dans <code>tests/MYSOF/</code>, dont un dans <code>motDePasse.ts</code> (titre sans rapport avec le fichier). Deux s'appellent <code>'Utilisation disponible'</code>.</li>
+<li><strong><code>generateRandomBirthDate</code></strong> (<code>utils/Utils.js:79</code>) produit des dates invalides (mois et année flottants, <code>"/0" + Math.random()*9</code>) ; elle n'est ni exportée ni appelée.</li>
+<li><strong><code>utils/Utils.js</code></strong> mélange <code>import fs from 'fs'</code> (ESM) et <code>module.exports</code> (CommonJS).</li>
+<li><strong>Tirage des pièces d'identité</strong> : <code>Math.floor(Math.random() * 48) + 1</code> couvre <code>1..48</code>, alors que les fichiers vont de <code>0</code> à <code>49</code>. Deux couples ne sont jamais utilisés.</li>
+<li><strong><code>idClient</code> codé en dur</strong> dans les tests <code>CC/CONNU_CREDIT</code> (<code>"92398286246"</code>). Le test dépend de l'état de ce client en recette.</li>
+</ul>
+
+<h3>Ordre de traitement suggéré</h3>
+<ol class="steps">
+<li><span class="st">Sortir les secrets du dépôt et les faire tourner</span><span class="fn">criticité : critique</span></li>
+<li><span class="st">Retirer le <code>|| true</code> du pipeline, une fois le taux de réussite stabilisé</span><span class="fn">sans quoi la CI reste décorative</span></li>
+<li><span class="st">Corriger les défauts fonctionnels isolés</span><span class="fn">sendToSlack · getSimulationRedoute · Math.floor sur la date de naissance · await sur isVisible()</span></li>
+<li><span class="st">Ajouter des assertions de fin de parcours</span><span class="fn">n° de dossier obtenu, écran de confirmation affiché — aujourd'hui un test vert ne prouve pas qu'un dossier a été créé</span></li>
+<li><span class="st">Remplacer progressivement les <code>waitForTimeout</code> par des attentes conditionnelles</span><span class="fn">et vider les try/catch silencieux qui ne correspondent pas à une variabilité réelle</span></li>
+<li><span class="st">Trancher entre <code>api/Ceasy.js</code> et <code>api/Ceasy2.ts</code>, puis supprimer le perdant</span><span class="fn">deux implémentations concurrentes</span></li>
+</ol>
+
+<div class="footer">
+  <p>Documentation générée à partir du code source du dépôt <code>subscription-essential-e2e</code>.
+  Les versions Markdown équivalentes se trouvent dans <code>docs/</code> : <code>architecture.md</code>, <code>pom-reference.md</code>, <code>jeux-de-donnees.md</code>, <code>ci-cd.md</code>, <code>ajouter-un-test.md</code>, <code>points-attention.md</code>.</p>
+</div>
+</section>
+
+</div><!-- /wrap -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var themeBtn = document.getElementById('themeBtn');
+  var stored = null;
+  try { stored = localStorage.getItem('doc-theme'); } catch(e){}
+  if (stored) root.setAttribute('data-theme', stored);
+
+  themeBtn.addEventListener('click', function(){
+    var cur = root.getAttribute('data-theme');
+    if (!cur) {
+      cur = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var next = cur === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('doc-theme', next); } catch(e){}
+  });
+
+  // Mobile nav
+  var sidebar = document.getElementById('sidebar');
+  var scrim = document.getElementById('scrim');
+  document.getElementById('menuBtn').addEventListener('click', function(){
+    sidebar.classList.add('open'); scrim.classList.add('open');
+  });
+  scrim.addEventListener('click', function(){
+    sidebar.classList.remove('open'); scrim.classList.remove('open');
+  });
+  sidebar.addEventListener('click', function(e){
+    if (e.target.tagName === 'A') { sidebar.classList.remove('open'); scrim.classList.remove('open'); }
+  });
+
+  // Anchor links on headings
+  document.querySelectorAll('h3[id], h4[id]').forEach(function(h){
+    if (h.querySelector('.anchor')) return;
+    var a = document.createElement('a');
+    a.className = 'anchor'; a.href = '#' + h.id; a.textContent = '#';
+    h.appendChild(a);
+  });
+
+  // Nav filter
+  var search = document.getElementById('navSearch');
+  var navItems = Array.prototype.slice.call(document.querySelectorAll('#nav li'));
+  search.addEventListener('input', function(){
+    var q = search.value.trim().toLowerCase();
+    navItems.forEach(function(li){
+      li.classList.toggle('hidden', q !== '' && li.textContent.toLowerCase().indexOf(q) === -1);
+    });
+  });
+
+  // Scrollspy
+  var links = Array.prototype.slice.call(document.querySelectorAll('#nav a'));
+  var targets = links.map(function(a){ return document.getElementById(a.getAttribute('href').slice(1)); })
+                     .filter(Boolean);
+  var crumb = document.getElementById('crumb');
+
+  function spy(){
+    var pos = window.scrollY + 100, current = null;
+    targets.forEach(function(t){ if (t.offsetTop <= pos) current = t; });
+    links.forEach(function(a){
+      var on = current && a.getAttribute('href') === '#' + current.id;
+      a.classList.toggle('active', !!on);
+      if (on) crumb.textContent = a.textContent;
+    });
+  }
+  var ticking = false;
+  window.addEventListener('scroll', function(){
+    if (!ticking) { window.requestAnimationFrame(function(){ spy(); ticking = false; }); ticking = true; }
+  }, {passive:true});
+  spy();
+})();
+</script>
+
+</body>
+</html>
