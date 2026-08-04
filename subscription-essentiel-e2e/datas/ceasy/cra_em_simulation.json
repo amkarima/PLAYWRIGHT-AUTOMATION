@@ -1,0 +1,10 @@
+{
+    "amount": 856,
+    "scaleCode": "FORF3ESE",
+    "equipmentCode":"320",
+    "businessProviderId": "30116432009",
+    "borrowersParameter": {
+        "hasInsurance": true
+    },
+    "isPrincipal": false
+}

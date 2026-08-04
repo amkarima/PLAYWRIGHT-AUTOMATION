@@ -1,0 +1,7 @@
+{
+    "amount": 2222,
+    "scaleCode": "CASCR12",
+    "borrower": {
+        "hasInsurance": true
+    }
+}

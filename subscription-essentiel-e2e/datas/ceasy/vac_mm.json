@@ -1,0 +1,17 @@
+{
+    "customer": {
+        "firstName": "Jerome",
+        "lastName": "Manson",
+        "mobilePhoneNumber": "",
+        "emailAddress": "jmanson@ca-cf.fr"
+      },
+      "order": {    
+        "id": "{{orderId}}",
+        "businessProviderId": "99102493736",
+        "amount": 1250
+      },
+      "tokenFormat": "OPAQUE",
+      "businessContext":"{\"providerContext\":{\"businessProviderId\":\"99102493736\",\"returnUrl\":\"https://www.decathlon.fr\",\"exchangeUrl\":\"https://sofinco.exchange/demo\", \"sellerUserId\":\"jejevend\", \"originFrontCode\":\"ESSCEA\"},\"customerContext\":{\"civilityCode\":\"1\",\"firstName\":\"Jérôme\",\"lastName\":\"MANSON\",\"birthCity\":\"Evry\",\"birthZipCode\":\"91000\",\"citizenshipCode\":\"F\",\"birthCountryCode\":\"F\",\"street\":\"12 avenue de l 'Europe\",\"city\":\"PARIS\",\"distributerOffice\":\"PARIS\",\"zipCode\":\"75012\",\"mobileNumber\":\"0788972219\",\"externalCustomerId\":\"release240\",\"emailAddress\":\"jmanson@ca-cf.fr\"},\"offerContext\":{\"orderId\":\"{{orderId}}\",\"scaleId\":\"WL990\",\"equipmentCode\":\"290\",\"duration\":\"12\",\"orderAmount\":125000,\"amount\":125000}, \"simulationContext\":{\"simulationId\":\"{{simulationId}}\",\"dueNumber\":12,\"scaleCode\":\"WL990\"}}",
+        "tokenDuration": 3600
+    
+    }

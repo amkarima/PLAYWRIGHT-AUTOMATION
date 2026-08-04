@@ -1,0 +1,17 @@
+{
+    "customer": {
+        "firstName": "Jerome",
+        "lastName": "Manson",
+        "mobilePhoneNumber": "",
+        "emailAddress": "jmanson@ca-cf.fr"
+      },
+      "order": {    
+        "id": "{{orderId}}",
+        "businessProviderId": "99102325769",
+        "amount": 1223
+      },
+      "tokenFormat": "OPAQUE",
+      "businessContext":"{\"providerContext\":{\"businessProviderId\":\"99102325769\",\"returnUrl\":\"https://www.decathlon.fr\",\"exchangeUrl\":\"https://sofinco.exchange/demo\", \"sellerUserId\":\"jejevend\", \"originFrontCode\":\"ESSCEA\", \"prescriber\": {\"name\":\"presnom\", \"externalProviderId\":\"12121\", \"employeeCode\":\"455455\", \"saleGroup\":\"111\", \"departmentCode\":\"222\", \"status\":\"D\"}},\"customerContext\":{\"civilityCode\":\"1\",\"firstName\":\"Jérôme\",\"lastName\":\"MANSON\",\"birthCity\":\"Evry\",\"birthZipCode\":\"91000\",\"citizenshipCode\":\"F\",\"birthCountryCode\":\"F\",\"street\":\"12 avenue de l 'Europe\",\"city\":\"PARIS\",\"distributerOffice\":\"PARIS\",\"zipCode\":\"75012\",\"mobileNumber\":\"0788972219\",\"externalCustomerId\":\"release240\",\"emailAddress\":\"jmanson@ca-cf.fr\"},\"offerContext\":{\"orderId\":\"{{orderId}}\",\"scaleId\":\"CASTOPAC\",\"duration\":\"12\",\"orderAmount\":222200,\"amount\":222200}, \"simulationContext\":{\"simulationId\":\"{{simulationId}}\",\"dueNumber\":12,\"scaleCode\":\"CASCR12\"}}",
+        "tokenDuration": 3600
+    
+    }

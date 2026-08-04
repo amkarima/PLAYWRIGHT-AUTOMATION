@@ -1,0 +1,17 @@
+{
+    "customer": {
+        "firstName": "Jerome",
+        "lastName": "Manson",
+        "mobilePhoneNumber": "",
+        "emailAddress": "jmanson@ca-cf.fr"
+      },
+      "order": {    
+        "id": "{{orderId}}",
+        "businessProviderId": "30116432009",
+        "amount": 856
+      },
+      "tokenFormat": "OPAQUE",
+      "businessContext":"{\"providerContext\":{\"businessProviderId\":\"30116432009\",\"returnUrl\":\"https://www.decathlon.fr\",\"exchangeUrl\":\"https://sofinco.exchange/demo\", \"sellerUserId\":\"jejevend\", \"originFrontCode\":\"ESSCEA\"},\"customerContext\":{\"civilityCode\":\"1\",\"firstName\":\"Jérôme\",\"lastName\":\"MANSON\",\"birthCity\":\"Evry\",\"birthZipCode\":\"91000\",\"citizenshipCode\":\"F\",\"birthCountryCode\":\"F\",\"street\":\"12 avenue de l 'Europe\",\"city\":\"PARIS\",\"distributerOffice\":\"PARIS\",\"zipCode\":\"75012\",\"mobileNumber\":\"0788972219\",\"externalCustomerId\":\"release240\",\"emailAddress\":\"jmanson@ca-cf.fr\"},\"offerContext\":{\"orderId\":\"{{orderId}}\",\"scaleId\":\"FORF3ESE\",\"equipmentCode\":\"320\",\"orderAmount\":85600,\"amount\":85600}, \"simulationContext\":{\"simulationId\":\"{{simulationId}}\",\"dueNumber\":36,\"scaleCode\":\"FORF3ESE\"}}",
+        "tokenDuration": 3600
+    
+    }

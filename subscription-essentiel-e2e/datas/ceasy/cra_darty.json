@@ -1,0 +1,18 @@
+{
+    "customer": {
+        "firstName": "Pierre",
+        "lastName": "DUPONT",
+        "mobilePhoneNumber": "",
+        "emailAddress": "jmanson@ca-cf.fr"
+    },
+    "order": {
+        "id": "{{orderId}}",
+        "businessProviderId": "99102496219",
+        "amount": 600
+    },
+    "businessContext": "{\"offerContext\":{\"orderId\":\"{{orderId}}\",\"externalPartnerId\":\"exttest76\",\"scaleId\":\"DLIBR\",\"amount\":\"60000\",\"orderAmount\":\"60000\",\"personalContributionAmount\" : \"0\",\"awaitingFunding\":false,\"insuranceCode\" : \"\",\"deliveryStreet\":\"rue de livraison\",\"deliveryAdditionalStreet\":\"compl livraison\",\"deliveryCity\":\"Massy\",\"deliveryZipCode\":\"91300\",\"deliveryDistributerOffice\":\"Massy\",\"billingStreet\":\"rue de facture\",\"billingAdditionalStreet\":\"compl facture\",\"billingCity\":\"Massy\",\"billingZipCode\":\"91300\",\"billingDistributerOffice\":\"Massy\",\"deliveryChoice\":\"home\",\"paymentChoice\":\"card\",\"cardType\":\"\",\"cart\":{\"products\":[{\"index\":0,\"isTradeForward\":false,\"family\":\"nom famille\",\"amount\":90000,\"quantity\":1,\"ean\":\"\",\"label\":\"article nom\"},{\"index\":1,\"isTradeForward\":true,\"family\":\"nom famille\",\"amount\":20000,\"quantity\":1,\"ean\":\"194252707289\",\"engagementDuration\":24,\"label\":\"article nom\"}],\"totalAmount\":44555}},\"customerContext\":{\"civilityCode\":\"1\",\"firstName\":\"Pierre\",\"lastName\":\"DUPONT\",\"externalCustomerId\":\"\",\"birthDate\":\"1979-04-22\",\"citizenshipCode\":\"FR\",\"mobileNumber\":\"0788972219\",\"phoneNumber\":\"0788972219\",\"emailAddress\":\"jmanson@ca-cf.fr\",\"optin\":\"true\", \"stopRelation\":\"false\", \"socioEconomicClassificationCode\":\"30\",\"member\":\"true\",\"memberAccountDate\":\"2021-09-13\",\"lastUncancelledPurchaseDate\":\"2022-11-17\",\"totalPurchasesNumber\":\"3\",\"uncancelledPurchasesNumber\":\"9\",\"scoringCancelledPurchasesNumber\":\"8\"},\"providerContext\":{\"businessProviderId\":\"99102496219\",\"returnUrl\":\"https://www.fnac.com\",\"exchangeUrl\":\"https://sofinco.exchange/demo\",\"homeReturnUrl\":\"https://www.fnac.com\", \"sellerUserId\":\"jejevend\", \"originFrontCode\":\"ESSCEA\"},\"simulationContext\":{\"simulationId\":\"{{simulationId}}\",\"dueNumber\":12,\"scaleCode\":\"DLIBR\"}}",
+
+    "tokenFormat": "OPAQUE",
+
+    "tokenDuration": 3600
+}

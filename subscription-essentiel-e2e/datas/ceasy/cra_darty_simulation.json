@@ -1,0 +1,17 @@
+{
+    "amount": 600,
+    "durations": [10],
+    "scaleCode": "DLIBR",
+    "isPrincipal":false,
+    "isSale":true,
+    "businessProviderId": "99102496219",
+    "offerDate": "2024-10-18",
+    "borrowersParameter": {
+        "hasInsurance": true,
+        "birthDate": "1989-08-14",
+        "socioEconomicClassificationCode": "46",
+        "insuranceCode": null,
+        "retrieveAlternativeInsurances": null
+    },
+    "coBorrowersParameter": null
+}

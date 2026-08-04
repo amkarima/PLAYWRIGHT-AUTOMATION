@@ -1,0 +1,8 @@
+{
+    "amount": 2560,
+    "scaleCode": "11210",
+    "borrower": {
+        "hasInsurance": true
+    },
+    "businessProviderId":"99102200995"
+}

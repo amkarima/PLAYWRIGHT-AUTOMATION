@@ -1,0 +1,8 @@
+{
+      "amount": 555.11,  
+      "scaleCode": "DLIBR", 
+      "borrower": {
+            "hasInsurance": true
+      }
+    }
+    

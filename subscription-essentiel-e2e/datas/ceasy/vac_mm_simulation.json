@@ -1,0 +1,9 @@
+{
+      "amount": 2345,
+      "businessProviderId": "99102493736",
+      "equipmentCode": "290",
+      "scaleCode": "WL990",
+      "borrower": {
+          "hasInsurance": true
+      }
+  }

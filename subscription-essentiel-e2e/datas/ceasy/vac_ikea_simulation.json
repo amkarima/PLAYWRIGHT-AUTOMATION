@@ -1,0 +1,7 @@
+{
+  "amount": 1223,
+  "scaleCode": "IKVAC",
+  "borrower": {
+      "hasInsurance": true
+  }
+}

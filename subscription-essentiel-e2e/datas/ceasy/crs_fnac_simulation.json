@@ -1,0 +1,13 @@
+{
+    "amount": "1000",
+    "durations": [36],
+    "scaleCode": null,
+    "businessProviderId": "99102020395",
+    "borrowersParameter": {
+        "hasInsurance": true,
+        "birthDate": "1942-11-30",
+        "socioEconomicClassificationCode": "",
+        "insuranceCode": "",
+        "retrieveAlternativeInsurances": false
+    }
+}

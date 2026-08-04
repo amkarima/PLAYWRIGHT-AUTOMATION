@@ -1,0 +1,11 @@
+{
+    "amount": 3907.05,
+    "scaleCode": "FLIBR ",
+    "isPrincipal":false,
+    "isSale":true,
+    "businessProviderId": "99102020395",
+    "borrowersParameter": {
+        "hasInsurance": true
+    },
+    "coBorrowersParameter": null
+}

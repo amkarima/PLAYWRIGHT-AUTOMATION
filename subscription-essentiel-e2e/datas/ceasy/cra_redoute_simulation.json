@@ -1,0 +1,8 @@
+{
+    "amount": 445.55,
+    "scaleCode":"00333",
+    "isPrincipal": false,
+    "borrowersParameter": {
+        "hasInsurance": true
+    }
+}
