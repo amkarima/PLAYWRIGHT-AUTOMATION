@@ -1,0 +1,3 @@
+{
+  "businessContext": "{\"providerContext\": {\"businessProviderId\":\"99102493736\",\"returnUrl\": \"https://www.darty.com\",\"exchangeUrl\": \"https://sofinco.exchange/demo\",\"homeReturnUrl\": \"https://www.darty.com\"},\"customerContext\": {\"firstName\": \"MO\",\"lastName\": \"ZAR\",\"birthDate\": \"1993-06-28\",\"member\": false,\"emailAddress\":\"mo@zar.fr\",\"mobileNumber\":  \"0662662255\"},\"coBorrowerContext\": {\"member\": false},\"offerContext\": {\"scaleId\": \"WL990\",\"amount\": \"70000\",\"orderAmount\": \"70000\", \"duration\": \"24\",\"cart\": {\"products\": [],\"totalAmount\": 100000},\"awaitingFunding\": false, \"orderId\":\"{{orderId}}\"},\"simulationContext\":{\"simulationId\":\"{{simulationId}}\",\"dueNumber\":10,\"scaleCode\":\"WL990\"}}"
+}

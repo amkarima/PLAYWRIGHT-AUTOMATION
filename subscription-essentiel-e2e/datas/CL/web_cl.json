@@ -1,0 +1,33 @@
+{
+    "businessContext": {
+      "providerContext": {
+        "businessProviderId": "30116432009",
+        "returnUrl": "https://www.fnac.com",
+        "exchangeUrl": "https://sofinco.exchange/demo",
+        "homeReturnUrl": "https://www.fnac.com"
+      },
+      "customerContext": {
+        "firstName": "THIBAUD",
+        "lastName": "DELOMEZ",
+        "birthDate": "1995-06-28",
+        "member": false
+      },
+      "coBorrowerContext": {
+        "member": false
+      },
+      "offerContext": {
+        "orderId": "{{orderId}}",
+        "equipmentCode": "320",
+        "amount": "85000",
+        "orderAmount": null,
+        "duration": null,
+        "cart": {
+          "products": [],
+          "totalAmount": 0
+        },
+        "awaitingFunding": false
+      }
+    },
+    "Q6": "web_cl",
+    "domain": "simulator"
+  }

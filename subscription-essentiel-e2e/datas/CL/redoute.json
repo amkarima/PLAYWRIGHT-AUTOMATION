@@ -1,0 +1,3 @@
+{
+  "businessContext": "{\"providerContext\": {\"businessProviderId\": \"99102197485\",\"returnUrl\": \"https://www.darty.com\",\"exchangeUrl\": \"https://sofinco.exchange/demo\",\"homeReturnUrl\": \"https://www.darty.com\"},\"customerContext\": {\"firstName\": \"MO\",\"lastName\": \"ZAR\",\"birthDate\": \"1993-06-28\",\"member\": false,\"emailAddress\":\"mo@zar.fr\",\"mobileNumber\":  \"0662662255\"},\"coBorrowerContext\": {\"member\": false},\"offerContext\": {\"scaleId\": \"00333\",\"amount\": \"100000\",\"orderAmount\": \"100000\", \"duration\": \"24\",\"cart\": {\"products\": [],\"totalAmount\": 100000},\"awaitingFunding\": false, \"orderId\":\"{{orderId}}\"},\"simulationContext\":{\"dueNumber\":10,\"scaleCode\":\"00333\"}}"
+}
