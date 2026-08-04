@@ -1,0 +1,22 @@
+{
+  "name": "node-js-playwright-browserstack",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "ui": "npx playwright test --headed --ui"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "1.59.1"
+  },
+  "dependencies": {
+    "decompress": "^4.2.1",
+    "fs": "^0.0.1-security",
+    "https": "^1.0.0",
+    "node-fetch": "^3.3.2",
+    "open": "^10.1.0"
+  }
+}

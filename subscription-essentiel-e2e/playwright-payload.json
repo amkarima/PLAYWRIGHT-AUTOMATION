@@ -1,0 +1,33 @@
+{
+  "api_key": "pk_a6acc9fbaea9371574c6df618e8ee4091963bc77b5fc62cc76ae0960ba63bf64",
+  "integration_id": "d723fa53-0566-4adb-8c18-d54fda423b9c",
+  "execution_id": "Local-2026-05-22T14:42:56.231Z",
+  "workspace_id": "b1f0aa22-0b3b-4935-a924-f6886c03c00c",
+  "system_name": "Sofinco Sanity",
+  "campaign_name": "Sofinco Sanity",
+  "test_suite": "Sofinco Sanity",
+  "environment": "unknown",
+  "execution_start": "2026-05-22T14:41:59.470Z",
+  "execution_end": "2026-05-22T14:42:56.231Z",
+  "total_tests": 1,
+  "passed_tests": 0,
+  "failed_tests": 1,
+  "skipped_tests": 0,
+  "execution_status": "failed",
+  "metadata": {
+    "ci_build_id": "Local",
+    "commit_sha": "Local",
+    "branch": "Local",
+    "trigger": "Local",
+    "ci_platform": "Local"
+  },
+  "test_results": [
+    {
+      "test_file": "C:\\Users\\R15449\\Desktop\\subscription-essential-e2e\\tests\\CEASY copy\\DARTY\\DARTY.ts",
+      "status": "failed",
+      "duration_ms": 48199,
+      "retry_count": 0,
+      "error": "Error: page.click: Target page, context or browser has been closed\nCall log:\n\u001b[2m  - waiting for locator('//span[contains(text(),\\'Identité\\')]')\u001b[22m\n"
+    }
+  ]
+}

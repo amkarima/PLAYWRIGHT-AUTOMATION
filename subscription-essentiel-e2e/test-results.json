@@ -1,0 +1,180 @@
+{
+  "config": {
+    "configFile": "C:\\Users\\R16399\\Documents\\GitHub\\playwright-automation\\subscription-essential-e2e\\playwright.config.ts",
+    "rootDir": "C:/Users/R16399/Documents/GitHub/playwright-automation/subscription-essential-e2e/tests",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "C:/Users/R16399/Documents/GitHub/playwright-automation/subscription-essential-e2e/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "C:/Users/R16399/Documents/GitHub/playwright-automation/subscription-essential-e2e/tests",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.ts"
+        ],
+        "timeout": 600000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "blob",
+        null
+      ],
+      [
+        "html",
+        null
+      ],
+      [
+        "line",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 5,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "CEASY\\CASTORAMA\\CASTORAMA.ts",
+      "file": "CEASY/CASTORAMA/CASTORAMA.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "SOF-155911 | CEASY-CASTORAMA | CRA | CREDIT",
+          "ok": true,
+          "tags": [
+            "sanity",
+            "tnr"
+          ],
+          "tests": [
+            {
+              "timeout": 600000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "Mobile Chrome",
+              "projectName": "Mobile Chrome",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 243243,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "steps": [
+                    {
+                      "title": "Popup: Cookies",
+                      "duration": 1199
+                    },
+                    {
+                      "title": "Etape: PID",
+                      "duration": 5277
+                    },
+                    {
+                      "title": "Etape: Statut marital",
+                      "duration": 1639
+                    },
+                    {
+                      "title": "Etape: Connexion banque Linxo",
+                      "duration": 10370
+                    },
+                    {
+                      "title": "Etape: Sélection compte RIB",
+                      "duration": 24183
+                    },
+                    {
+                      "title": "Etape: CSP",
+                      "duration": 11969
+                    },
+                    {
+                      "title": "Etape: Adresse",
+                      "duration": 5696
+                    },
+                    {
+                      "title": "Etape: Assurance",
+                      "duration": 5574
+                    },
+                    {
+                      "title": "Etape: Recapitulatif informations",
+                      "duration": 4825
+                    },
+                    {
+                      "title": "Etape: Recapitulatif financement",
+                      "duration": 9548
+                    },
+                    {
+                      "title": "Etape: Notice SE",
+                      "duration": 3
+                    },
+                    {
+                      "title": "Etape: SE - Ceasy - Accepter les conditions",
+                      "duration": 60202
+                    }
+                  ],
+                  "startTime": "2026-08-03T13:38:45.649Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "C:\\Users\\R16399\\Documents\\GitHub\\playwright-automation\\subscription-essential-e2e\\test-results\\CEASY-CASTORAMA-CASTORAMA.-6a58e--CEASY-CASTORAMA-CRA-CREDIT-Mobile-Chrome\\trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "c8d283e07f430706e1b0-f11d4c03be231b4704b9",
+          "file": "CEASY/CASTORAMA/CASTORAMA.ts",
+          "line": 11,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-08-03T13:38:41.855Z",
+    "duration": 256701.56999999998,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
