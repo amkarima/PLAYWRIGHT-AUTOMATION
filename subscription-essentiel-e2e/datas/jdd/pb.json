@@ -1,0 +1,96 @@
+{
+  "datas": [
+    {
+      "title": "PB - 4000€ - Assurance",
+      "tags": ["@pb", "@tnr", "@assurance", "@nominal"],
+      "simulation": {
+        "amount": "3100",
+        "carte": "non",
+        "type": "PB"
+      },
+      "user": {
+        "email": "RANDOM",
+        "phone": "0757592585",
+        "birthDate": "01/06/1995"
+      },
+      "documents": {
+        "type": "CI",
+        "front": "cni-recto.png",
+        "back": "cni-verso.png"
+      },
+      "birthPlace": {
+        "country": "FRANCE",
+        "city": "LILLE"
+      },
+      "miTrust": {
+        "file": "mytrust1.json"
+      },
+      "linxo": {
+        "account": "ESSENTIEL_OK_2"
+      },
+      "csp": {
+        "amount": "10000",
+        "date": "01/2020"
+      },
+      "address": {
+        "street": "5 RUE DE DOUAI",
+        "zipCode": "59000",
+        "loyer": "500",
+        "date": "01/2020",
+        "miTrust": true
+      },
+      "assurance": {
+        "type": "Assurance recommandée"
+      },
+      "conditions": {
+        "step": 4
+      }
+    },
+    {
+      "title": "PB - 10000€ - Sans Assurance",
+      "tags": ["@pb", "@tnr", "@assurance"],
+      "simulation": {
+        "amount": "10000",
+        "carte": "non",
+        "type": "PB"
+      },
+      "user": {
+        "email": "RANDOM",
+        "phone": "0757592585",
+        "birthDate": "01/06/1995"
+      },
+      "documents": {
+        "type": "CI",
+        "front": "cni-recto5.png",
+        "back": "cni-verso5.png"
+      },
+      "birthPlace": {
+        "country": "FRANCE",
+        "city": "LILLE"
+      },
+      "miTrust": {
+        "file": "mytrust1.json"
+      },
+      "linxo": {
+        "account": "ESSENTIEL_OK_2"
+      },
+      "csp": {
+        "amount": "10000",
+        "date": "01/2020"
+      },
+      "address": {
+        "street": "5 RUE DE DOUAI",
+        "zipCode": "59000",
+        "loyer": "500",
+        "date": "01/2020",
+        "miTrust": true
+      },
+      "assurance": {
+        "type": "Je ne souhaite pas"
+      },
+      "conditions": {
+        "step": 4
+      }
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+    "datas": [
+      {
+        "title": "CR < 3000€ - Bforbank",
+        "tags": ["@cr", "@tnr", "@bforbank", "@nominal"],
+        "simulation": {
+          "amount": "3000",
+          "carte": "oui",
+          "type": "CR"
+        },
+        "user": {
+          "email": "RANDOM",
+          "phone": "0757592585",
+          "birthDate": "01/06/1995"
+        },
+        "documents": {
+          "type": "CI",
+          "front": "cni-recto.png",
+          "back": "cni-verso.png"
+        },
+        "birthPlace": {
+          "country": "FRANCE",
+          "city": "LILLE"
+        },
+        "miTrust": {
+          "file": "mytrust1.json"
+        },
+        "linxo": {
+          "account": "ESSENTIEL_OK_2"
+        },
+        "csp": {
+          "amount": "10000",
+          "date": "01/2020"
+        },
+        "address": {
+          "street": "5 RUE DE DOUAI",
+          "zipCode": "59000",
+          "loyer": "500",
+          "date": "01/2020",
+          "miTrust": false
+        },
+        "assurance": {
+          "type": "Assurance recommandée"
+        },
+        "conditions": {
+          "step": 4
+        }
+      }
+    ]
+  }

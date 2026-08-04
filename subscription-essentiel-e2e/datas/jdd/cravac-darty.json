@@ -1,0 +1,188 @@
+{
+    "datas": [
+      {
+        "title": "CRAVAC DARTY 1",
+        "tags": ["@cra", "@darty","@nominal"],
+        "simulation": {
+          "amount": "2000",
+          "carte": "oui",
+          "type": "CR"
+        },
+        "user": {
+          "email": "RANDOM",
+          "phone": "0757592585",
+          "birthDate": "01/06/1995"
+        },
+        "documents": {
+          "type": "CI",
+          "front": "cni-recto6.png",
+          "back": "cni-verso6.png"
+        },
+        "birthPlace": {
+          "country": "FRANCE",
+          "city": "TOUR"
+        },
+        "miTrust": {
+          "file": "mytrust1.json"
+        },
+        "linxo": {
+          "account": "ESSENTIEL_OK_2"
+        },
+        "csp": {
+          "amount": "10000",
+          "date": "01/2020"
+        },
+        "address": {
+          "street": "5 RUE DE DOUAI",
+          "zipCode": "59000",
+          "loyer": "500",
+          "date": "01/2020",
+          "miTrust": false
+        },
+        "assurance": {
+          "type": "Assurance recommandée"
+        },
+        "conditions": {
+          "step": 4
+        }
+      },
+      {
+        "title": "CRAVAC DARTY 2",
+        "tags": ["@cra", "@darty","@nominal"],
+        "simulation": {
+          "amount": "2000",
+          "carte": "oui",
+          "type": "CR"
+        },
+        "user": {
+          "email": "RANDOM",
+          "phone": "0757592585",
+          "birthDate": "01/06/1995"
+        },
+        "documents": {
+          "type": "CI",
+          "front": "cni-recto6.png",
+          "back": "cni-verso6.png"
+        },
+        "birthPlace": {
+          "country": "FRANCE",
+          "city": "TOUR"
+        },
+        "miTrust": {
+          "file": "mytrust1.json"
+        },
+        "linxo": {
+          "account": "ESSENTIEL_OK_2"
+        },
+        "csp": {
+          "amount": "10000",
+          "date": "01/2020"
+        },
+        "address": {
+          "street": "5 RUE DE DOUAI",
+          "zipCode": "59000",
+          "loyer": "500",
+          "date": "01/2020",
+          "miTrust": false
+        },
+        "assurance": {
+          "type": "Assurance recommandée"
+        },
+        "conditions": {
+          "step": 4
+        }
+      },
+      {
+        "title": "CRAVAC DARTY 3",
+        "tags": ["@cra", "@darty","@nominal"],
+        "simulation": {
+          "amount": "2000",
+          "carte": "oui",
+          "type": "CR"
+        },
+        "user": {
+          "email": "RANDOM",
+          "phone": "0757592585",
+          "birthDate": "01/06/1995"
+        },
+        "documents": {
+          "type": "CI",
+          "front": "cni-recto6.png",
+          "back": "cni-verso6.png"
+        },
+        "birthPlace": {
+          "country": "FRANCE",
+          "city": "TOUR"
+        },
+        "miTrust": {
+          "file": "mytrust1.json"
+        },
+        "linxo": {
+          "account": "ESSENTIEL_OK_2"
+        },
+        "csp": {
+          "amount": "10000",
+          "date": "01/2020"
+        },
+        "address": {
+          "street": "5 RUE DE DOUAI",
+          "zipCode": "59000",
+          "loyer": "500",
+          "date": "01/2020",
+          "miTrust": false
+        },
+        "assurance": {
+          "type": "Assurance recommandée"
+        },
+        "conditions": {
+          "step": 4
+        }
+      },
+      {
+        "title": "CRAVAC DARTY 4",
+        "tags": ["@cra", "@darty","@nominal"],
+        "simulation": {
+          "amount": "2000",
+          "carte": "oui",
+          "type": "CR"
+        },
+        "user": {
+          "email": "RANDOM",
+          "phone": "0757592585",
+          "birthDate": "01/06/1995"
+        },
+        "documents": {
+          "type": "CI",
+          "front": "cni-recto6.png",
+          "back": "cni-verso6.png"
+        },
+        "birthPlace": {
+          "country": "FRANCE",
+          "city": "TOUR"
+        },
+        "miTrust": {
+          "file": "mytrust1.json"
+        },
+        "linxo": {
+          "account": "ESSENTIEL_OK_2"
+        },
+        "csp": {
+          "amount": "10000",
+          "date": "01/2020"
+        },
+        "address": {
+          "street": "5 RUE DE DOUAI",
+          "zipCode": "59000",
+          "loyer": "500",
+          "date": "01/2020",
+          "miTrust": false
+        },
+        "assurance": {
+          "type": "Assurance recommandée"
+        },
+        "conditions": {
+          "step": 4
+        }
+      }
+    ]
+  }

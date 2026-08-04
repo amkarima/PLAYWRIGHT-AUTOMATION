@@ -1,0 +1,144 @@
+{
+    "datas": [
+      {
+        "title": "CR > 3000€ - Avec Assurance",
+        "tags": ["@cr", "@tnr", "@assurance", "@nominal"],
+        "customerId": "",
+        "simulation": {
+          "amount": "3200",
+          "carte": "oui",
+          "type": "CR"
+        },
+        "user": {
+          "email": "RANDOM",
+          "phone": "0757592585",
+          "birthDate": "01/06/1995"
+        },
+        "documents": {
+          "type": "CI",
+          "front": "cni-recto6.png",
+          "back": "cni-verso6.png"
+        },
+        "birthPlace": {
+          "country": "FRANCE",
+          "city": "TOURCOING"
+        },
+        "miTrust": {
+          "file": "mytrust1.json"
+        },
+        "linxo": {
+          "account": "ESSENTIEL_OK_2"
+        },
+        "csp": {
+          "amount": "10000",
+          "date": "01/2020"
+        },
+        "address": {
+          "street": "5 RUE DE DOUAI",
+          "zipCode": "59000",
+          "loyer": "500",
+          "date": "01/2020",
+          "miTrust": true
+        },
+        "assurance": {
+          "type": "Assurance recommandée"
+        },
+        "conditions": {
+          "step": 4
+        }
+      },
+      {
+        "title": "CR > 3000€ - Sans Assurance",
+        "tags": ["@cr", "@tnr", "@sans-assurance", "@nominal"],
+        "simulation": {
+          "amount": "3001",
+          "carte": "oui",
+          "type": "CR"
+        },
+        "user": {
+          "email": "RANDOM",
+          "phone": "0757592585",
+          "birthDate": "01/06/1995"
+        },
+        "documents": {
+          "type": "CI",
+          "front": "cni-recto.png",
+          "back": "cni-verso.png"
+        },
+        "birthPlace": {
+          "country": "FRANCE",
+          "city": "LILLE"
+        },
+        "miTrust": {
+          "file": "mytrust1.json"
+        },
+        "linxo": {
+          "account": "ESSENTIEL_OK_2"
+        },
+        "csp": {
+          "amount": "10000",
+          "date": "01/2020"
+        },
+        "address": {
+          "street": "5 RUE DE DOUAI",
+          "zipCode": "59000",
+          "loyer": "500",
+          "date": "01/2020",
+          "miTrust": true
+        },
+        "assurance": {
+          "type": "Je ne souhaite pas"
+        },
+        "conditions": {
+          "step": 4
+        }
+      },
+      {
+        "title": "CR > 3000€ - Sans carte",
+        "tags": ["@cr", "@tnr", "@assurance", "@sans-carte"],
+        "customerId": "",
+        "simulation": {
+          "amount": "4000",
+          "carte": "non",
+          "type": "CR"
+        },
+        "user": {
+          "email": "RANDOM",
+          "phone": "0757592585",
+          "birthDate": "01/06/1995"
+        },
+        "documents": {
+          "type": "CI",
+          "front": "cni-recto.png",
+          "back": "cni-verso.png"
+        },
+        "birthPlace": {
+          "country": "FRANCE",
+          "city": "LILLE"
+        },
+        "miTrust": {
+          "file": "mytrust1.json"
+        },
+        "linxo": {
+          "account": "ESSENTIEL_OK_2"
+        },
+        "csp": {
+          "amount": "10000",
+          "date": "01/2020"
+        },
+        "address": {
+          "street": "5 RUE DE DOUAI",
+          "zipCode": "59000",
+          "loyer": "500",
+          "date": "01/2020",
+          "miTrust": true
+        },
+        "assurance": {
+          "type": "Assurance recommandée"
+        },
+        "conditions": {
+          "step": 4
+        }
+      }
+    ]
+  }
