@@ -28,7 +28,7 @@ test('SOF-149125 | PB>3000 prospect',  { tag: ['@sanity', '@tnr'],}, async ({ pa
   await essentiel.confirmLieuNaissance(page, data.birthPlace.country, data.birthPlace.city);
   await essentiel.skipPedagogieMiTrust(page);
   await essentiel.miTrust_se_connecter(page, data.miTrust.file);
-  await page.getByText("Continuer").click({timeout: 120000});
+  await page.getByText("Suivant").click({timeout: 120000});
   await essentiel.connectLinxoAccount(page, data.linxo.account);
   await essentiel.selectFirstAccount(page);
   await essentiel.setCsp(page, data.csp.amount, data.csp.date);
@@ -63,7 +63,7 @@ test('SOF-149125 | PB>3000 prospect sans assurance',  { tag: ['@tnr'],}, async (
   await essentiel.confirmLieuNaissance(page, data.birthPlace.country, data.birthPlace.city);
   await essentiel.skipPedagogieMiTrust(page);
   await essentiel.miTrust_se_connecter(page, data.miTrust.file);
-  await page.getByText("Continuer").click({timeout: 120000});
+  await page.getByText("Suivant").click({timeout: 120000});
   await essentiel.connectLinxoAccount(page, data.linxo.account);
   await essentiel.selectFirstAccount(page);
   await essentiel.setCsp(page, data.csp.amount, data.csp.date);
@@ -96,7 +96,7 @@ test('SOF-149125 | PB>3000 prospect sans assurance',  { tag: ['@tnr'],}, async (
     await essentiel.confirmLieuNaissance(page, data.birthPlace.country, data.birthPlace.city);
     await essentiel.skipPedagogieMiTrust(page);
     await essentiel.miTrust_se_connecter(page, data.miTrust.file);
-    await page.getByText("Continuer").click({timeout: 120000});
+    await page.getByText("Suivant").click({timeout: 120000});
     await essentiel.connectLinxoAccount(page, data.linxo.account);
     await essentiel.selectFirstAccount(page);
     await essentiel.setCsp(page, data.csp.amount, data.csp.date);
