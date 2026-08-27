@@ -61,13 +61,13 @@ export async function selectPasseport(page: Page) {
 export async function selectCI(page: Page) {
   await page.click(LOCATORS.identiteOption);
   try {
-    await page.click("//*[contains(text(),'Importer ma pièce')]",{timeout: 3000})
+    await page.click("//*[contains(text(),'Ajoutez votre justificatif')]",{timeout: 3000})
 
   } catch (error) {
     
   }
-  await page.click(LOCATORS.jePhotographieMaPieceButton);
-
+  //await page.click(LOCATORS.jePhotographieMaPieceButton);
+await page.getByText("Importer ma pièce d'identité manuellement").click();
   //await page.click(LOCATORS.okButton);
 }
 
