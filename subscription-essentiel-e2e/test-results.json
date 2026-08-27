@@ -1,7 +1,15 @@
 {
   "config": {
-    "configFile": "C:\\Users\\R16399\\Documents\\GitHub\\playwright-automation\\subscription-essential-e2e\\playwright.config.ts",
-    "rootDir": "C:/Users/R16399/Documents/GitHub/playwright-automation/subscription-essential-e2e/tests",
+    "argv": [
+      "/usr/local/bin/node",
+      "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/node_modules/.bin/playwright",
+      "test",
+      "--ui",
+      "--headed"
+    ],
+    "configFile": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/playwright.config.ts",
+    "rootDir": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/tests",
+    "failOnFlakyTests": false,
     "forbidOnly": false,
     "fullyParallel": false,
     "globalSetup": null,
@@ -16,7 +24,7 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "C:/Users/R16399/Documents/GitHub/playwright-automation/subscription-essential-e2e/test-results",
+        "outputDir": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -24,7 +32,7 @@
         },
         "id": "Mobile Chrome",
         "name": "Mobile Chrome",
-        "testDir": "C:/Users/R16399/Documents/GitHub/playwright-automation/subscription-essential-e2e/tests",
+        "testDir": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/tests",
         "testIgnore": [],
         "testMatch": [
           "**/*.ts"
@@ -59,22 +67,22 @@
     },
     "shard": null,
     "tags": [],
-    "updateSnapshots": "missing",
+    "updateSnapshots": "all",
     "updateSourceMethod": "patch",
-    "version": "1.59.1",
+    "version": "1.62.1",
     "workers": 5,
     "webServer": null
   },
   "suites": [
     {
-      "title": "CEASY\\CASTORAMA\\CASTORAMA.ts",
-      "file": "CEASY/CASTORAMA/CASTORAMA.ts",
+      "title": "CC/PROSPECT/CR_PROSPECT_-3000e.ts",
+      "file": "CC/PROSPECT/CR_PROSPECT_-3000e.ts",
       "column": 0,
       "line": 0,
       "specs": [
         {
-          "title": "SOF-155911 | CEASY-CASTORAMA | CRA | CREDIT",
-          "ok": true,
+          "title": "SOF-148667 | CR<3000 prospect avec carte",
+          "ok": false,
           "tags": [
             "sanity",
             "tnr"
@@ -90,79 +98,86 @@
                 {
                   "workerIndex": 0,
                   "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 243243,
-                  "errors": [],
+                  "status": "failed",
+                  "duration": 78352,
+                  "error": {
+                    "message": "TimeoutError: page.click: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[id=\\'photo-guide-next\\']')\u001b[22m\n",
+                    "stack": "TimeoutError: page.click: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[id=\\'photo-guide-next\\']')\u001b[22m\n\n    at selectCI (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:69:14)\n    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:30:7\n    at Object.selectAndUpload (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:25:3)\n    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/tests/CC/PROSPECT/CR_PROSPECT_-3000e.ts:40:3",
+                    "location": {
+                      "file": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts",
+                      "column": 14,
+                      "line": 69
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39m../pom/essentiel/Identite.ts:69\n\n\u001b[0m \u001b[90m 67 |\u001b[39m     \n \u001b[90m 68 |\u001b[39m   }\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 69 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[33mLOCATORS\u001b[39m\u001b[33m.\u001b[39mjePhotographieMaPieceButton)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 70 |\u001b[39m\n \u001b[90m 71 |\u001b[39m   \u001b[90m//await page.click(LOCATORS.okButton);\u001b[39m\n \u001b[90m 72 |\u001b[39m }\u001b[0m"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts",
+                        "column": 14,
+                        "line": 69
+                      },
+                      "message": "TimeoutError: page.click: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[id=\\'photo-guide-next\\']')\u001b[22m\n\n\n\u001b[90m   at \u001b[39m../pom/essentiel/Identite.ts:69\n\n\u001b[0m \u001b[90m 67 |\u001b[39m     \n \u001b[90m 68 |\u001b[39m   }\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 69 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[33mLOCATORS\u001b[39m\u001b[33m.\u001b[39mjePhotographieMaPieceButton)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 70 |\u001b[39m\n \u001b[90m 71 |\u001b[39m   \u001b[90m//await page.click(LOCATORS.okButton);\u001b[39m\n \u001b[90m 72 |\u001b[39m }\u001b[0m\n\u001b[2m    at selectCI (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:69:14)\u001b[22m\n\u001b[2m    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:30:7\u001b[22m\n\u001b[2m    at Object.selectAndUpload (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:25:3)\u001b[22m\n\u001b[2m    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/tests/CC/PROSPECT/CR_PROSPECT_-3000e.ts:40:3\u001b[22m"
+                    }
+                  ],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
                   "steps": [
                     {
                       "title": "Popup: Cookies",
-                      "duration": 1199
-                    },
-                    {
-                      "title": "Etape: PID",
-                      "duration": 5277
-                    },
-                    {
-                      "title": "Etape: Statut marital",
-                      "duration": 1639
-                    },
-                    {
-                      "title": "Etape: Connexion banque Linxo",
-                      "duration": 10370
-                    },
-                    {
-                      "title": "Etape: Sélection compte RIB",
-                      "duration": 24183
+                      "duration": 52
                     },
                     {
                       "title": "Etape: CSP",
-                      "duration": 11969
+                      "duration": 5668
                     },
                     {
-                      "title": "Etape: Adresse",
-                      "duration": 5696
+                      "title": "Etape: Coordonnées email & tel",
+                      "duration": 750
                     },
                     {
-                      "title": "Etape: Assurance",
-                      "duration": 5574
-                    },
-                    {
-                      "title": "Etape: Recapitulatif informations",
-                      "duration": 4825
-                    },
-                    {
-                      "title": "Etape: Recapitulatif financement",
-                      "duration": 9548
-                    },
-                    {
-                      "title": "Etape: Notice SE",
-                      "duration": 3
-                    },
-                    {
-                      "title": "Etape: SE - Ceasy - Accepter les conditions",
-                      "duration": 60202
+                      "title": "Etape: PID",
+                      "duration": 60256,
+                      "error": {
+                        "message": "TimeoutError: page.click: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[id=\\'photo-guide-next\\']')\u001b[22m\n",
+                        "stack": "TimeoutError: page.click: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[id=\\'photo-guide-next\\']')\u001b[22m\n\n    at selectCI (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:69:14)\n    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:30:7\n    at Object.selectAndUpload (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:25:3)\n    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/tests/CC/PROSPECT/CR_PROSPECT_-3000e.ts:40:3",
+                        "location": {
+                          "file": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts",
+                          "column": 14,
+                          "line": 69
+                        },
+                        "snippet": "\u001b[90m   at \u001b[39m../pom/essentiel/Identite.ts:69\n\n\u001b[0m \u001b[90m 67 |\u001b[39m     \n \u001b[90m 68 |\u001b[39m   }\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 69 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[33mLOCATORS\u001b[39m\u001b[33m.\u001b[39mjePhotographieMaPieceButton)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 70 |\u001b[39m\n \u001b[90m 71 |\u001b[39m   \u001b[90m//await page.click(LOCATORS.okButton);\u001b[39m\n \u001b[90m 72 |\u001b[39m }\u001b[0m"
+                      }
                     }
                   ],
-                  "startTime": "2026-08-03T13:38:45.649Z",
+                  "startTime": "2026-08-27T13:43:58.785Z",
                   "annotations": [],
                   "attachments": [
                     {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/test-results/CC-PROSPECT-CR_PROSPECT_-3-77cac-CR-3000-prospect-avec-carte-Mobile-Chrome/error-context.md"
+                    },
+                    {
                       "name": "trace",
                       "contentType": "application/zip",
-                      "path": "C:\\Users\\R16399\\Documents\\GitHub\\playwright-automation\\subscription-essential-e2e\\test-results\\CEASY-CASTORAMA-CASTORAMA.-6a58e--CEASY-CASTORAMA-CRA-CREDIT-Mobile-Chrome\\trace.zip"
+                      "path": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/test-results/CC-PROSPECT-CR_PROSPECT_-3-77cac-CR-3000-prospect-avec-carte-Mobile-Chrome/trace.zip"
                     }
-                  ]
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts",
+                    "column": 14,
+                    "line": 69
+                  }
                 }
               ],
-              "status": "expected"
+              "status": "unexpected"
             }
           ],
-          "id": "c8d283e07f430706e1b0-f11d4c03be231b4704b9",
-          "file": "CEASY/CASTORAMA/CASTORAMA.ts",
-          "line": 11,
+          "id": "273b07c5916aceec5539-d32a60b2f959c46f17d3",
+          "file": "CC/PROSPECT/CR_PROSPECT_-3000e.ts",
+          "line": 13,
           "column": 5
         }
       ]
@@ -170,11 +185,11 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-03T13:38:41.855Z",
-    "duration": 256701.56999999998,
-    "expected": 1,
+    "startTime": "2026-08-27T13:43:58.449Z",
+    "duration": 79562.65299999999,
+    "expected": 0,
     "skipped": 0,
-    "unexpected": 0,
+    "unexpected": 1,
     "flaky": 0
   }
 }

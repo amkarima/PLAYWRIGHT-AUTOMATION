@@ -1,7 +1,7 @@
 import { test, chromium, Page } from '@playwright/test';
 import * as essentiel from '../../../pom/essentiel';
 import * as simulateur from '../../../pom/simulateur';
-import * as utils from '../../../utils/Utils';
+import * as utils from '../../../utils/utils';
 import jdd from '../../../datas/jdd/autpassive.json';
 import fs from 'fs';
 import path from 'path';

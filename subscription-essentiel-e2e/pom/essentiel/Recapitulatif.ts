@@ -5,6 +5,11 @@ const LOCATORS = {
   checkboxFrame: "//div[@class='checkbox-frame']"
 };
 
+export async function checkRecapitulatifInfos(page: Page) {
+  // add check recap here
+  
+}
+
 export async function acceptRecapitulatifInfos(page: Page) {
   await test.step("Etape: Recapitulatif informations", async () => {
     await page.waitForTimeout(3000);
