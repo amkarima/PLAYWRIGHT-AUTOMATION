@@ -75,16 +75,16 @@
   },
   "suites": [
     {
-      "title": "CC/PROSPECT/CR_PROSPECT_-3000e.ts",
-      "file": "CC/PROSPECT/CR_PROSPECT_-3000e.ts",
+      "title": "CEASY/CASTORAMA/CASTO.ts",
+      "file": "CEASY/CASTORAMA/CASTO.ts",
       "column": 0,
       "line": 0,
       "specs": [
         {
-          "title": "SOF-148667 | CR<3000 prospect avec carte",
+          "title": "SOF-155911 | CEASY-CASTORAMA | CRA | CREDIT",
           "ok": false,
           "tags": [
-            "sanity",
+            "refacto",
             "tnr"
           ],
           "tests": [
@@ -99,94 +99,76 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "failed",
-                  "duration": 78352,
+                  "duration": 227,
                   "error": {
-                    "message": "TimeoutError: page.click: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[id=\\'photo-guide-next\\']')\u001b[22m\n",
-                    "stack": "TimeoutError: page.click: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[id=\\'photo-guide-next\\']')\u001b[22m\n\n    at selectCI (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:69:14)\n    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:30:7\n    at Object.selectAndUpload (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:25:3)\n    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/tests/CC/PROSPECT/CR_PROSPECT_-3000e.ts:40:3",
+                    "message": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND vip2-proxy.cacf.gca\nCall log:\n\u001b[2m  - → POST https://rct-api.sofinco.fr/token\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Mobile Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - Content-Type: application/x-www-form-urlencoded\u001b[22m\n\u001b[2m    - Authorization: Basic TTNQYWdEUGxxaXFNNHNZbV82aGVMSjBlUEdzYTpMU21tSWRqZjdMY0tSU044bElySFIyMWhjNW9h\u001b[22m\n\u001b[2m    - content-length: 29\u001b[22m\n",
+                    "stack": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND vip2-proxy.cacf.gca\nCall log:\n\u001b[2m  - → POST https://rct-api.sofinco.fr/token\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Mobile Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - Content-Type: application/x-www-form-urlencoded\u001b[22m\n\u001b[2m    - Authorization: Basic TTNQYWdEUGxxaXFNNHNZbV82aGVMSjBlUEdzYTpMU21tSWRqZjdMY0tSU044bElySFIyMWhjNW9h\u001b[22m\n\u001b[2m    - content-length: 29\u001b[22m\n\n    at getToken (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/api/Ceasy.ts:37:36)\n    at Object.CommencerLaSouscriptionCeasy (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/steps/souscriptionSteps.ts:40:17)\n    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/tests/CEASY/CASTORAMA/CASTO.ts:37:8",
                     "location": {
-                      "file": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts",
-                      "column": 14,
-                      "line": 69
+                      "file": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/api/Ceasy.ts",
+                      "column": 36,
+                      "line": 37
                     },
-                    "snippet": "\u001b[90m   at \u001b[39m../pom/essentiel/Identite.ts:69\n\n\u001b[0m \u001b[90m 67 |\u001b[39m     \n \u001b[90m 68 |\u001b[39m   }\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 69 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[33mLOCATORS\u001b[39m\u001b[33m.\u001b[39mjePhotographieMaPieceButton)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 70 |\u001b[39m\n \u001b[90m 71 |\u001b[39m   \u001b[90m//await page.click(LOCATORS.okButton);\u001b[39m\n \u001b[90m 72 |\u001b[39m }\u001b[0m"
+                    "snippet": "\u001b[90m   at \u001b[39m../api/Ceasy.ts:37\n\n\u001b[0m \u001b[90m 35 |\u001b[39m     \u001b[36mconst\u001b[39m context \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m createApiContext()\n \u001b[90m 36 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m     \u001b[36mconst\u001b[39m response \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m context\u001b[33m.\u001b[39mpost(apiUrl\u001b[33m,\u001b[39m {\n \u001b[90m    |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m       headers\u001b[33m:\u001b[39m {\n \u001b[90m 39 |\u001b[39m         \u001b[32m'Content-Type'\u001b[39m\u001b[33m:\u001b[39m \u001b[32m'application/x-www-form-urlencoded'\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 40 |\u001b[39m         \u001b[32m'Authorization'\u001b[39m\u001b[33m:\u001b[39m \u001b[32m'Basic TTNQYWdEUGxxaXFNNHNZbV82aGVMSjBlUEdzYTpMU21tSWRqZjdMY0tSU044bElySFIyMWhjNW9h'\u001b[39m\u001b[33m,\u001b[39m\u001b[0m"
                   },
                   "errors": [
                     {
                       "location": {
-                        "file": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts",
-                        "column": 14,
-                        "line": 69
+                        "file": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/api/Ceasy.ts",
+                        "column": 36,
+                        "line": 37
                       },
-                      "message": "TimeoutError: page.click: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[id=\\'photo-guide-next\\']')\u001b[22m\n\n\n\u001b[90m   at \u001b[39m../pom/essentiel/Identite.ts:69\n\n\u001b[0m \u001b[90m 67 |\u001b[39m     \n \u001b[90m 68 |\u001b[39m   }\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 69 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[33mLOCATORS\u001b[39m\u001b[33m.\u001b[39mjePhotographieMaPieceButton)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 70 |\u001b[39m\n \u001b[90m 71 |\u001b[39m   \u001b[90m//await page.click(LOCATORS.okButton);\u001b[39m\n \u001b[90m 72 |\u001b[39m }\u001b[0m\n\u001b[2m    at selectCI (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:69:14)\u001b[22m\n\u001b[2m    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:30:7\u001b[22m\n\u001b[2m    at Object.selectAndUpload (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:25:3)\u001b[22m\n\u001b[2m    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/tests/CC/PROSPECT/CR_PROSPECT_-3000e.ts:40:3\u001b[22m"
+                      "message": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND vip2-proxy.cacf.gca\nCall log:\n\u001b[2m  - → POST https://rct-api.sofinco.fr/token\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Mobile Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - Content-Type: application/x-www-form-urlencoded\u001b[22m\n\u001b[2m    - Authorization: Basic TTNQYWdEUGxxaXFNNHNZbV82aGVMSjBlUEdzYTpMU21tSWRqZjdMY0tSU044bElySFIyMWhjNW9h\u001b[22m\n\u001b[2m    - content-length: 29\u001b[22m\n\n\n\u001b[90m   at \u001b[39m../api/Ceasy.ts:37\n\n\u001b[0m \u001b[90m 35 |\u001b[39m     \u001b[36mconst\u001b[39m context \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m createApiContext()\n \u001b[90m 36 |\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 37 |\u001b[39m     \u001b[36mconst\u001b[39m response \u001b[33m=\u001b[39m \u001b[36mawait\u001b[39m context\u001b[33m.\u001b[39mpost(apiUrl\u001b[33m,\u001b[39m {\n \u001b[90m    |\u001b[39m                                    \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 38 |\u001b[39m       headers\u001b[33m:\u001b[39m {\n \u001b[90m 39 |\u001b[39m         \u001b[32m'Content-Type'\u001b[39m\u001b[33m:\u001b[39m \u001b[32m'application/x-www-form-urlencoded'\u001b[39m\u001b[33m,\u001b[39m\n \u001b[90m 40 |\u001b[39m         \u001b[32m'Authorization'\u001b[39m\u001b[33m:\u001b[39m \u001b[32m'Basic TTNQYWdEUGxxaXFNNHNZbV82aGVMSjBlUEdzYTpMU21tSWRqZjdMY0tSU044bElySFIyMWhjNW9h'\u001b[39m\u001b[33m,\u001b[39m\u001b[0m\n\u001b[2m    at getToken (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/api/Ceasy.ts:37:36)\u001b[22m\n\u001b[2m    at Object.CommencerLaSouscriptionCeasy (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/steps/souscriptionSteps.ts:40:17)\u001b[22m\n\u001b[2m    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/tests/CEASY/CASTORAMA/CASTO.ts:37:8\u001b[22m"
                     }
                   ],
                   "stdout": [],
-                  "stderr": [],
+                  "stderr": [
+                    {
+                      "text": "Erreur lors de l'appel API: apiRequestContext.post: getaddrinfo ENOTFOUND vip2-proxy.cacf.gca\nCall log:\n\u001b[2m  - → POST https://rct-api.sofinco.fr/token\u001b[22m\n\u001b[2m    - user-agent: Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Mobile Safari/537.36\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - Content-Type: application/x-www-form-urlencoded\u001b[22m\n\u001b[2m    - Authorization: Basic TTNQYWdEUGxxaXFNNHNZbV82aGVMSjBlUEdzYTpMU21tSWRqZjdMY0tSU044bElySFIyMWhjNW9h\u001b[22m\n\u001b[2m    - content-length: 29\u001b[22m\n\n    at getToken \u001b[90m(/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/\u001b[39mapi/Ceasy.ts:37:36\u001b[90m)\u001b[39m\n    at Object.CommencerLaSouscriptionCeasy \u001b[90m(/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/\u001b[39msteps/souscriptionSteps.ts:40:17\u001b[90m)\u001b[39m\n    at \u001b[90m/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/\u001b[39mtests/CEASY/CASTORAMA/CASTO.ts:37:8 {\n  log: [\n    \u001b[32m'  - → POST https://rct-api.sofinco.fr/token'\u001b[39m,\n    \u001b[32m'    - user-agent: Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Mobile Safari/537.36'\u001b[39m,\n    \u001b[32m'    - accept: */*'\u001b[39m,\n    \u001b[32m'    - accept-encoding: gzip,deflate,br'\u001b[39m,\n    \u001b[32m'    - Content-Type: application/x-www-form-urlencoded'\u001b[39m,\n    \u001b[32m'    - Authorization: Basic TTNQYWdEUGxxaXFNNHNZbV82aGVMSjBlUEdzYTpMU21tSWRqZjdMY0tSU044bElySFIyMWhjNW9h'\u001b[39m,\n    \u001b[32m'    - content-length: 29'\u001b[39m\n  ],\n  name: \u001b[32m'Error'\u001b[39m,\n  \u001b[32mSymbol(step)\u001b[39m: {\n    location: {\n      file: \u001b[32m'/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/api/Ceasy.ts'\u001b[39m,\n      line: \u001b[33m37\u001b[39m,\n      column: \u001b[33m36\u001b[39m,\n      function: \u001b[32m'getToken'\u001b[39m\n    },\n    category: \u001b[32m'pw:api'\u001b[39m,\n    title: \u001b[32m'POST \"/token\"'\u001b[39m,\n    apiName: \u001b[32m'apiRequestContext.post'\u001b[39m,\n    params: {\n      url: \u001b[32m'https://rct-api.sofinco.fr/token'\u001b[39m,\n      params: \u001b[90mundefined\u001b[39m,\n      encodedParams: \u001b[90mundefined\u001b[39m,\n      method: \u001b[32m'POST'\u001b[39m,\n      headers: \u001b[36m[Array]\u001b[39m,\n      postData: \u001b[90mundefined\u001b[39m,\n      jsonData: \u001b[90mundefined\u001b[39m,\n      formData: \u001b[36m[Array]\u001b[39m,\n      multipartData: \u001b[90mundefined\u001b[39m,\n      failOnStatusCode: \u001b[90mundefined\u001b[39m,\n      ignoreHTTPSErrors: \u001b[90mundefined\u001b[39m,\n      maxRedirects: \u001b[90mundefined\u001b[39m,\n      maxRetries: \u001b[90mundefined\u001b[39m,\n      __testHookLookup: \u001b[90mundefined\u001b[39m\n    },\n    group: \u001b[90mundefined\u001b[39m,\n    stepId: \u001b[32m'pw:api@36'\u001b[39m,\n    boxedStack: \u001b[90mundefined\u001b[39m,\n    steps: [],\n    attachmentIndices: [],\n    info: TestStepInfoImpl {\n      annotations: [],\n      _testInfo: \u001b[36m[TestInfoImpl]\u001b[39m,\n      _stepId: \u001b[32m'pw:api@36'\u001b[39m,\n      _title: \u001b[32m'POST \"/token\"'\u001b[39m,\n      _parentStep: \u001b[90mundefined\u001b[39m,\n      skip: \u001b[36m[Function (anonymous)]\u001b[39m\n    },\n    complete: \u001b[36m[Function: complete]\u001b[39m,\n    endWallTime: \u001b[33m1787840905627\u001b[39m,\n    error: {\n      message: \u001b[32m'Error: apiRequestContext.post: getaddrinfo ENOTFOUND vip2-proxy.cacf.gca\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m  - → POST https://rct-api.sofinco.fr/token\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - user-agent: Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Mobile Safari/537.36\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - accept: */*\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - accept-encoding: gzip,deflate,br\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - Content-Type: application/x-www-form-urlencoded\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - Authorization: Basic TTNQYWdEUGxxaXFNNHNZbV82aGVMSjBlUEdzYTpMU21tSWRqZjdMY0tSU044bElySFIyMWhjNW9h\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - content-length: 29\\x1B[22m\\n'\u001b[39m,\n      stack: \u001b[32m'Error: apiRequestContext.post: getaddrinfo ENOTFOUND vip2-proxy.cacf.gca\\n'\u001b[39m +\n        \u001b[32m'Call log:\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m  - → POST https://rct-api.sofinco.fr/token\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - user-agent: Mozilla/5.0 (Linux; Android 11; Pixel 5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.7922.34 Mobile Safari/537.36\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - accept: */*\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - accept-encoding: gzip,deflate,br\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - Content-Type: application/x-www-form-urlencoded\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - Authorization: Basic TTNQYWdEUGxxaXFNNHNZbV82aGVMSjBlUEdzYTpMU21tSWRqZjdMY0tSU044bElySFIyMWhjNW9h\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\x1B[2m    - content-length: 29\\x1B[22m\\n'\u001b[39m +\n        \u001b[32m'\\n'\u001b[39m +\n        \u001b[32m'    at getToken (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/api/Ceasy.ts:37:36)\\n'\u001b[39m +\n        \u001b[32m'    at Object.CommencerLaSouscriptionCeasy (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/steps/souscriptionSteps.ts:40:17)\\n'\u001b[39m +\n        \u001b[32m'    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/tests/CEASY/CASTORAMA/CASTO.ts:37:8'\u001b[39m,\n      cause: \u001b[90mundefined\u001b[39m\n    }\n  }\n}\n"
+                    }
+                  ],
                   "retry": 0,
                   "steps": [
                     {
-                      "title": "Popup: Cookies",
-                      "duration": 52
-                    },
-                    {
-                      "title": "Etape: CSP",
-                      "duration": 5668
-                    },
-                    {
-                      "title": "Etape: Coordonnées email & tel",
-                      "duration": 750
-                    },
-                    {
-                      "title": "Etape: PID",
-                      "duration": 60256,
-                      "error": {
-                        "message": "TimeoutError: page.click: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[id=\\'photo-guide-next\\']')\u001b[22m\n",
-                        "stack": "TimeoutError: page.click: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[id=\\'photo-guide-next\\']')\u001b[22m\n\n    at selectCI (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:69:14)\n    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:30:7\n    at Object.selectAndUpload (/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts:25:3)\n    at /Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/tests/CC/PROSPECT/CR_PROSPECT_-3000e.ts:40:3",
-                        "location": {
-                          "file": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts",
-                          "column": 14,
-                          "line": 69
-                        },
-                        "snippet": "\u001b[90m   at \u001b[39m../pom/essentiel/Identite.ts:69\n\n\u001b[0m \u001b[90m 67 |\u001b[39m     \n \u001b[90m 68 |\u001b[39m   }\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 69 |\u001b[39m   \u001b[36mawait\u001b[39m page\u001b[33m.\u001b[39mclick(\u001b[33mLOCATORS\u001b[39m\u001b[33m.\u001b[39mjePhotographieMaPieceButton)\u001b[33m;\u001b[39m\n \u001b[90m    |\u001b[39m              \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 70 |\u001b[39m\n \u001b[90m 71 |\u001b[39m   \u001b[90m//await page.click(LOCATORS.okButton);\u001b[39m\n \u001b[90m 72 |\u001b[39m }\u001b[0m"
-                      }
+                      "title": " Génération de données de test ...",
+                      "duration": 1
                     }
                   ],
-                  "startTime": "2026-08-27T13:43:58.785Z",
+                  "startTime": "2026-08-27T14:28:25.281Z",
                   "annotations": [],
                   "attachments": [
                     {
                       "name": "error-context",
                       "contentType": "text/markdown",
-                      "path": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/test-results/CC-PROSPECT-CR_PROSPECT_-3-77cac-CR-3000-prospect-avec-carte-Mobile-Chrome/error-context.md"
+                      "path": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/test-results/CEASY-CASTORAMA-CASTO.ts-S-17490--CEASY-CASTORAMA-CRA-CREDIT-Mobile-Chrome/error-context.md"
                     },
                     {
                       "name": "trace",
                       "contentType": "application/zip",
-                      "path": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/test-results/CC-PROSPECT-CR_PROSPECT_-3-77cac-CR-3000-prospect-avec-carte-Mobile-Chrome/trace.zip"
+                      "path": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/test-results/CEASY-CASTORAMA-CASTO.ts-S-17490--CEASY-CASTORAMA-CRA-CREDIT-Mobile-Chrome/trace.zip"
                     }
                   ],
                   "errorLocation": {
-                    "file": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/pom/essentiel/Identite.ts",
-                    "column": 14,
-                    "line": 69
+                    "file": "/Users/karimaamrouche/Documents/GitHub/PLAYWRIGHT-AUTOMATION/subscription-essentiel-e2e/api/Ceasy.ts",
+                    "column": 36,
+                    "line": 37
                   }
                 }
               ],
               "status": "unexpected"
             }
           ],
-          "id": "273b07c5916aceec5539-d32a60b2f959c46f17d3",
-          "file": "CC/PROSPECT/CR_PROSPECT_-3000e.ts",
-          "line": 13,
-          "column": 5
+          "id": "6d1738c58acfd2da9482-10afe39ec75019163d17",
+          "file": "CEASY/CASTORAMA/CASTO.ts",
+          "line": 33,
+          "column": 7
         }
       ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-08-27T13:43:58.449Z",
-    "duration": 79562.65299999999,
+    "startTime": "2026-08-27T14:28:24.936Z",
+    "duration": 766.8220000000001,
     "expected": 0,
     "skipped": 0,
     "unexpected": 1,
