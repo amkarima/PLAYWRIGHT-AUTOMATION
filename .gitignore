@@ -1,0 +1,49 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.env
+/subscription-essential-e2e/playwright-report
+/subscription-essential-e2e/reports
+/subscription-essential-e2e/blob-report
+/subscription-essential-e2e/dossiers
+/subscription-essential-e2e/dossiers
+subscription-essential-e2e/tests/CEASY copy/Zone.sav
+
+# Playwright E2E reports
+subscription-essential-e2e/playwright-report/
+subscription-essential-e2e/test-results/
+subscription-essential-e2e/test-results.json
+
+# Fichiers temporaires
+subscription-essential-e2e/dossiers/undefined.txt
+
+# Traces Playwright
+subscription-essential-e2e/**/*.zip
+subscription-essential-e2e/**/trace*
+
+# Screenshots Playwright
+subscription-essential-e2e/**/*.png
+subscription-essential-e2e/**/*.jpg
+subscription-essential-e2e/**/*.jpeg
+subscription-essential-e2e/**/*.webm
