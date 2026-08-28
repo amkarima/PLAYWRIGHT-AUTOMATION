@@ -4,10 +4,10 @@ import * as simulateur from '../pom/simulateur';
 import * as utils from '../utils/Utils';
 import { buildCraContext, buildSimulation, getSimulationCeasy, buildSimulationUrl} from "../builders/cra.builder";
 import { SubscribeParams } from "../api/ceasy.interface";
-import { CEASY_PARTNERS } from "../config/ceasy.config";
+import { getPartnerConfig } from "../config/partners";
 
 import { buildSimulateurUrl, simulateurParams } from '../api/CC';
-import {getToken, getSimulation, getUrl, getUrlCeasy} from '../api/Ceasy';
+import {getToken, getSimulation, getUrl, getUrlCeasy} from '../api/Ceasy.jss';
 
 
 export async function GenenrationDeDonneDeTest(jdd: any) {
@@ -38,22 +38,32 @@ export async function CommencerLaSouscriptionCC( page: Page, params : simulateur
 
 export async function CommencerLaSouscriptionCeasy(page: Page, campaign: string, params: SubscribeParams)  {
   const token = await getToken();
-  const partner = CEASY_PARTNERS[params.apporteur];
-  const simulationUrl = buildSimulationUrl(partner,campaign);
-  const simulationPayload = buildSimulation({ amount: params.amount, scaleCode: partner.scaleCode,hasInsurance: params.hasInsurance, });
- 
-  const simulationId = await getSimulationCeasy(token, simulationUrl, simulationPayload,partner.partnerId); 
+  const partner = getPartnerConfig('ceasy', params.apporteur, {
+    amount: params.amount,
+    duration: params.duration,
+    hasInsurance: params.hasInsurance,
+    campaign: campaign || undefined,
+  });
+
+  const simulationUrl = buildSimulationUrl(partner as any, campaign || partner.campaign || 'cra');
+  const simulationPayload = buildSimulation({
+    amount: params.amount,
+    scaleCode: partner.scaleCode ?? 'CASCR12',
+    hasInsurance: params.hasInsurance ?? partner.hasInsurance ?? true,
+  });
+
+  const simulationId = await getSimulationCeasy(token, simulationUrl, simulationPayload, partner.partnerId ?? 'creditPartner');
   const context = buildCraContext({
       simulationId,
       amount: params.amount,
-      scaleCode: partner.scaleCode,
-      duration: params.duration ?? 12,
+      scaleCode: partner.scaleCode ?? 'CASCR12',
+      duration: params.duration ?? partner.duration ?? 12,
       orderId: params.orderId,
-      apporteur: partner,
+      apporteur: partner as any,
     });
 
-  const link = await getUrlCeasy(token,simulationId, context, partner.channel, partner.workflow);
- 
+  const link = await getUrlCeasy(token, simulationId, context, partner.channel ?? 'web_castorama', partner.workflow ?? 'cra_wis');
+
   await page.goto(link);
 }
 
