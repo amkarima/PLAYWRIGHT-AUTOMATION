@@ -47,12 +47,12 @@ scenarios.forEach(({ title, amount, assurance, carte, tags }) => {
       await steps.ValiderLesOptins(page);
       await steps.ValiderLaPedagogie(page);
       await steps.identification(page, data, idRecto, idVerso);
-     /* await steps.Finances(page, data, amount);
+      await steps.Finances(page, data, amount);
       await steps.ProfessionEtRevenusEtAdresse(page, data);
       await steps.Assurance(page, assurance);
       await steps.Carte(page, carte);
-      await steps.Recapitulatif(page);
-      await steps.OffreDeFinancement(page);*/
+      await steps.RecapitulatifInfos(page);
+      await steps.OffreDeFinancement(page, assurance);
 
   });
 

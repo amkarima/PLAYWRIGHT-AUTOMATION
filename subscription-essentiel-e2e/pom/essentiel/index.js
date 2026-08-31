@@ -4,6 +4,7 @@ const { setRib } = require('./Linxo');
 const { fillForm, skipIntro, skipIntroConnuCredit } = require('./Mini-Formulaire');
 const { acceptConditonsSeCeasy, setOtpAndValidateCeasy } = require('./SE');
 
+
 module.exports = {
      // env : process.env.ENV || "https://rct2.sofinco.fr",
      env : process.env.ENV || "https://recette.esigate.sofinco.fr",
@@ -21,8 +22,10 @@ module.exports = {
     valider_recevez_offres_et_bon_plan: require('./Identite').validerRecevezOffresEtBonPlan,
     setStatutMarital: require('./StatutMarital').setStatutMarital,
     connectLinxoAccount: require('./Linxo').connectLinxoAccount,
+    bypassBanqueNotExist: require('./Linxo').bypassBanqueNotExist,
     selectFirstAccount: require('./Linxo').selectFirstAccount,
     setRib: require('./Linxo').setRib,
+    setCard: require('./carte').setCard,
 
     setCsp: require('./Csp').setCsp,
     fillForm: require('./Mini-Formulaire').fillForm,
@@ -35,6 +38,8 @@ module.exports = {
     setAssurance: require('./Assurance').setAssurance,
     acceptRecapitulatifInfos: require('./Recapitulatif').acceptRecapitulatifInfos,
     acceptRecapitulatifFinancement: require('./Recapitulatif').acceptRecapitulatifFinancement,
+    checkRecapitulatifInfos: require('./Recapitulatif').checkRecapitulatifInfos,
+    checkRecapitulatifFinancement: require('./Recapitulatif').checkRecapitulatifFinancement,
     acceptNoticeSE: require('./NoticeSE').acceptNoticeSE,
     acceptConditons: require('./SE').acceptConditons,
     acceptConditonsSeCeasy: require('./SE').acceptConditonsSeCeasy,

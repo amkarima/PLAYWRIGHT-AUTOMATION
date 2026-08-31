@@ -80,18 +80,80 @@ export async function selectCIv2(page: Page) {
     
   }
 }
-export async function uploadDoc(page: Page, doc: string) {
-  const fileChooserPromise = page.waitForEvent('filechooser');
-  await page.locator(LOCATORS.passportInput).click();
-  const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles('datas/identite/' + doc);
-  await page.click(LOCATORS.submitButton);
+export async function uploadDoc(page: Page, doc: string, maxRetries: number = 2) {
+  await test.step(`Upload passport ${doc}`, async () => {
+    for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      const fileChooserPromise = page.waitForEvent('filechooser');
+      await page.locator(LOCATORS.passportInput).click();
+      const fileChooser = await fileChooserPromise;
+      await fileChooser.setFiles('datas/identite/' + doc);
+      await page.click(LOCATORS.submitButton);
+
+      // Attendre un court instant pour que le message d'erreur apparaisse ou que la page avance
+      await page.waitForTimeout(2000);
+
+      // Détecter un message d'erreur de conformité (libellés partiels tolérés)
+      const errorVisible = await page.locator("text=/ne semble pas conforme|renvoyer un justificatif|justificatif.*conforme/i").first().isVisible().catch(() => false);
+
+      if (!errorVisible) {
+        // Pas d'erreur détectée : supposer réussite
+        return;
+      }
+
+      // Si erreur et qu'il reste des tentatives, réessayer
+      if (attempt <= maxRetries) {
+        console.warn(`Upload échoué (tentative ${attempt}). Nouvelle tentative...`);
+        // Tenter de fermer le message d'erreur si un bouton OK existe
+        await page.locator(LOCATORS.okButton).click().catch(() => {});
+        // Revenir à l'état d'upload (si nécessaire) : tenter d'ouvrir à nouveau l'interface d'import
+        await page.locator("text=Importer ma pièce", { hasText: 'Importer ma pièce' }).click().catch(() => {});
+        // petite attente avant la nouvelle tentative
+        await page.waitForTimeout(800);
+        continue;
+      }
+
+      // Dernière tentative échouée
+      throw new Error('Upload du document refusé : message de non-conformité après plusieurs tentatives');
+    }
+  });
 }
 
-export async function uploadCI(page: Page, docRecto: string, docVerso: string) {
-  await page.locator(LOCATORS.idRectoInput).setInputFiles("datas/identite/" + docRecto);
-  await page.locator(LOCATORS.idVersoInput).setInputFiles("datas/identite/" + docVerso);
-  await page.click(LOCATORS.submitButton);
+export async function waitForOCRResponse(page: Page) {
+  const response = await page.waitForResponse(response => response.url().includes('/supportingDocuments') && response.request().method() === 'POST', { timeout: 30000 });
+  return await response.json();
+}
+
+export async function uploadCI(page: Page, docRecto: string, docVerso: string, maxRetries: number = 2) {
+  await test.step(`Upload CI ${docRecto} / ${docVerso}`, async () => {
+    for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
+      console.log(`Upload CI - tentative ${attempt}/${maxRetries + 1}`);
+
+      await page.locator(LOCATORS.idRectoInput).setInputFiles(`datas/identite/${docRecto}`);
+      await page.locator(LOCATORS.idVersoInput).setInputFiles(`datas/identite/${docVerso}`);
+
+      const ocrResponsePromise = waitForOCRResponse(page);
+
+      await page.locator(LOCATORS.submitButton).click();
+
+      const ocrResult = await ocrResponsePromise;
+
+      console.log('Réponse OCR :', JSON.stringify(ocrResult, null, 2));
+
+      if (ocrResult.status !== 'ERR_OCR_KO') {
+        console.log(`CI acceptée à la tentative ${attempt}`);
+        return;
+      }
+
+      console.warn(`OCR KO à la tentative ${attempt} : ${ocrResult.message}`);
+
+      if (attempt <= maxRetries) {
+        await page.waitForTimeout(800);
+        continue;
+      }
+
+      throw new Error(`Upload des pièces d’identité refusé après ${maxRetries + 1} tentatives : ${ocrResult.message}`);
+    }
+  });
 }
 
 export async function uploadRandomCI(page: Page) {
