@@ -2,7 +2,6 @@ import { test, chromium, Page } from '@playwright/test';
 import * as steps from '../../../steps/souscriptionSteps';
 test.describe.configure({ mode: 'parallel' });
 import jdd from '../../../datas/jdd/pb.json';
-import {Dossier}  from '../../../utils/Utils';
 
 const scenarios = [
   {
@@ -38,8 +37,8 @@ scenarios.forEach(({ title, amount, assurance, tags }) => {
       await steps.Finances(page, data, amount);
       await steps.ProfessionEtRevenusEtAdresse(page, data);
       await steps.Assurance(page, assurance);
-      await steps.Recapitulatif(page);
-      await steps.OffreDeFinancement(page);
+      await steps.RecapitulatifInfos(page);
+      await steps.OffreDeFinancement(page, assurance);
 
   });
 

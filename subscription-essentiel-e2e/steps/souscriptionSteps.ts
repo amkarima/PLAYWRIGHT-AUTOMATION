@@ -30,6 +30,7 @@ export async function CommencerLaSouscriptionCC( page: Page, params : simulateur
     try {
 ;       const url = buildSimulateurUrl(params);
         await page.goto(url);
+        utils.interceptCalculator(page);
         await simulateur.acceptPopupCookies(page);
       } catch (error) {
       }
@@ -124,8 +125,9 @@ export async function Finances( page: Page, data: any, amount: number ){
     {
       await essentiel.skipPedagogieMiTrust(page);
       await essentiel.miTrust_se_connecter(page, data.miTrust.file);
-      await page.getByText("Continuer").click();
+      
     }
+    await page.getByText("Continuer").click(); 
     await essentiel.connectLinxoAccount(page, data.linxo.account);
     await essentiel.selectFirstAccount(page);
   })
@@ -158,14 +160,16 @@ export async function Carte( page: Page, avecCarte : boolean){
   })
 }
 
-export async function Recapitulatif( page: Page){
+export async function RecapitulatifInfos( page: Page, ){
   return test.step( ' Récapitulatif des informations ... ', async() => {
    await essentiel.checkRecapitulatifInfos(page);
    await essentiel.acceptRecapitulatifInfos(page);
   })
 }
-export async function OffreDeFinancement( page: Page){
+
+export async function OffreDeFinancement( page: Page, assurance: boolean){
   return test.step( 'Offre de financement ...', async() => {
+      await essentiel.checkRecapitulatifFinancement(page,assurance);
       await essentiel.acceptRecapitulatifFinancement(page);
   })
 }
@@ -177,4 +181,36 @@ export async function SE( page: Page){
       const line = process.env.CI_JOB_NAME + `: Id dossier: ${Dossier.dossier} / Id client: ${Dossier.client}\n`;
       await essentiel.setOtpAndValidate(page); 
   })
+}
+
+export async function mockLinxoKO(page: Page) {
+  await page.route('**/bankStatementsCheck', async route => {
+    const response = await route.fetch();
+    const body = await response.json();
+
+    await route.fulfill({
+      response,
+      json: {
+        ...body,
+        status: "2"
+      }
+    });
+  });
+}
+
+export async function FinancesBypassLinxo(page: Page, data: any, amount: number) {
+  return test.step('Point finances - bypass Linxo KO ...', async () => {
+    await page.getByText("Continuer").click();
+    await mockLinxoKO(page);
+    await essentiel.connectLinxoAccount(page, data.linxo.account);
+    await essentiel.selectFirstAccount(page);
+  });
+}
+
+
+export async function bypassBanqueNotExist(page: Page, data: any, amount: number) {
+  return test.step('Point finances - bypass Linxo banque pas dans la liste ...', async () => {
+    await essentiel.bypassBanqueNotExist(page, data.linxo.account);
+    await essentiel.setRib(page);
+  });
 }

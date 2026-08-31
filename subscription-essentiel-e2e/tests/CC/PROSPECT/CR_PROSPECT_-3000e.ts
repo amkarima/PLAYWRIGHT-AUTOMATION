@@ -51,8 +51,8 @@ scenarios.forEach(({ title, amount, assurance, carte, tags }) => {
       await steps.ProfessionEtRevenusEtAdresse(page, data);
       await steps.Assurance(page, assurance);
       await steps.Carte(page, carte);
-      await steps.Recapitulatif(page);
-      await steps.OffreDeFinancement(page);
+      await steps.RecapitulatifInfos(page);
+      await steps.OffreDeFinancement(page, assurance);
 
   });
 

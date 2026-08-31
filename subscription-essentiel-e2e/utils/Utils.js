@@ -156,6 +156,37 @@ export class Dossier {
   }
 
 }
+
+const calculatorResponses = new WeakMap();
+
+export function setCalculatorResponse(page, response) {
+  calculatorResponses.set(page, response);
+}
+
+export function getCalculatorResponse(page) {
+  const response = calculatorResponses.get(page);
+
+  if (!response) {
+    throw new Error("La réponse du calculateur n'a pas encore été capturée.");
+  }
+
+  return response;
+}
+
+export function interceptCalculator(page) {
+  page.on('response', async response => {
+    if (response.request().method() !== 'POST') return;
+    if (!response.url().includes('/calculate')) return;
+
+    try {
+      const json = await response.json();
+      setCalculatorResponse(page, json);
+    } catch (error) {
+      console.warn(`Impossible de lire la réponse du calculateur : ${error}`);
+    }
+  });
+}
+
 module.exports = {
-  generateRandomEmail, launchBrowser, interceptNumDossier, Dossier, sendToSlack
+  generateRandomEmail, launchBrowser, interceptNumDossier, Dossier, sendToSlack, interceptCalculator, setCalculatorResponse, getCalculatorResponse, generateRandomBirthDate
 };
