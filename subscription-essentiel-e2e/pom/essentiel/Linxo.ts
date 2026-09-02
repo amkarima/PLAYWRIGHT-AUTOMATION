@@ -41,41 +41,64 @@ async function selectLinxoBank(page: Page) {
 }
 
 async function waitForBankStatementsCheck(page: Page) {
-  const response = await page.waitForResponse(response => response.url().includes('/bankStatementsCheck') && response.request().method() === 'POST', { timeout: 180000 });
+  const response = await page.waitForResponse(response => response.url().includes('/bankStatementsCheck/V2/banks') && response.request().method() === 'POST', { timeout: 180000 });
   return await response.json();
+}
+
+export async function waitForLinxoResult(page: Page) {
+  const accountSummaryPromise = page.waitForResponse(
+    response => response.url().includes('/bankStatementsCheck/V2/bankStatements/accountSummary') && response.request().method() === 'POST',
+    { timeout: 180000 }
+  );
+
+  const errorMessagePromise = page.locator(LOCATORS.retryMessage).waitFor({ state: "visible", timeout: 180000 }).then(() => "KO");
+
+  return await Promise.race([
+    accountSummaryPromise.then(async response => {
+      const body = await response.json();
+
+      console.log(`Réponse accountSummary : ${JSON.stringify(body)}`);
+
+      return {
+        type: "ACCOUNT_SUMMARY",
+        body
+      };
+    }),
+    errorMessagePromise.then(() => ({
+      type: "ERROR_MESSAGE"
+    }))
+  ]);
 }
 
 async function retryLinxoConnection(page: Page, fichier: string, maxRetries: number = 3): Promise<boolean> {
   let success = false;
 
   await test.step("Etape: Tentative de connexion Linxo avec gestion des retries", async () => {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      console.log(`Tentative Linxo ${attempt}/${maxRetries}`);
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    console.log(`Tentative Linxo ${attempt}/${maxRetries}`);
 
-      if (attempt > 1) {
-        await page.locator(LOCATORS.retryMessage).waitFor({ state: "visible", timeout: 30000 });
-        await selectLinxoBank(page);
-      }
-
-      const bankStatementsCheckPromise = waitForBankStatementsCheck(page);
-
-      await fillLinxoCredentials(page, fichier);
-
-      const result = await bankStatementsCheckPromise;
-
-      console.log(`Réponse bankStatementsCheck : ${JSON.stringify(result)}`);
-
-      if (result.status !== "2") {
-        console.log(`Connexion Linxo réussie à la tentative ${attempt}`);
-        success = true;
-        break;
-      }
-
-      console.warn(`Linxo KO à la tentative ${attempt}`);
+    if (attempt > 1) {
+      await page.locator(LOCATORS.retryMessage).waitFor({ state: "visible", timeout: 30000 });
+      await selectLinxoBank(page);
     }
-  });
 
-  return success;
+    const resultPromise = waitForLinxoResult(page);
+
+    await fillLinxoCredentials(page, fichier);
+
+    const result = await resultPromise;
+
+    if (result.type === "ACCOUNT_SUMMARY" && "body" in result && result.body.status === "0") {
+      console.log(`Connexion Linxo réussie à la tentative ${attempt}`);
+      success = true;
+      break;
+    }
+
+    console.warn(`Linxo KO à la tentative ${attempt}`);
+  }
+});
+
+return success;
 }
 
 async function fillLinxoCredentials(page: Page, fichier: string) {

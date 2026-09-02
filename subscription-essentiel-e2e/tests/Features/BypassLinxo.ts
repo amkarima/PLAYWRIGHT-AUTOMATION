@@ -18,7 +18,7 @@ test('Bypass Linxo : Banque KO ..', { tag: ['@refacto', '@tnr', '@bypass-linxo']
   await steps.ProfessionEtRevenusEtAdresse(page, data);
   await steps.Assurance(page, false);
   await steps.Carte(page, true);
- await steps.RecapitulatifInfos(page);
+  await steps.RecapitulatifInfos(page);
   await steps.OffreDeFinancement(page, false);
 
 });

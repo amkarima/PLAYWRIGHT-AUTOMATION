@@ -184,7 +184,7 @@ export async function SE( page: Page){
 }
 
 export async function mockLinxoKO(page: Page) {
-  await page.route('**/bankStatementsCheck', async route => {
+  await page.route('**/bankStatementsCheck/V2/bankStatements/checkStatus', async route => {
     const response = await route.fetch();
     const body = await response.json();
 
