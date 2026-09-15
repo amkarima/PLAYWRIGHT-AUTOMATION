@@ -1,4 +1,12 @@
 export type FamilyName = 'ceasy' | 'cl' | 'cc';
+export type CeasyPartner =
+  | 'CASTORAMA'
+  | 'DARTY'
+  | 'DECATHLON'
+  | 'FNAC'
+  | 'IKEA'
+  | 'PRINTEMPS'
+  | 'EM';
 
 export interface PartnerConfig {
   family: FamilyName;
@@ -89,13 +97,13 @@ export const PARTNER_REGISTRY: Record<FamilyName, FamilyConfig> = {
         returnUrl: 'https://www.fnac.com',
       },
       IKEA: {
-        businessProviderId: 'web_ikea',
-        scaleCode: 'IKECR12',
-        scaleId: 'IKEOPAC',
+        businessProviderId: '99102325769',
+        scaleCode: 'IK49X',
+        scaleId: 'IK49X',
         frontCode: 'ESSCEA',
         channel: 'web_ikea',
         exchangeUrl: 'https://sofinco.exchange/demo',
-        returnUrl: 'https://www.ikea.com',
+        returnUrl: 'https://www.ikea.com'
       },
       PRINTEMPS: {
         businessProviderId: 'web_printemps',
