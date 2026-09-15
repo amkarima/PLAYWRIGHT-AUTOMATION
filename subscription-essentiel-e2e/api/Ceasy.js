@@ -1,38 +1,29 @@
-import { request } from '@playwright/test';
+const { request } = require('playwright');
 import * as fs from 'fs';
 
+/*const withProxy = {
+  server: "VIP2-PROXY.CACF.GCA:8080"
+}*/
+const withProxy = {
+  server: "VIP2-PROXY.CACF.GCA:8080"
+}
 /**
  * Fonction statique pour appeler l'API.
  * @returns {Promise<Object>} La réponse JSON de l'API.
  */
-
-const withProxy = {
-  server: "VIP2-PROXY.CACF.GCA:8080"
-};
-
-export async function createApiContext() {
-
-  const proxy = process.env.SERVER_PROXY
-    ? {
-        server: process.env.SERVER_PROXY,
-        username: process.env.USERNAME_PROXY,
-        password: process.env.PASSWORD_PROXY
-      }
-    : withProxy;
-
-  return request.newContext({
-    ignoreHTTPSErrors: true,
-    timeout: 20000,
-    proxy
-  });
-}
-
 export async function getToken() {
   const apiUrl = 'https://rct-api.sofinco.fr/token';
 
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        timeout: 20000,
+        //proxy: withProxy
+        
+      }
+    );
 
     const response = await context.post(apiUrl, {
       headers: {
@@ -65,7 +56,14 @@ export async function getTokenCl() {
 
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        timeout: 20000,
+        //proxy: withProxy,
+        
+      }
+    );
 
     const response = await context.post(apiUrl, {
       headers: {
@@ -98,7 +96,12 @@ export async function getSimulationVac(file, partner, token) {
 
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        //proxy: withProxy
+      }
+    );
 
     const response = await context.post(apiUrl, {
       headers: {
@@ -130,7 +133,13 @@ export async function getSimulationCra(file, partner, token) {
 
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        
+        
+      }
+    );
 
     const response = await context.post(apiUrl, {
       headers: {
@@ -161,7 +170,12 @@ export async function getSimulationCraIkea(file, partner, token) {
 
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        //proxy: withProxy
+      }
+    );
 
     const response = await context.post(apiUrl, {
       headers: {
@@ -192,7 +206,12 @@ export async function getSimulationVacIkea(file, partner, token) {
 
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        //proxy: withProxy
+      }
+    );
 
     const response = await context.post(apiUrl, {
       headers: {
@@ -223,7 +242,12 @@ export async function getSimulationCraCastorama(file, token) {
 
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        //proxy: withProxy
+      }
+    );
 
     const response = await context.post(apiUrl, {
       headers: {
@@ -254,7 +278,12 @@ export async function getSimulationCraPrintemps(file, token) {
 
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        //proxy: withProxy
+      }
+    );
 
     const response = await context.post(apiUrl, {
       headers: {
@@ -285,7 +314,12 @@ export async function getSimulationCrs(file, token) {
 
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        //proxy: withProxy
+      }
+    );
 
     const response = await context.post(apiUrl, {
       headers: {
@@ -316,7 +350,12 @@ export async function getSimulationRedoute(file, partner, token) {
 
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        //proxy: withProxy
+      }
+    );
 
     const response = await context.post(apiUrl, {
       headers: {
@@ -336,7 +375,7 @@ export async function getSimulationRedoute(file, partner, token) {
 
     const data = await response.json();
     await context.dispose(); // Nettoie le contexte après utilisation
-    return data.id;
+    return data.access_token;
   } catch (error) {
     console.error('Erreur lors de l\'appel API:', error);
     throw error; // Relance l'erreur pour que les tests puissent la capturer
@@ -347,7 +386,12 @@ export async function getUrl(token, simualtionId, file , partenaire, contrat) {
   const apiUrl = 'https://rct-api.sofinco.fr/partnerDataExchange/v1/links/';
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        //proxy: withProxy
+      }
+    );
     const response = await context.post(apiUrl, {
       headers: {
         'Content-Type': 'application/json',
@@ -362,7 +406,7 @@ export async function getUrl(token, simualtionId, file , partenaire, contrat) {
 
     if (!response.ok()) {
       const data = await response.text();
-      
+      await console.log(data)
       throw new Error(`HTTP error! Status: ${response.status()}`);
     }
 
@@ -374,70 +418,17 @@ export async function getUrl(token, simualtionId, file , partenaire, contrat) {
     throw error; // Relance l'erreur pour que les tests puissent la capturer
   }
 }
-
-export async function getUrlCeasy(
-  token: string,
-  simulationId: string,
-  contextPayload: any,
-  partenaire: string,
-  contrat: string
-) {
-  const apiUrl ="https://rct-api.sofinco.fr/partnerDataExchange/v1/links/";
-  console.log(
-  "***************************simulationId transmis à getUrlCeasy:",
-  simulationId
-);
-
-  const context = await createApiContext();
-  
-
-  const payload = {
-    ...contextPayload,
-    businessContext: contextPayload.businessContext
-      .replaceAll("{{simulationId}}", simulationId)
-      .replaceAll(
-        "{{orderId}}",
-        "testauto" + Math.floor(Math.random() * 30000)
-      ),
-  };
-
-  console.log(
-    "PAYLOAD ENVOYE :",
-    JSON.stringify(payload, null, 2)
-  );
-
-  const response = await context.post(apiUrl, {
-    headers: {
-      "Content-Type": "application/json",
-      "Context-Applicationid": "ceasy",
-      "Context-Partnerid": partenaire,
-      "Context-Sourceid": contrat,
-      Authorization: `Bearer ${token}`,
-    },
-    data: payload,
-  });
-
-    if (!response.ok()) {
-      const errorBody = await response.text();
-      console.log(errorBody);
-
-      throw new Error(
-        `HTTP error ${response.status()}`
-      );
-    }
-
-    const data = await response.json();
-
-    return data.link;
-  }
-
-
 export async function getSimulationCraEm(file, partner, token) {
   const apiUrl = `https://rct-api.sofinco.fr/revolvingSimulation/v3/partners/web_em/campaigns/cra/simulations/revolvings/calculate`;
 
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        //proxy: withProxy
+      }
+    );
 
     const response = await context.post(apiUrl, {
       headers: {
@@ -467,7 +458,12 @@ export async function getUrlCl(token, simualtionId, file , partenaire, contrat) 
   const apiUrl = 'https://rct-api.sofinco.fr/partnerDataExchange/v1/links/';
   try {
     // Crée un contexte de requête (pas besoin de navigateur ici)
-    const context = await createApiContext()
+    const context = await request.newContext(
+      {
+        ignoreHTTPSErrors: true,
+        //proxy: withProxy
+      }
+    );
     const response = await context.post(apiUrl, {
       headers: {
         'Content-Type': 'application/json',
@@ -494,6 +490,5 @@ export async function getUrlCl(token, simualtionId, file , partenaire, contrat) 
     throw error; // Relance l'erreur pour que les tests puissent la capturer
   }  
 }
-
 
 
