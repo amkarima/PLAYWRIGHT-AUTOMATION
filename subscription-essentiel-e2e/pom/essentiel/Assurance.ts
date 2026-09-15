@@ -8,9 +8,9 @@ const LOCATORS = {
   submitButton: "//button[@type='submit']"
 };
 
-export async function setAssurance(page: Page, assurance: string) {
+export async function setAssurance(page: Page, assurance: boolean) {
   await test.step("Etape: Assurance", async () => {
-    if(process.env.assurance == "non"){
+    if(!assurance){
       await page.click(LOCATORS.noAssuranceOption);
       await page.click(LOCATORS.agreeNoCoverage);
     }

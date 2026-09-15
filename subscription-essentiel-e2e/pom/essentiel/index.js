@@ -1,5 +1,6 @@
 const { launchBrowserOnBrowserStack } = require('../../utils/Utils');
 const { skipPedago } = require('./AuthPassive');
+const { setCardCeasy } = require('./carte');
 const { setRib } = require('./Linxo');
 const { fillForm, skipIntro, skipIntroConnuCredit } = require('./Mini-Formulaire');
 const { acceptConditonsSeCeasy, setOtpAndValidateCeasy } = require('./SE');
@@ -26,6 +27,7 @@ module.exports = {
     selectFirstAccount: require('./Linxo').selectFirstAccount,
     setRib: require('./Linxo').setRib,
     setCard: require('./carte').setCard,
+    setCardCeasy: require('./carte').setCardCeasy,
 
     setCsp: require('./Csp').setCsp,
     fillForm: require('./Mini-Formulaire').fillForm,

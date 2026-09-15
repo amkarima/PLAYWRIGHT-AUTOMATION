@@ -49,7 +49,7 @@ export async function selectPasseport(page: Page) {
   await page.click(LOCATORS.suivantButton, { force: true });
   await page.click(LOCATORS.passeportOption);
   try {
-    await page.click("//*[contains(text(),'Importer ma pièce')]",{timeout: 3000})
+    await page.click("//*[contains(text(),'Importer mon Passeport')]",{timeout: 3000})
 
   } catch (error) {
     
@@ -61,14 +61,16 @@ export async function selectPasseport(page: Page) {
 export async function selectCI(page: Page) {
   await page.click(LOCATORS.identiteOption);
   try {
-    await page.click("//*[contains(text(),'Ajoutez votre justificatif')]",{timeout: 3000})
+    await page.click("//*[contains(text(),'Importer ma Carte')]",{timeout: 3000})
+    await page.click(LOCATORS.jePhotographieMaPieceButton);
+    await page.click(LOCATORS.suivantButton);
+    await page.click("//*[contains(text(),'Ajouter votre')]",{timeout: 3000})
 
   } catch (error) {
     
   }
-  //await page.click(LOCATORS.jePhotographieMaPieceButton);
-await page.getByText("Importer ma pièce d'identité manuellement").click();
-  //await page.click(LOCATORS.okButton);
+ await page.getByText("Importer ma").click(); 
+ 
 }
 
 export async function selectCIv2(page: Page) {
@@ -80,6 +82,7 @@ export async function selectCIv2(page: Page) {
     
   }
 }
+
 export async function uploadDoc(page: Page, doc: string, maxRetries: number = 2) {
   await test.step(`Upload passport ${doc}`, async () => {
     for (let attempt = 1; attempt <= maxRetries + 1; attempt++) {
@@ -164,11 +167,12 @@ export async function uploadRandomCI(page: Page) {
 
 export async function confirmLieuNaissance(page: Page, pays: string, ville: string) {
   await page.getByRole('combobox', { name: 'Pays de naissance (ex :' }).fill('FRA');
+  await page.getByRole('option', { name: 'FRANCE' }).scrollIntoViewIfNeeded();
   await page.getByRole('option', { name: 'FRANCE' }).click();
   await page.getByRole('combobox', { name: 'Ville de naissance ou code' }).fill('LILLE');
   await page.getByRole('option', { name: 'LILLE (59000)' }).click();
   await page.fill(LOCATORS.birthdate, "20/01/"+(1976+(Math.random()*30)))
- await page.click(LOCATORS.submitButton);
+  await page.click(LOCATORS.submitButton);
 
 }
 

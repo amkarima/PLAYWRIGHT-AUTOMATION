@@ -8,13 +8,19 @@ const LOCATORS = {
   housingTypeOption: "//li[contains(text(),'Logé par la famille')]",
   rentInput: "//input[@id='rent']",
   movingInDateInput: "//input[@id='moving-in-date']",
-  submitButton: "//button[@type='submit']"
+  submitButton: "//button[@type='submit']",
+  modifierAdresse: "button[title='Modifier mon adresse postale']"
 };
 
 export async function setAdresse(page: Page, adresse: string, zipcode: string, rent: string, movingDate: string, mitrust: boolean) {
   await test.step("Etape: Adresse", async () => {
-    await page.waitForTimeout(3000);
     await page.click(LOCATORS.suivantButton);
+    await page.waitForTimeout(3000);
+    const btnModifierAdresse = page.locator(LOCATORS.modifierAdresse);
+
+    if (await btnModifierAdresse.first().isVisible()) {
+      await btnModifierAdresse.first().click();
+     }
     if (!mitrust) {
       await page.fill(LOCATORS.streetInput, adresse);
       await page.waitForTimeout(1000);
