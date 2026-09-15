@@ -1,5 +1,5 @@
 import {createApiContext} from "../api/Ceasy"
-import { CEASY_PARTNERS } from "../config/ceasy.config";
+import { PartnerConfig } from "../config/partner";
 
 export function buildSimulation({amount, scaleCode, hasInsurance = true,}: {
   amount: number;
@@ -52,7 +52,7 @@ interface BuildCraContextParams {
 };
 }
 
-export function buildSimulationUrl(partner: (typeof CEASY_PARTNERS)[keyof typeof CEASY_PARTNERS],campaign : string): string {
+export function buildSimulationUrl(partner: PartnerConfig,campaign: string): string {
   return `https://rct-api.sofinco.fr/revolvingSimulation/v3/partners/${partner.channel}/campaigns/${campaign}/simulations/revolvings/calculate`;
 }
 
@@ -70,8 +70,8 @@ export function buildCraContext({
   const customerData = {
     firstName: customer.firstName ?? "Karima",
     lastName: customer.lastName ?? "Amrouche",
-    mobilePhoneNumber: customer.mobilePhoneNumber ?? "",
-    emailAddress: customer.emailAddress ?? "jmanson@ca-cf.fr"
+    mobilePhoneNumber: customer.mobilePhoneNumber ?? "0652119965",
+    emailAddress: customer.emailAddress ?? "testAuto@ca-cf.fr"
   };
 
   const customerContext = {
@@ -81,8 +81,8 @@ export function buildCraContext({
 
     birthCity: localisation.birthCity ?? "Evry",
     birthZipCode: localisation.birthZipCode ?? "91000",
-    citizenshipCode: localisation.citizenshipCode ?? "F",
-    birthCountryCode: localisation.birthCountryCode ?? "F",
+    citizenshipCode: localisation.citizenshipCode ?? "FR",
+    birthCountryCode: localisation.birthCountryCode ?? "FR",
 
     street: localisation.street ?? "12 avenue de l'Europe",
     city: localisation.city ?? "PARIS",
@@ -129,7 +129,15 @@ export function buildCraContext({
       scaleCode
     }
   };
+console.log(
+  "%%%%%%%%%%%%%%%%%%%%%%%%%%%%  BUSINESS CONTEXT AVANT STRINGIFY :",
+  JSON.stringify(businessContext, null, 2)
+);
 
+console.log(
+  "%%%%%%%%%%%%%%%%%%%%%%%%%%SIMULATION ID DANS LE CONTEXTE :",
+  businessContext.simulationContext.simulationId
+);
   return {
         customer: customerData,
         order: {
@@ -164,6 +172,7 @@ export async function getSimulationCeasy(token: string, endpoint: string, simula
           }
 
           const data = await response.json();
+          console.log("************simulation response", data);
           return data.id as string;
       } finally {
         await context.dispose();
