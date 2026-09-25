@@ -7,29 +7,22 @@ test.describe.configure({ mode: 'parallel' });
 
 const scenarios = [
   {
-    title: 'SOF-155911 | CEASY | CASTORAMA | CRA | CREDIT',
-    tags: ['@sanity', '@tnr','@castorama'],
-    amount: 2500,
-    campaign: "cra",
-    assurance: false,
-    carte: true
-  },
-  {
-    title: 'SOF-157931 | CEASY | CASTORAMA | VAC',
-    tags: ['@sanity', '@tnr','@castorama'],
-    amount: 1000,
+    title: 'SOF-150944 | CEASY | MM | VAC | CREDIT',
+    tags: ['@sanity', '@tnr', '@mm'],
+    amount: 1223,
     campaign: "vac",
     assurance: false,
-    carte: false
+    carte: true
   }
-]
+];
 
-const apporteur: CeasyPartner = 'CASTORAMA';
+const apporteur: CeasyPartner = 'MM';
 
 scenarios.forEach((scenario) => {
   test(scenario.title, { tag: scenario.tags }, async ({ page }) => {
     await runCeasyScenario(page, scenario, apporteur);
   });
 });
+
 
 
