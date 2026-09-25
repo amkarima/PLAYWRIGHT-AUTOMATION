@@ -22,10 +22,10 @@ export async function setCard(page: Page, carte: boolean) {
 export async function setCardCeasy(page: Page,partner: string, carte: boolean) {
   await test.step("Etape: Carte ..", async () => {
     if(!carte){
-      await page.click(LOCATORS.noCardOption);
+      await page.getByText('Je ne souhaite pas recevoir').click();
     }
     else{
-      await page.locator(LOCATORS.CeasyCardOption).nth(0).click();
+      await page.getByRole('group', { name: 'Choix de la carte' }).click();
     }
     await page.click(LOCATORS.submitButton);
 });

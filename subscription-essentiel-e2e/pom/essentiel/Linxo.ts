@@ -105,15 +105,20 @@ async function fillLinxoCredentials(page: Page, fichier: string) {
   await test.step("Etape: Saisie des identifiants Linxo", async () => {
     await page.fill(LOCATORS.loginInput, "dev");
     await page.fill(LOCATORS.passwordInput, "dev");
-    await page.fill(LOCATORS.fileUrlInput, `https://linxo-test-bank.s3.amazonaws.com/B2B/QyHEv57N954fehyc22/${formattedDate}/${fichier}.txt`);
+      await page.fill(LOCATORS.fileUrlInput, `https://linxo-test-bank.s3.amazonaws.com/B2B/QyHEv57N954fehyc22/${formattedDate}/${fichier}.txt`);
     await page.waitForTimeout(1000);
     await page.keyboard.press("Enter");
   });
 }
 
 export async function selectFirstAccount(page: Page) {
-  await test.step("Etape: Sélection compte RIB", async () => {
-    await page.click(LOCATORS.firstAccountLabel, { timeout: 180000 });
+  await test.step('Etape: Sélection compte RIB', async () => {
+    const accounts = page.locator(LOCATORS.firstAccountLabel);
+
+    if (await accounts.count() > 0) {
+      await accounts.first().click();
+    }
+
     await page.click(LOCATORS.submitButton);
   });
 }

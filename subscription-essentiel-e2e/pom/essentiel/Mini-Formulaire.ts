@@ -43,14 +43,12 @@ export async function fillForm(page: Page, salaire: string, depuis: string, coem
 }
 
 export async function skipIntro(page: Page) {
-  await test.step('Etape: Pedagogie Introduction', async () => {
-    await page.getByText("Commencez votre souscription").click();
-    await page.getByText("Continuer").click();
-    await page.getByText("Ce dont vous aurez besoin").click();
-    await page.getByText("Continuer").click();
-    // await page.getByText("Continuer").click();
-    await page.getByText("Nous allons procéder").click();
-    await page.getByText("Continuer").click({ force: true });
+  await test.step('Etape: Pedagogie Introduction', async () => {  ;
+  
+  await page.getByText("Commencez votre souscription").click();
+  await page.getByText("Continuer").click();
+  await page.getByText("Ce dont vous aurez besoin").click();
+  await page.getByText("Continuer").click();
   });
 }
 export async function skipIntroConnuCredit(page: Page) {

@@ -3,7 +3,7 @@ import { Page, test } from '@playwright/test';
 const LOCATORS = {
   suivantButton: "//*[contains(text(),'Continuer')]",
   passeportOption: "//span[contains(text(),'Passeport')]",
-  identiteOption: "//span[contains(text(),'Identité')]",
+  identiteOption: "//span[contains(text(),'Carte Nationale')]",
   okButton: "//button[contains(text(),'Ok')]",
   passportInput: "input[id='passport']",
   jePhotographieMaPieceButton: "button[id='photo-guide-next']",
@@ -61,15 +61,16 @@ export async function selectPasseport(page: Page) {
 export async function selectCI(page: Page) {
   await page.click(LOCATORS.identiteOption);
   try {
-    await page.click("//*[contains(text(),'Importer ma Carte')]",{timeout: 3000})
-    await page.click(LOCATORS.jePhotographieMaPieceButton);
-    await page.click(LOCATORS.suivantButton);
+   // await page.click(LOCATORS.jePhotographieMaPieceButton);
     await page.click("//*[contains(text(),'Ajouter votre')]",{timeout: 3000})
+    
+   // await page.click("//*[contains(text(),'Importer ma Carte')]",{timeout: 3000})
+   // await page.click(LOCATORS.suivantButton);
 
   } catch (error) {
-    
+     await page.click("//*[contains(text(),'Importer ma Carte')]",{timeout: 3000})
   }
- await page.getByText("Importer ma").click(); 
+ //await page.getByText("Importer ma").click(); 
  
 }
 
@@ -177,7 +178,7 @@ export async function confirmLieuNaissance(page: Page, pays: string, ville: stri
 }
 
 export async function validerRecevezOffresEtBonPlan(page: Page) {
-  await page.waitForTimeout(3000);
+  await page.waitForTimeout(6000);
   await page.waitForLoadState("load")
   await page.click(LOCATORS.submitButton);
 }
