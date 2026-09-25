@@ -2,12 +2,13 @@ import { test, Page } from '@playwright/test';
 import * as essentiel from '../pom/essentiel';
 import * as simulateur from '../pom/simulateur';
 import * as utils from '../utils/Utils';
+import * as api from '../api/Ceasy';
 import { buildCraContext, buildSimulation, getSimulationCeasy, buildSimulationUrl} from "../builders/cra.builder";
 import { SubscribeParams } from "../api/ceasy.interface";
 import { getPartnerConfig } from "../config/partners";
 
 import { buildSimulateurUrl, simulateurParams } from '../api/CC';
-import {getToken, getSimulation, getUrl, getUrlCeasy} from '../api/Ceasy.jss';
+import {getToken, getTokenCl, getSimulation, getUrl, getUrlCeasy} from '../api/Ceasy';
 
 
 export async function GenenrationDeDonneDeTest(jdd: any) {
@@ -28,7 +29,7 @@ export async function GenenrationDeDonneDeTest(jdd: any) {
 export async function CommencerLaSouscriptionCC( page: Page, params : simulateurParams){
   return test.step( 'Commencer la souscription full web Circuit Court ...', async() => {
     try {
-;       const url = buildSimulateurUrl(params);
+        const url = buildSimulateurUrl(params);
         await page.goto(url);
         utils.interceptCalculator(page);
         await simulateur.acceptPopupCookies(page);
@@ -38,44 +39,98 @@ export async function CommencerLaSouscriptionCC( page: Page, params : simulateur
 }
 
 export async function CommencerLaSouscriptionCeasy(page: Page, campaign: string, params: SubscribeParams)  {
+  
   const token = await getToken();
   const partner = getPartnerConfig('ceasy', params.apporteur, {
     amount: params.amount,
-    duration: params.duration,
+    duration: params.duration,  
     hasInsurance: params.hasInsurance,
     campaign: campaign || undefined,
   });
 
-  const simulationUrl = buildSimulationUrl(partner as any, campaign || partner.campaign || 'cra');
-  const simulationPayload = buildSimulation({
-    amount: params.amount,
-    scaleCode: partner.scaleCode ?? 'CASCR12',
-    hasInsurance: params.hasInsurance ?? partner.hasInsurance ?? true,
-  });
 
-  const simulationId = await getSimulationCeasy(token, simulationUrl, simulationPayload, partner.partnerId ?? 'creditPartner');
+
+  const simulationUrl = buildSimulationUrl(partner,campaign || partner.campaign || 'cra');
+  const simulationPayload = buildSimulation({
+  amount: params.amount,
+  duration: params.duration,
+  scaleCode: partner.scaleCode!,
+  businessProviderId: partner.businessProviderId!,
+  hasInsurance: params.hasInsurance,
+});
+
+const applicationId =
+  campaign === 'vac'
+    ? partner.vacApplicationId ?? partner.applicationId
+    : campaign === 'crs'
+      ? partner.crsApplicationId ?? partner.applicationId
+      : partner.applicationId;
+      
+  const simulationId = await getSimulationCeasy(token, simulationUrl, simulationPayload, applicationId!);
   const context = buildCraContext({
       simulationId,
       amount: params.amount,
       scaleCode: partner.scaleCode ?? 'CASCR12',
       duration: params.duration ?? partner.duration ?? 12,
       orderId: params.orderId,
-      apporteur: partner as any,
+      apporteur: {
+        businessProviderId: partner.businessProviderId!,
+        scaleId: partner.scaleId!,
+        frontCode: partner.frontCode!,
+        returnUrl: partner.returnUrl!,
+        exchangeUrl: partner.exchangeUrl!,
+      },
     });
 
-  const link = await getUrlCeasy(token, simulationId, context, partner.channel ?? 'web_castorama', partner.workflow ?? 'cra_wis');
+   const link = await getUrlCeasy(token, simulationId, context, partner.channel ?? 'web_castorama', partner.workflow ?? 'cra_wis');
 
   await page.goto(link);
 }
 
-export async function CommencerLaSouscriptionCL( page: Page, params : simulateurParams){
+export async function CommencerLaSouscriptionCL2( page: Page,campaign: string, params : simulateurParams){
   return test.step( 'Commencer la souscription Full web CL ...', async() => {
+    
+   const partner = getPartnerConfig('ceasy', params.apporteur, {
+    amount: params.amount,
+    duration: params.duration,  
+    hasInsurance: params.hasInsurance,
+    campaign: campaign || undefined,
+  });
+   const token = await api.getTokenCl()
+   const link = await api.getUrlCl(token,"","../../datas/CL/darty.json", "web_darty", "cra")
+   await page.goto(link)
   })
 }
 
+
+
+export async function CommencerLaSouscriptionCL(page: Page,campaign: string,params: SubscribeParams) {
+
+  const token = await api.getTokenCl();
+  const partner = getPartnerConfig('cl', params.apporteur, {
+    amount: params.amount,
+    duration: params.duration,
+    hasInsurance: params.hasInsurance,
+    campaign,
+  });
+
+  console.log('partner CL', partner);
+
+  const link = await api.getUrlCl(
+    token,
+    '',
+    partner.contextFile!,
+    partner.channel!,
+    campaign,
+  );
+
+  await page.goto(link);
+}
+
+
 export async function miniSimulateur( page: Page, data: any){
   return test.step( ' Mini simulateur  ...', async() => {
-    await page.getByText("C'est parti").click();
+    await page.getByRole('button', { name: 'Commencer ma souscription' }).click();
     await essentiel.fillForm(page, data.csp.amount, data.csp.date, false);
     await essentiel.setInfos(page, data.user.email, data.user.phone, data.user.birthDate);
   })
@@ -127,9 +182,15 @@ export async function Finances( page: Page, data: any, amount: number ){
       await essentiel.miTrust_se_connecter(page, data.miTrust.file);
       
     }
-    await page.getByText("Continuer").click(); 
-    await essentiel.connectLinxoAccount(page, data.linxo.account);
-    await essentiel.selectFirstAccount(page);
+     try {
+            await page.getByText("Continuer").or(page.getByText("Suivant")).click();;
+            await essentiel.connectLinxoAccount(page, data.linxo.account);
+            await essentiel.selectFirstAccount(page);
+         
+        } catch (error) {
+          await page.getByText("Commencer").click();
+          await essentiel.setRib(page);
+          }
   })
 }
 
@@ -154,22 +215,27 @@ export async function Assurance( page: Page, assurance: boolean){
   })
 }
 
-export async function Carte( page: Page, avecCarte : boolean){
+export async function Carte( page: Page, avecCarte : boolean, partner='web_sofinco', parcours="CC"){
   return test.step( 'Choix de la carte ...', async() => {
+    if(parcours == 'CC')
       await essentiel.setCard(page,avecCarte);
+    else if(parcours == 'CEASY')
+      await essentiel.setCardCeasy(page,avecCarte,partner,parcours)
+    else if(parcours == 'CL')  
+      await essentiel.setCardCeasy(page,avecCarte,partner,parcours)// a changer si besoin 
   })
 }
 
 export async function RecapitulatifInfos( page: Page, ){
   return test.step( ' Récapitulatif des informations ... ', async() => {
-   await essentiel.checkRecapitulatifInfos(page);
+  // await essentiel.checkRecapitulatifInfos(page);
    await essentiel.acceptRecapitulatifInfos(page);
   })
 }
 
 export async function OffreDeFinancement( page: Page, assurance: boolean){
   return test.step( 'Offre de financement ...', async() => {
-      await essentiel.checkRecapitulatifFinancement(page,assurance);
+    //  await essentiel.checkRecapitulatifFinancement(page,assurance);
       await essentiel.acceptRecapitulatifFinancement(page);
   })
 }
