@@ -1,16 +1,49 @@
 import {createApiContext} from "../api/Ceasy"
 import { PartnerConfig } from "../config/partner";
 
-export function buildSimulation({amount, scaleCode, hasInsurance = true,}: {
+export function buildSimulation({
+  amount,
+  duration,
+  scaleCode,
+  businessProviderId,
+  hasInsurance = true,
+  isSale,
+  equipmentCode,
+  dueDay,
+  personalContributionAmount,
+  isPrincipal,
+}: {
   amount: number;
-  scaleCode: string;
+  duration?: number;
+  scaleCode?: string;
+  businessProviderId: string;
   hasInsurance?: boolean;
+  isSale?: boolean;
+  equipmentCode?: string;
+  dueDay?: number;
+  personalContributionAmount?: number;
+  isPrincipal?: boolean;
 }) {
   return {
     amount,
-    scaleCode,
-    borrower: {
+
+    ...(duration && { durations: [duration] }),
+    ...(scaleCode && { scaleCode }),
+    ...(equipmentCode && { equipmentCode }),
+    ...(dueDay !== undefined && { dueDay }),
+    ...(isSale !== undefined && { isSale }),
+    ...(personalContributionAmount !== undefined && {
+      personalContributionAmount,
+    }),
+    ...(isPrincipal !== undefined && { isPrincipal }),
+
+    businessProviderId,
+
+    borrowersParameter: {
       hasInsurance,
+      socioEconomicClassificationCode: '',
+      insuranceCode: '',
+      retrieveAlternativeInsurances: false,
     },
   };
 }
@@ -52,8 +85,22 @@ interface BuildCraContextParams {
 };
 }
 
-export function buildSimulationUrl(partner: PartnerConfig,campaign: string): string {
-  return `https://rct-api.sofinco.fr/revolvingSimulation/v3/partners/${partner.channel}/campaigns/${campaign}/simulations/revolvings/calculate`;
+export function buildSimulationUrl(
+  partner: PartnerConfig,
+  campaign: string
+): string {
+
+  const partnerCode =
+    campaign === 'vac'
+      ? partner.vacSimulationPartner ?? partner.channel
+      : partner.simulationPartner ?? partner.channel;
+      
+
+  if (campaign === 'vac') {
+    return `https://rct-api.sofinco.fr/creditSaleSimulation/v1/partners/${partnerCode}/campaigns/vac/simulations/creditSales/calculate`;
+  }
+
+  return `https://rct-api.sofinco.fr/revolvingSimulation/v3/partners/${partnerCode}/campaigns/${campaign}/simulations/revolvings/calculate`;
 }
 
 export function buildCraContext({
@@ -70,7 +117,7 @@ export function buildCraContext({
   const customerData = {
     firstName: customer.firstName ?? "Karima",
     lastName: customer.lastName ?? "Amrouche",
-    mobilePhoneNumber: customer.mobilePhoneNumber ?? "0652119965",
+    mobilePhoneNumber: customer.mobilePhoneNumber ?? "",
     emailAddress: customer.emailAddress ?? "testAuto@ca-cf.fr"
   };
 
@@ -129,15 +176,7 @@ export function buildCraContext({
       scaleCode
     }
   };
-console.log(
-  "%%%%%%%%%%%%%%%%%%%%%%%%%%%%  BUSINESS CONTEXT AVANT STRINGIFY :",
-  JSON.stringify(businessContext, null, 2)
-);
 
-console.log(
-  "%%%%%%%%%%%%%%%%%%%%%%%%%%SIMULATION ID DANS LE CONTEXTE :",
-  businessContext.simulationContext.simulationId
-);
   return {
         customer: customerData,
         order: {
@@ -154,7 +193,6 @@ console.log(
 export async function getSimulationCeasy(token: string, endpoint: string, simulationPayload: ReturnType<typeof buildSimulation>, applicationId: string): Promise<string> {
   const context = await createApiContext();
   try {
-        const payload = `{"amount": 2500,"scaleCode": "CASCR12","borrower": {"hasInsurance": true }}`;
         const response = await context.post(endpoint, {
           headers: {
             "Content-Type": "application/json",
