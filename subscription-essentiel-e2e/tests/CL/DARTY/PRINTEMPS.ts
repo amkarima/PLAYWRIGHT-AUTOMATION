@@ -6,10 +6,10 @@ test.describe.configure({ mode: 'parallel' });
 
 const scenarios = [
   {
-    title: 'SOF-150935 | CEASY | DARTY | CRA | CREDIT',
+    title: 'SOF-150935 | CEASY | PRINTEMPS | CRS | CREDIT',
     tags: ['@refacto', '@tnr', '@printemps'],
-    amount: 2560,
-    campaign: "cra",
+    amount: 700,
+    campaign: "crs",
     assurance: false,
     carte: true
   }
@@ -17,7 +17,7 @@ const scenarios = [
 
 
 
-const apporteur: FullWebClPartner = 'DARTY';
+const apporteur: FullWebClPartner = 'PRINTEMPS';
 
 scenarios.forEach((scenario) => {
   test(scenario.title, { tag: scenario.tags }, async ({ page }) => {
