@@ -47,3 +47,7 @@ subscription-essential-e2e/**/*.png
 subscription-essential-e2e/**/*.jpg
 subscription-essential-e2e/**/*.jpeg
 subscription-essential-e2e/**/*.webm
+/subscription-essential-e2e/playwright-report
+/subscription-essential-e2e/playwright-report/trace
+subscription-essential-e2e/playwright-report/trace/snapshot.html
+subscription-essential-e2e/dossiers/undefined.txt

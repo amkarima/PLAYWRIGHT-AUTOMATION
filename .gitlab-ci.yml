@@ -1,0 +1,105 @@
+stages:
+  - instal
+  - test
+  - merge_reports
+  - deploy
+default:
+  tags: 
+    - k8s
+variables:
+  ENV: "CI"
+  CI: "true"
+  PLAYWRIGHT_IMAGE: cacf-shared-docker-stable-intranet.registry.saas.cagip.group.gca/playwright:1.0.1
+  se:
+    description: "Signature Electronique? oui/non"
+    value: non
+  assurance:
+    description: "Souscription Assurance? oui/non"
+    value: oui
+  SELECTED_TESTS:
+    description: tag de tests 
+    value: sanity
+instal:
+  stage: instal
+  image: cacf-shared-docker-stable-intranet.registry.saas.cagip.group.gca/cacf-node-ci:1.8.0
+  when: always
+  script:
+    - cd subscription-essential-e2e
+    - |
+      cat > .npmrc <<EOF
+      registry=https://artifactory.registry.saas.cagip.group.gca/artifactory/api/npm/cacf-internal-npm-intranet-virtual/
+      always-auth=true
+      //artifactory.registry.saas.cagip.group.gca/artifactory/api/npm/cacf-internal-npm-intranet-virtual/:_auth=${ARTIFACTORY_TOKEN}
+      EOF
+    - npm config list
+    - npm config get registry
+    - echo ${ARTIFACTORY_TOKEN:+TOKEN_PRESENT} 
+    - npm install
+  artifacts:
+    when: always
+    paths:
+      - subscription-essential-e2e/node_modules/**
+      - node_modules/**
+    expire_in: 2 week
+
+
+.default_test_job:
+  stage: test
+  image: ${PLAYWRIGHT_IMAGE}
+  variables:
+    HTTPS_PROXY: http://$CI_PROXY_HOST:$CI_PROXY_PORT
+    NO_PROXY: .gca
+    https_proxy: http://$CI_PROXY_HOST:$CI_PROXY_PORT
+    no_proxy: .gca
+  script:
+    - cd subscription-essential-e2e
+#    - npx playwright install --with-deps 
+    - PLAYWRIGHT_JSON_OUTPUT_NAME=results.json npx playwright test --grep "$SELECTED_TESTS" --reporter blob,html,json --shard=$CI_NODE_INDEX/$CI_NODE_TOTAL || true
+  rules:
+    - when: always
+  artifacts:
+    when: always
+    paths:
+      - subscription-essential-e2e/playwright-report/*
+      - subscription-essential-e2e/dossiers.txt
+      - subscription-essential-e2e/blob-report/*
+      - subscription-essential-e2e/results.json
+    expire_in: 2 week
+
+
+test_shard:
+  extends: .default_test_job
+  parallel: 5
+
+merge_reports:
+  stage: merge_reports
+  image: ${PLAYWRIGHT_IMAGE}
+  variables:
+    HTTPS_PROXY: http://$CI_PROXY_HOST:$CI_PROXY_PORT
+    NO_PROXY: .gca
+    https_proxy: http://$CI_PROXY_HOST:$CI_PROXY_PORT
+    no_proxy: .gca
+  when: always
+  script:
+    - cd subscription-essential-e2e
+    - npm install
+    - echo "Merging test reports"
+    - PLAYWRIGHT_JSON_OUTPUT_NAME=test-results-merged.json npx playwright merge-reports --reporter html,json ./blob-report
+  artifacts:
+    when: always
+    paths:
+      - subscription-essential-e2e/playwright-report/**
+      - subscription-essential-e2e/test-results-merged.json
+      - subscription-essential-e2e/dossiers/**
+    expire_in: 2 week
+pages:
+  publish: public
+  stage: deploy
+  image: cacf-shared-docker-stable-intranet.registry.saas.cagip.group.gca/cacf-node-ci:1.8.0
+  script:
+    - echo toto
+  artifacts:
+    paths:
+      - public
+  only:
+    - develop
