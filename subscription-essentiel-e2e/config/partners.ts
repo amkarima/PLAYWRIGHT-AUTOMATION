@@ -2,16 +2,32 @@ export type FamilyName = 'ceasy' | 'cl' | 'cc';
 export type CeasyPartner =
   | 'CASTORAMA'
   | 'DARTY'
-  | 'DECATHLON'
   | 'FNAC'
   | 'IKEA'
   | 'PRINTEMPS'
+  | 'MM'
   | 'EM';
 
+  export type FullWebClPartner =
+  | 'DARTY'
+  | 'FNAC'
+  | 'IKEA'
+  | 'PRINTEMPS'
+  | 'DECATHLON'
+  | 'REDOUTE'
+  | 'CL'
+  | 'MM';
+  
 export interface PartnerConfig {
   family: FamilyName;
   partnerId?: string;
+  applicationId?: string;
+  vacApplicationId?: string;
+  simulationPartner?: string;
   businessProviderId?: string;
+  crsApplicationId?: string;
+  vacSimulationPartner?: string;
+  contextFile?: string;
   scaleCode?: string;
   scaleId?: string;
   frontCode?: string;
@@ -40,7 +56,6 @@ export const PARTNER_DEFAULTS: Record<FamilyName, Partial<PartnerConfig>> = {
     family: 'ceasy',
     campaign: 'cra',
     workflow: 'cra_wis',
-    partnerId: 'creditPartner',
     amount: 2500,
     duration: 12,
     hasInsurance: true,
@@ -71,63 +86,81 @@ export const PARTNER_REGISTRY: Record<FamilyName, FamilyConfig> = {
     partners: {
       CASTORAMA: {
         businessProviderId: '99102325769',
+        applicationId: 'creditPartner',
         scaleCode: 'CASCR12',
         scaleId: 'CASTOPAC',
         frontCode: 'ESSCEA',
+        simulationPartner: 'web_castorama',
         channel: 'web_castorama',
         exchangeUrl: 'https://sofinco.exchange/demo',
         returnUrl: 'https://www.castorama.fr',
       },
-      DECATHLON: {
-        businessProviderId: '99102325770',
-        scaleCode: 'DECCR12',
-        scaleId: 'DECTOPAC',
-        frontCode: 'ESSCEA',
-        channel: 'web_decathlon',
-        exchangeUrl: 'https://sofinco.exchange/demo',
-        returnUrl: 'https://www.decathlon.fr',
-      },
       FNAC: {
-        businessProviderId: 'web_fnac',
-        scaleCode: 'FNACR12',
-        scaleId: 'FNACOPAC',
+        businessProviderId: '99102020395',
+        applicationId: 'essential',
+        vacApplicationId: 'creditPartner',
+        crsApplicationId: 'essential',
+        scaleCode: 'FLIBR',
+        scaleId: 'FLIBR',
         frontCode: 'ESSCEA',
         channel: 'web_fnac',
+        simulationPartner: 'web_fnac',
         exchangeUrl: 'https://sofinco.exchange/demo',
         returnUrl: 'https://www.fnac.com',
       },
       IKEA: {
         businessProviderId: '99102325769',
+        applicationId: 'creditPartner',
         scaleCode: 'IK49X',
         scaleId: 'IK49X',
         frontCode: 'ESSCEA',
         channel: 'web_ikea',
+        simulationPartner: 'web_ikea',
         exchangeUrl: 'https://sofinco.exchange/demo',
         returnUrl: 'https://www.ikea.com'
       },
       PRINTEMPS: {
-        businessProviderId: 'web_printemps',
-        scaleCode: 'PTCR12',
-        scaleId: 'PTOPAC',
+        businessProviderId: '99102200995',
+        applicationId: 'creditPartner',
+        scaleCode: '11210',
+        scaleId: '11210',
         frontCode: 'ESSCEA',
+        simulationPartner: 'web_printemps',
         channel: 'web_printemps',
         exchangeUrl: 'https://sofinco.exchange/demo',
         returnUrl: 'https://www.printemps.com',
       },
       EM: {
-        businessProviderId: 'web_em',
-        scaleCode: 'EMCR12',
-        scaleId: 'EMOPAC',
+        businessProviderId: '30116432009',
+        applicationId: 'creditPartner',
+        scaleCode: 'FORF3ESE',
+        scaleId: 'FORF3ESE',
         frontCode: 'ESSCEA',
         channel: 'web_em',
+        simulationPartner: 'web_em',
+        exchangeUrl: 'https://sofinco.exchange/demo',
+        returnUrl: 'https://www.em.fr',
+      },
+      MM: {
+        businessProviderId: '99102493736',
+        applicationId: 'creditPartner',
+        scaleCode: 'WL990',
+        scaleId: 'WL990',
+        frontCode: 'ESSCEA',
+        channel: 'web_cl',
+        simulationPartner: 'web_cl',
         exchangeUrl: 'https://sofinco.exchange/demo',
         returnUrl: 'https://www.em.fr',
       },
       DARTY: {
-        businessProviderId: 'web_darty',
-        scaleCode: 'DARTCR12',
-        scaleId: 'DARTOPAC',
+        businessProviderId: '99102496219',
+        applicationId: 'ceasy',
+        vacApplicationId: 'creditPartner',
+        scaleCode: 'DLIBR',
+        scaleId: 'DLIBR',
         frontCode: 'ESSCEA',
+        simulationPartner: 'pdv_darty',
+        vacSimulationPartner: 'web_darty',
         channel: 'web_darty',
         exchangeUrl: 'https://sofinco.exchange/demo',
         returnUrl: 'https://www.darty.com',
@@ -138,16 +171,18 @@ export const PARTNER_REGISTRY: Record<FamilyName, FamilyConfig> = {
     defaults: PARTNER_DEFAULTS.cl,
     partners: {
       DARTY: {
-        businessProviderId: 'web_darty',
+        businessProviderId: '99100316520',
         channel: 'web_darty',
         campaign: 'cra',
         returnUrl: 'https://www.darty.com',
+        contextFile: '../../datas/CL/darty.json'
       },
       FNAC: {
         businessProviderId: 'web_fnac',
         channel: 'web_fnac',
         campaign: 'cra',
         returnUrl: 'https://www.fnac.com',
+        contextFile: '../../datas/CL/fnac.json'
       },
       IKEA: {
         businessProviderId: 'web_ikea',
@@ -166,15 +201,21 @@ export const PARTNER_REGISTRY: Record<FamilyName, FamilyConfig> = {
         channel: 'web_redoute',
         campaign: 'cra',
         returnUrl: 'https://www.redoute.fr',
+      },  
+      DECATHLON: {
+        businessProviderId: '99102325770',
+        channel: 'web_decathlon',
+        exchangeUrl: 'https://sofinco.exchange/demo',
+        returnUrl: 'https://www.decathlon.fr',
       },
-      WEB_CL: {
-        businessProviderId: 'web_cl',
+      CL: {
+        businessProviderId: '30116432009',
         channel: 'web_cl',
         campaign: 'cra',
         returnUrl: 'https://www.sofinco.fr',
       },
-      WEB_MM: {
-        businessProviderId: 'web_mm',
+      MM: {
+        businessProviderId: '30116432009',
         channel: 'web_mm',
         campaign: 'cra',
         returnUrl: 'https://www.mmm.fr',
