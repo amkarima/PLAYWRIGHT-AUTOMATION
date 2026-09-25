@@ -6,13 +6,13 @@ import jdd from '../../../datas/jdd/pb.json';
 const scenarios = [
   {
     title: 'SOF-149125 | PB>3k prospect avec assurance',
-    tags: ['@refacto', '@tnr'],
+    tags: ['@sanity', '@tnr'],
     amount: 3001,
     assurance: true
   },
   {
     title: 'SOF-149125 | PB>3k prospect sans assurance',
-    tags: ['@refacto', '@tnr'],
+    tags: ['@sanity', '@tnr'],
     amount: 4000,
     assurance: false
   }

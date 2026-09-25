@@ -6,28 +6,28 @@ test.describe.configure({ mode: 'parallel' });
 const scenarios = [
   {
     title: 'SOF-148815 | CR>3k prospect avec carte',
-    tags: ['@refacto', '@tnr'],
+    tags: ['@sanity', '@tnr'],
     amount: 3001,
     assurance: false,
     carte: true
   },
   {
     title: 'SOF-148815 | CR>3k prospect sans carte',
-    tags: ['@refacto', '@tnr'],
+    tags: ['@sanity', '@tnr'],
     amount: 4000,
     assurance: false,
     carte: false
   },
   {
     title: 'SOF-148815b | CR>3k prospect sans assurance',
-    tags: ['@refacto', '@tnr'],
+    tags: ['@sanity', '@tnr'],
     amount: 5000,
     assurance: true,
     carte: false
   },
   {
     title: 'SOF-148815b | CR>3k prospect avec assurance avec carte',
-    tags: ['@refacto', '@tnr'],
+    tags: ['@sanity', '@tnr'],
     amount: 4500,
     assurance: true,
     carte: true
