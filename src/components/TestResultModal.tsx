@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import JSZip from 'jszip';
-import { X, Download, FileText, CheckCircle, XCircle, Clock, AlertTriangle, Search, Bug, Monitor, File as FileEdit, RotateCcw } from 'lucide-react';
+import { X, FileText, CheckCircle, XCircle, Clock, AlertTriangle, Search, Bug, Monitor, File as FileEdit, Play, Video, Image as ImageIcon, Rocket, Clock as ClockIcon, Upload, Loader2, Mail, Send } from 'lucide-react';
 import { TestResult, PlaywrightReport, TestFailureAnalysis } from '../types';
 import { gitlabApi } from '../services/gitlabApi';
 import { TestFailureAnalysisModal } from './TestFailureAnalysisModal';
@@ -9,6 +9,143 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// ─── Count-up hook ──────────────────────────────────────────────────────────
+function useCountUp(target: number, duration: number = 900, delay: number = 0) {
+  const [value, setValue] = useState(0);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (target === 0) { setValue(0); return; }
+    const startTimer = setTimeout(() => {
+      const start = performance.now();
+      const animate = (now: number) => {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setValue(Math.round(target * eased));
+        if (progress < 1) rafRef.current = requestAnimationFrame(animate);
+      };
+      rafRef.current = requestAnimationFrame(animate);
+    }, delay);
+    return () => { clearTimeout(startTimer); cancelAnimationFrame(rafRef.current); };
+  }, [target, duration, delay]);
+
+  return value;
+}
+
+// ─── Animated progress ring ──────────────────────────────────────────────────
+const ProgressRing: React.FC<{ pct: number; color: string; size?: number; stroke?: number; delay?: number; label?: string }> = ({
+  pct, color, size = 120, stroke = 10, delay = 200, label,
+}) => {
+  const [animatedPct, setAnimatedPct] = useState(0);
+  const radius = (size - stroke) / 2;
+  const circ = 2 * Math.PI * radius;
+  const offset = circ - (animatedPct / 100) * circ;
+  const countedPct = useCountUp(pct, 1000, delay);
+
+  useEffect(() => {
+    const t = setTimeout(() => setAnimatedPct(pct), delay + 50);
+    return () => clearTimeout(t);
+  }, [pct, delay]);
+
+  return (
+    <div className="relative" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="transform -rotate-90">
+        <circle cx={size/2} cy={size/2} r={radius} fill="none" stroke="rgba(0,0,0,0.07)" strokeWidth={stroke} />
+        <circle
+          cx={size/2} cy={size/2} r={radius} fill="none" stroke={color}
+          strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={circ} strokeDashoffset={offset}
+          style={{
+            transition: 'stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1)',
+            filter: `drop-shadow(0 0 6px ${color}50)`,
+          }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-extrabold" style={{ color }}>{countedPct}%</span>
+        {label && <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide mt-0.5">{label}</span>}
+      </div>
+    </div>
+  );
+};
+
+// ─── Stats section (hooks must be at component level) ───────────────────────
+const StatsSection: React.FC<{
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  duration: number;
+  formatDuration: (ms: number) => string;
+}> = ({ total, passed, failed, skipped, duration, formatDuration }) => {
+  const rate = total > 0 ? (passed / total) * 100 : 0;
+  const animatedTotal = useCountUp(total, 900, 100);
+  const animatedPassed = useCountUp(passed, 900, 200);
+  const animatedFailed = useCountUp(failed, 900, 300);
+  const animatedSkipped = useCountUp(skipped, 900, 400);
+
+  let ringColor = '#22c55e';
+  if (rate < 50) ringColor = '#ef4444';
+  else if (rate < 70) ringColor = '#f97316';
+  else if (rate < 90) ringColor = '#f59e0b';
+
+  const stats = [
+    { label: 'Total', value: animatedTotal, color: '#6b7280', bg: 'rgba(107,114,128,0.06)', icon: FileText, iconColor: 'text-gray-500' },
+    { label: 'Réussis', value: animatedPassed, color: '#22c55e', bg: 'rgba(34,197,94,0.06)', icon: CheckCircle, iconColor: 'text-green-500' },
+    { label: 'Échecs', value: animatedFailed, color: '#ef4444', bg: 'rgba(239,68,68,0.06)', icon: XCircle, iconColor: 'text-red-500' },
+    { label: 'Ignorés', value: animatedSkipped, color: '#f59e0b', bg: 'rgba(245,158,11,0.06)', icon: Clock, iconColor: 'text-amber-500' },
+  ];
+
+  return (
+    <div
+      className="rounded-2xl p-5"
+      style={{ background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(229,231,235,0.6)', boxShadow: '0 4px 16px rgba(0,0,0,0.04)' }}
+    >
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex-shrink-0">
+          <ProgressRing pct={rate} color={ringColor} size={110} stroke={9} delay={200} label="Réussite" />
+        </div>
+        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
+          {stats.map((s, i) => {
+            const Icon = s.icon;
+            return (
+              <div
+                key={i}
+                className="rounded-xl p-3 relative overflow-hidden"
+                style={{
+                  animation: `card-enter 0.4s cubic-bezier(0.22,1,0.36,1) ${i * 80}ms both`,
+                  background: s.bg,
+                  border: `1px solid ${s.color}25`,
+                }}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-medium text-gray-500">{s.label}</span>
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center ${s.iconColor} bg-white/80`}>
+                    <Icon className="w-3.5 h-3.5" strokeWidth={2} />
+                  </div>
+                </div>
+                <p className="text-2xl font-extrabold tabular-nums" style={{ color: s.color }}>{s.value}</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div
+        className="mt-4 rounded-xl p-3 flex items-center gap-3"
+        style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)' }}
+      >
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.12)' }}>
+          <ClockIcon className="w-4 h-4 text-blue-600" strokeWidth={2} />
+        </div>
+        <span className="text-sm font-medium text-gray-600">Durée totale</span>
+        <span className="text-sm font-extrabold text-blue-600 ml-auto">
+          {formatDuration(duration)}
+        </span>
+      </div>
+    </div>
+  );
+};
 
 interface TestResultModalProps {
   isOpen: boolean;
@@ -56,7 +193,12 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
   const [errorPipelineArtifacts, setErrorPipelineArtifacts] = useState<string | null>(null);
 
   const [testAnalyses, setTestAnalyses] = useState<Record<string, TestFailureAnalysis>>({});
+  const [testMedia, setTestMedia] = useState<Record<string, Array<{ id: string; file_name: string; file_path: string; media_type: string; mime_type: string; uploaded_by: string; created_at: string }>>>({});
   const [analysisModalOpen, setAnalysisModalOpen] = useState(false);
+  const [mediaUploadKey, setMediaUploadKey] = useState<string | null>(null);
+  const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [uploadProgressMsg, setUploadProgressMsg] = useState('');
+  const mediaFileInputRef = useRef<HTMLInputElement>(null);
   const [selectedTestForAnalysis, setSelectedTestForAnalysis] = useState<{
     key: string;
     title: string;
@@ -72,8 +214,10 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
   const [dossiersContent, setDossiersContent] = useState<string | null>(null);
   const [dossiersFiles, setDossiersFiles] = useState<Array<{ name: string; content: string }>>([]);
   const [loadingDossiers, setLoadingDossiers] = useState(false);
-  const [retriggeringTests, setRetriggeringTests] = useState(false);
-
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<{ type: 'success' | 'error' | null; msg: string }>({ type: null, msg: '' });
   useEffect(() => {
     if (isOpen) {
       // Reset states when modal opens
@@ -85,6 +229,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
       setArtifactsByTest({});
       setError(null);
       setTestAnalyses({});
+      setTestMedia({});
       setDossiersContent(null);
       setDossiersFiles([]);
 
@@ -92,6 +237,7 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
       if (test.jobId) {
         loadTestDetails();
         loadTestAnalyses();
+        loadTestMedia();
         loadDossiersFile();
       }
     }
@@ -118,6 +264,94 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
     } catch (err) {
       console.error('Error loading test analyses:', err);
     }
+  };
+
+  const loadTestMedia = async () => {
+    if (!test.jobId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('test_media_uploads')
+        .select('id, file_name, file_path, media_type, mime_type, uploaded_by, created_at, test_key')
+        .eq('job_id', test.jobId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (data) {
+        const mediaMap: Record<string, typeof data> = {};
+        data.forEach((m: any) => {
+          if (!mediaMap[m.test_key]) mediaMap[m.test_key] = [];
+          mediaMap[m.test_key].push(m);
+        });
+        setTestMedia(mediaMap);
+      }
+    } catch (err) {
+      console.error('Error loading test media:', err);
+    }
+  };
+
+  const getMediaPublicUrl = (filePath: string): string => {
+    const { data } = supabase.storage
+      .from('test-media-uploads')
+      .getPublicUrl(filePath);
+    return data.publicUrl;
+  };
+
+  const handleStandaloneMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !mediaUploadKey || !test.jobId || !test.pipelineId) return;
+
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    const getMediaType = (mt: string): 'image' | 'video' | null => {
+      if (mt.startsWith('image/')) return 'image';
+      if (mt.startsWith('video/')) return 'video';
+      return null;
+    };
+    const buildPath = (jk: number, tk: string, fn: string) => {
+      const safe = tk.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+      return `${jk}/${safe}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${fn}`;
+    };
+
+    for (const file of Array.from(files)) {
+      const mediaType = getMediaType(file.type);
+      if (!mediaType) continue;
+      if (file.size > MAX_FILE_SIZE) continue;
+
+      setUploadingMedia(true);
+      setUploadProgressMsg(`Upload de ${file.name}...`);
+      try {
+        const filePath = buildPath(test.jobId, mediaUploadKey, file.name);
+        const { error: upErr } = await supabase.storage
+          .from('test-media-uploads')
+          .upload(filePath, file, { contentType: file.type, upsert: false });
+        if (upErr) throw upErr;
+
+        const { error: dbErr } = await supabase
+          .from('test_media_uploads')
+          .insert({
+            analysis_id: null,
+            pipeline_id: test.pipelineId,
+            job_id: test.jobId,
+            test_key: mediaUploadKey,
+            file_name: file.name,
+            file_path: filePath,
+            media_type: mediaType,
+            mime_type: file.type,
+            file_size: file.size,
+            uploaded_by: 'anonymous',
+          });
+        if (dbErr) throw dbErr;
+      } catch (err) {
+        console.error('Standalone upload error:', err);
+      } finally {
+        setUploadingMedia(false);
+        setUploadProgressMsg('');
+      }
+    }
+
+    await loadTestMedia();
+    if (mediaFileInputRef.current) mediaFileInputRef.current.value = '';
   };
 
   const loadDossiersFile = async () => {
@@ -155,107 +389,6 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
       setDossiersContent(null);
     } finally {
       setLoadingDossiers(false);
-    }
-  };
-
-  const retriggerFailedTests = async () => {
-    if (!playwrightReport) return;
-
-    const failedTestIds: string[] = [];
-
-    const collectFailedTests = (suites: any[]) => {
-      suites.forEach((suite) => {
-        suite.specs?.forEach((spec: any) => {
-          spec.tests?.forEach((test: any) => {
-            const testStatus = getTestStatus(test);
-            if (testStatus === 'failed' || testStatus === 'timedOut') {
-              console.log('Failed test found:', {
-                title: test.title,
-                specTitle: spec.title,
-                specFile: spec.file,
-                suiteTitle: suite.title,
-                fullTest: test
-              });
-
-              // Chercher l'ID dans le titre du test, du spec ou de la suite
-              const testTitle = test.title || '';
-              const specTitle = spec.title || '';
-              const suiteTitle = suite.title || '';
-              const specFile = spec.file || '';
-
-              const searchText = `${testTitle} ${specTitle} ${suiteTitle} ${specFile}`;
-              const titleMatch = searchText.match(/(?:SOF|TST)-\d+/);
-
-              if (titleMatch && !failedTestIds.includes(titleMatch[0])) {
-                failedTestIds.push(titleMatch[0]);
-                console.log('Test ID extracted:', titleMatch[0]);
-              }
-            }
-          });
-        });
-
-        suite.suites?.forEach((subSuite: any) => {
-          subSuite.specs?.forEach((spec: any) => {
-            spec.tests?.forEach((test: any) => {
-              const testStatus = getTestStatus(test);
-              if (testStatus === 'failed' || testStatus === 'timedOut') {
-                console.log('Failed nested test found:', {
-                  title: test.title,
-                  specTitle: spec.title,
-                  specFile: spec.file,
-                  subSuiteTitle: subSuite.title,
-                  fullTest: test
-                });
-
-                const testTitle = test.title || '';
-                const specTitle = spec.title || '';
-                const subSuiteTitle = subSuite.title || '';
-                const specFile = spec.file || '';
-
-                const searchText = `${testTitle} ${specTitle} ${subSuiteTitle} ${specFile}`;
-                const titleMatch = searchText.match(/(?:SOF|TST)-\d+/);
-
-                if (titleMatch && !failedTestIds.includes(titleMatch[0])) {
-                  failedTestIds.push(titleMatch[0]);
-                  console.log('Test ID extracted from nested:', titleMatch[0]);
-                }
-              }
-            });
-          });
-        });
-      });
-    };
-
-    collectFailedTests(playwrightReport.suites);
-
-    console.log('All failed test IDs collected:', failedTestIds);
-
-    if (failedTestIds.length === 0) {
-      alert('Aucun test en échec à relancer');
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Voulez-vous relancer ${failedTestIds.length} test(s) en échec ?\n\n${failedTestIds.join('\n')}`
-    );
-
-    if (!confirmed) return;
-
-    setRetriggeringTests(true);
-    try {
-      const variables: Record<string, string> = {
-        ENV: 'CI',
-        ENVIRONMENT: 'CI',
-        SELECTED_TESTS: failedTestIds.join('|')
-      };
-
-      await gitlabApi.triggerPipeline('develop', variables);
-      alert('Pipeline déclenchée avec succès pour relancer les tests en échec');
-    } catch (err) {
-      console.error('Error retriggering failed tests:', err);
-      alert('Erreur lors du déclenchement de la pipeline');
-    } finally {
-      setRetriggeringTests(false);
     }
   };
 
@@ -321,16 +454,6 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
     // Utiliser directement le serveur GitLab Pages
     const pageUrl = `https://cacf.pages.saas.cagip.group.gca/-/middleware/quality-automation/playwright-automation/-/jobs/${test.jobId}/artifacts/subscription-essential-e2e/playwright-report/index.html`
     setHtmlReportUrl(pageUrl);
-  };
-
-  const handleDownloadArtifacts = async () => {
-    if (!test.jobId) return;
-    
-    try {
-      await gitlabApi.downloadJobArtifacts(test.jobId);
-    } catch (err) {
-      setError('Erreur lors du téléchargement des artifacts');
-    }
   };
 
   // Load artifacts only for a specific test
@@ -676,670 +799,890 @@ export const TestResultModal: React.FC<TestResultModalProps> = ({
     onClose();
   };
 
-  if (!isOpen) return null;
+  const collectFailedTests = (): Array<{ title: string; file: string }> => {
+    if (!playwrightReport) return [];
+    const failed: Array<{ title: string; file: string }> = [];
+    const traverse = (suites: any[], prefix: string = '') => {
+      suites.forEach((suite, si) => {
+        suite.specs?.forEach((spec: any, spi: number) => {
+          spec.tests?.forEach((t: any, ti: number) => {
+            const status = getTestStatus(t);
+            if (status === 'failed' || status === 'timedOut') {
+              failed.push({ title: spec.title, file: suite.file || spec.file || '' });
+            }
+          });
+        });
+        if (suite.suites) traverse(suite.suites);
+      });
+    };
+    traverse(playwrightReport.suites);
+    return failed;
+  };
 
+  const handleSendReportEmail = async () => {
+    if (!recipientEmail.trim()) {
+      setEmailStatus({ type: 'error', msg: 'Veuillez saisir une adresse email' });
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipientEmail.trim())) {
+      setEmailStatus({ type: 'error', msg: 'Adresse email invalide' });
+      return;
+    }
+
+    setSendingEmail(true);
+    setEmailStatus({ type: null, msg: '' });
+    try {
+      const total = playwrightReport ? countTests(playwrightReport.suites) : 0;
+      const passed = playwrightReport ? countTestsByStatus(playwrightReport.suites, 'passed') : 0;
+      const failed = playwrightReport ? countTestsByStatus(playwrightReport.suites, 'failed') : 0;
+      const skipped = playwrightReport ? countTestsByStatus(playwrightReport.suites, 'skipped') : 0;
+
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-contact-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          mode: 'test-report',
+          recipientEmail: recipientEmail.trim(),
+          testName: test.name,
+          branch: test.branch,
+          commit: test.commit,
+          environment: test.environment,
+          stats: { total, passed, failed, skipped, duration: playwrightReport ? formatDuration(playwrightReport.stats.duration || 0) : 'N/A' },
+          htmlReportUrl: htmlReportUrl || null,
+          failedTests: collectFailedTests(),
+        }),
+      });
+
+      if (!res.ok) {
+ const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Échec de l\'envoi');
+      }
+
+      setEmailStatus({ type: 'success', msg: 'Rapport envoyé avec succès!' });
+      setTimeout(() => { setShowEmailForm(false); setRecipientEmail(''); setEmailStatus({ type: null, msg: '' }); }, 2500);
+    } catch (err) {
+      setEmailStatus({ type: 'error', msg: err instanceof Error ? err.message : 'Erreur lors de l\'envoi' });
+    } finally {
+      setSendingEmail(false);
+    }
+  };
+
+  if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4 max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b">
-          <div className="flex items-center space-x-3">
-            <FileText className="w-6 h-6 text-blue-600" />
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">{test.name}</h2>
-              <p className="text-sm text-gray-600">
-                {test.branch} • {test.commit}
-              </p>
+    <>
+      {/* Animated keyframes */}
+      <style>{`
+        @keyframes card-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes bar-fill { to { width: var(--target-width); } }
+        @keyframes search-bugs-modal {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          25% { transform: translate(12px, -6px) rotate(5deg); }
+          50% { transform: translate(6px, 12px) rotate(-5deg); }
+          75% { transform: translate(-6px, 6px) rotate(3deg); }
+        }
+        @keyframes bug-appear-modal {
+          0%, 40% { opacity: 0; transform: scale(0.5) rotate(0deg); }
+          50%, 90% { opacity: 1; transform: scale(1) rotate(15deg); }
+          100% { opacity: 0; transform: scale(0.5) rotate(30deg); }
+        }
+        @keyframes screen-glow-modal { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scale-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+      `}</style>
+
+      <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ background: 'rgba(0,0,0,0.45)', animation: 'fade-in 0.2s ease' }}>
+        <div
+          className="rounded-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col"
+          style={{
+            background: 'rgba(255,255,255,0.98)',
+            border: '1px solid rgba(229,231,235,0.8)',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
+            animation: 'scale-in 0.3s cubic-bezier(0.22,1,0.36,1)',
+          }}
+        >
+          {/* ─── Header ─────────────────────────────────────────── */}
+          <div
+            className="flex items-center justify-between px-6 py-4 border-b border-gray-200 flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.04), rgba(99,102,241,0.04))' }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
+              >
+                <FileText className="w-5.5 h-5.5 text-white" strokeWidth={2} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-lg font-bold text-gray-900 truncate">{test.name}</h2>
+                <p className="text-sm text-gray-500 truncate">
+                  {test.branch} • {test.commit}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0 relative">
+              {htmlReportUrl && (
+                <a
+                  href={htmlReportUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                  style={{ background: '#22c55e', color: 'white', boxShadow: '0 3px 10px rgba(34,197,94,0.3)' }}
+                >
+                  <FileText className="w-4 h-4" />
+                  <span className="hidden sm:inline">Rapport HTML</span>
+                </a>
+              )}
+              {playwrightReport && (
+                <button
+                  onClick={() => { setShowEmailForm(!showEmailForm); setEmailStatus({ type: null, msg: '' }); }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                  style={{ background: '#3b82f6', color: 'white', boxShadow: '0 3px 10px rgba(59,130,246,0.3)' }}
+                >
+                  <Mail className="w-4 h-4" />
+                  <span className="hidden sm:inline">Envoyer par email</span>
+                </button>
+              )}
+              {showEmailForm && (
+                <div
+                  className="absolute top-full right-0 mt-2 p-4 rounded-xl z-20"
+                  style={{
+                    background: 'white',
+                    border: '1px solid rgba(229,231,235,0.8)',
+                    boxShadow: '0 12px 32px rgba(0,0,0,0.15)',
+                    minWidth: '320px',
+                    animation: 'scale-in 0.2s ease',
+                  }}
+                >
+                  <label className="block text-xs font-bold text-gray-700 mb-2">Email du destinataire</label>
+                  <input
+                    type="email"
+                    value={recipientEmail}
+                    onChange={(e) => setRecipientEmail(e.target.value)}
+                    placeholder="exemple@email.com"
+                    className="w-full px-3 py-2 rounded-lg text-sm border border-gray-200 focus:border-blue-500 focus:outline-none transition-colors"
+                    autoFocus
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !sendingEmail) handleSendReportEmail(); }}
+                  />
+                  {emailStatus.type && (
+                    <div
+                      className="mt-2 text-xs font-medium px-3 py-2 rounded-lg"
+                      style={{
+                        background: emailStatus.type === 'success' ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)',
+                        color: emailStatus.type === 'success' ? '#166534' : '#dc2626',
+                      }}
+                    >
+                      {emailStatus.msg}
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2 mt-3">
+                    <button
+                      onClick={handleSendReportEmail}
+                      disabled={sendingEmail}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                      style={{ background: '#3b82f6', color: 'white', boxShadow: '0 2px 8px rgba(59,130,246,0.3)' }}
+                    >
+                      {sendingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                      {sendingEmail ? 'Envoi...' : 'Envoyer'}
+                    </button>
+                    <button
+                      onClick={() => { setShowEmailForm(false); setRecipientEmail(''); setEmailStatus({ type: null, msg: '' }); }}
+                      className="px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-all duration-200"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={handleClose}
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            {playwrightReport && countTestsByStatus(playwrightReport.suites, 'failed') > 0 && (
+
+          {/* ─── Body ───────────────────────────────────────────── */}
+          <div className="flex-1 overflow-y-auto px-6 py-5">
+
+            {/* Section artifacts pipeline */}
+            <div
+              className="rounded-2xl p-5 mb-5"
+              style={{ background: 'rgba(249,250,251,0.8)', border: '1px solid rgba(229,231,235,0.6)' }}
+            >
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.12)' }}>
+                  <Rocket className="w-4 h-4 text-blue-600" strokeWidth={2} />
+                </div>
+                <h3 className="text-sm font-bold text-gray-900">Artifacts de toute la pipeline</h3>
+              </div>
               <button
-                onClick={retriggerFailedTests}
-                disabled={retriggeringTests}
-                className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={loadPipelineArtifacts}
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                style={{ background: '#3b82f6', color: 'white', boxShadow: '0 2px 8px rgba(59,130,246,0.25)' }}
+                disabled={loadingPipelineArtifacts}
               >
-                <RotateCcw className={`w-4 h-4 ${retriggeringTests ? 'animate-spin' : ''}`} />
-                <span>{retriggeringTests ? 'Déclenchement...' : 'Relancer les échecs'}</span>
+                {loadingPipelineArtifacts ? 'Chargement...' : 'Afficher les artifacts pipeline'}
               </button>
-            )}
-            <button
-              onClick={handleDownloadArtifacts}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              <span>Télécharger artifacts</span>
-            </button>
-            {htmlReportUrl && (
-              <a
-                href={htmlReportUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+              {errorPipelineArtifacts && (
+                <div className="mt-3 p-3 rounded-lg text-sm" style={{ background: 'rgba(239,68,68,0.08)', color: '#dc2626', border: '1px solid rgba(239,68,68,0.2)' }}>
+                  {errorPipelineArtifacts}
+                </div>
+              )}
+              {pipelineArtifacts.length > 0 && (
+                <div className="space-y-3 mt-4">
+                  {pipelineArtifacts.map((job: PipelineArtifactJob, ji: number) => (
+                    <div
+                      key={ji}
+                      className="rounded-xl p-3"
+                      style={{
+                        animation: `card-enter 0.4s cubic-bezier(0.22,1,0.36,1) ${ji * 80}ms both`,
+                        background: 'rgba(255,255,255,0.95)',
+                        border: '1px solid rgba(229,231,235,0.6)',
+                      }}
+                    >
+                      <div className="font-bold text-sm text-blue-700 mb-2">{job.jobName}</div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        {job.files.map((file: PipelineArtifactFile, fi: number) => (
+                          <div
+                            key={fi}
+                            className="rounded-lg overflow-hidden group cursor-pointer transition-all duration-200 hover:scale-105"
+                            style={{ border: '1px solid rgba(229,231,235,0.6)' }}
+                          >
+                            {file.type.startsWith('image') ? (
+                              <img src={file.url} alt={file.name} className="w-full h-20 object-cover" />
+                            ) : file.type.startsWith('video') ? (
+                              <div className="relative w-full h-20 bg-gray-900 flex items-center justify-center">
+                                <video src={file.url} controls className="w-full h-20 object-cover" />
+                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                  <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
+                                    <Play className="w-4 h-4 text-gray-900 ml-0.5" />
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-full h-20 bg-gray-50 flex items-center justify-center text-xs text-gray-500 p-2 truncate">{file.name}</div>
+                            )}
+                            <div className="p-1.5 text-xs text-gray-500 truncate">{file.name}</div>
+                          </div>
+                        ))}
+                        {job.files.length === 0 && (
+                          <div className="text-sm text-gray-400 col-span-full py-2">Aucun artifact pour ce job</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <div
+                className="mb-5 p-4 rounded-xl text-sm"
+                style={{ background: 'rgba(239,68,68,0.08)', color: '#dc2626', border: '1px solid rgba(239,68,68,0.2)' }}
               >
-                <FileText className="w-4 h-4" />
-                <span>Voir rapport HTML</span>
-              </a>
+                {error}
+              </div>
             )}
-            <button
-              onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-        </div>
-        
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-          {/* Section artifacts pipeline */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Artifacts de toute la pipeline</h3>
-            <button
-              onClick={loadPipelineArtifacts}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 mb-2"
-              disabled={loadingPipelineArtifacts}
-            >
-              {loadingPipelineArtifacts ? 'Chargement...' : 'Afficher les artifacts pipeline'}
-            </button>
-            {errorPipelineArtifacts && (
-              <div className="text-red-600 text-sm mb-2">{errorPipelineArtifacts}</div>
-            )}
-            {pipelineArtifacts.length > 0 && (
-              <div className="space-y-4">
-                {pipelineArtifacts.map((job: PipelineArtifactJob, ji: number) => (
-                  <div key={ji} className="border rounded p-2">
-                    <div className="font-medium text-blue-700 mb-1">{job.jobName}</div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {job.files.map((file: PipelineArtifactFile, fi: number) => (
-                        <div key={fi} className="border rounded overflow-hidden">
-                          {file.type.startsWith('image') ? (
-                            <img src={file.url} alt={file.name} className="w-full h-20 object-cover" />
-                          ) : file.type.startsWith('video') ? (
-                            <video src={file.url} controls className="w-full h-20 object-cover" />
-                          ) : (
-                            <div className="w-full h-20 bg-gray-50 flex items-center justify-center text-xs text-gray-600 p-2 truncate">{file.name}</div>
-                          )}
-                          <div className="p-1 text-xs text-gray-600 truncate">{file.name}</div>
+
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <div
+                  className="w-12 h-12 rounded-full border-4 border-gray-200"
+                  style={{ borderTopColor: '#3b82f6', animation: 'spin 0.8s linear infinite' }}
+                />
+                <span className="mt-4 text-sm text-gray-500 font-medium">Chargement du rapport...</span>
+              </div>
+            ) : playwrightReport ? (
+              <div className="space-y-5">
+                {/* ─── Statistiques avec progress ring ─────────────── */}
+                {(() => {
+                  const total = countTests(playwrightReport.suites);
+                  const passed = countTestsByStatus(playwrightReport.suites, 'passed');
+                  const failed = countTestsByStatus(playwrightReport.suites, 'failed');
+                  const skipped = countTestsByStatus(playwrightReport.suites, 'skipped');
+
+                  return (
+                    <StatsSection
+                      total={total}
+                      passed={passed}
+                      failed={failed}
+                      skipped={skipped}
+                      duration={playwrightReport.stats.duration || 0}
+                      formatDuration={formatDuration}
+                    />
+                  );
+                })()}
+
+                {/* Numéros de dossiers créés */}
+                {loadingDossiers ? (
+                  <div
+                    className="rounded-xl p-4 flex items-center gap-3"
+                    style={{ background: 'rgba(249,250,251,0.8)', border: '1px solid rgba(229,231,235,0.6)' }}
+                  >
+                    <div
+                      className="w-5 h-5 rounded-full border-2 border-gray-200"
+                      style={{ borderTopColor: '#3b82f6', animation: 'spin 0.8s linear infinite' }}
+                    />
+                    <span className="text-sm text-gray-500">Chargement des numéros de dossiers...</span>
+                  </div>
+                ) : dossiersFiles.length > 0 ? (
+                  <div
+                    className="rounded-2xl p-5"
+                    style={{ background: 'rgba(34,197,94,0.04)', border: '1px solid rgba(34,197,94,0.2)' }}
+                  >
+                    <div className="flex items-center gap-2.5 mb-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(34,197,94,0.12)' }}>
+                        <CheckCircle className="w-4 h-4 text-green-600" strokeWidth={2} />
+                      </div>
+                      <h4 className="text-sm font-bold text-green-900">Dossiers créés durant les tests</h4>
+                    </div>
+                    <div className="space-y-3">
+                      {dossiersFiles.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="rounded-xl p-3"
+                          style={{
+                            animation: `card-enter 0.3s ease ${idx * 60}ms both`,
+                            background: 'rgba(255,255,255,0.95)',
+                            border: '1px solid rgba(34,197,94,0.15)',
+                          }}
+                        >
+                          <div className="text-xs font-bold text-green-800 mb-2">{file.name}</div>
+                          <div className="rounded-lg p-2 max-h-32 overflow-y-auto" style={{ background: 'rgba(249,250,251,0.9)', border: '1px solid rgba(229,231,235,0.5)' }}>
+                            <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">{file.content}</pre>
+                          </div>
                         </div>
                       ))}
-                      {job.files.length === 0 && (
-                        <div className="text-sm text-gray-500 col-span-full">Aucun artifact pour ce job</div>
-                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                ) : null}
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-red-800">{error}</p>
-            </div>
-          )}
+                {/* ─── Liste des tests ─────────────────────────────── */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.12)' }}>
+                        <Monitor className="w-4 h-4 text-blue-600" strokeWidth={2} />
+                      </div>
+                      <h3 className="text-sm font-bold text-gray-900">Résultats détaillés</h3>
+                    </div>
+                    {selectedTestsForGroupAnalysis.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-500 font-medium">
+                          {selectedTestsForGroupAnalysis.length} test{selectedTestsForGroupAnalysis.length > 1 ? 's' : ''} sélectionné{selectedTestsForGroupAnalysis.length > 1 ? 's' : ''}
+                        </span>
+                        <button
+                          onClick={() => setAnalysisModalOpen(true)}
+                          className="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 hover:scale-105"
+                          style={{ background: '#3b82f6', color: 'white', boxShadow: '0 2px 8px rgba(59,130,246,0.3)' }}
+                        >
+                          Analyser en groupe
+                        </button>
+                        <button
+                          onClick={() => setSelectedTestsForGroupAnalysis([])}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 hover:scale-105"
+                          style={{ background: '#f3f4f6', color: '#6b7280' }}
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-4">
+                    {playwrightReport.suites.map((suite, suiteIndex) => (
+                      <div key={suiteIndex} className="space-y-2">
+                        <h4 className="text-sm font-bold text-gray-700 border-b border-gray-200 pb-2">{suite.title}</h4>
+                        {suite.specs.map((spec, specIndex) =>
+                          spec.tests.map((test, testIndex) => {
+                            const cardKey = `${suiteIndex}-${specIndex}-${testIndex}`;
+                            const testStatus = getTestStatus(test);
+                            const isPassed = testStatus === 'passed' || testStatus === 'flaky';
+                            const isFailed = testStatus === 'failed' || testStatus === 'timedOut';
+                            const cardColor = isPassed ? '#22c55e' : isFailed ? '#ef4444' : '#f59e0b';
+                            const cardGlow = isPassed ? 'rgba(34,197,94,0.20)' : isFailed ? 'rgba(239,68,68,0.20)' : 'rgba(245,158,11,0.20)';
+                            const isSelected = selectedTestsForGroupAnalysis.some(t => t.key === cardKey);
 
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Chargement du rapport...</span>
-            </div>
-          ) : playwrightReport ? (
-            <div className="space-y-6">
-              {/* Statistiques */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Total</span>
-                    <span className="text-2xl font-bold text-gray-900">
-                      {countTests(playwrightReport.suites)}
-                    </span>
-                  </div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Réussis</span>
-                    <span className="text-2xl font-bold text-green-600">
-                      {countTestsByStatus(playwrightReport.suites, 'passed')}
-                    </span>
-                  </div>
-                </div>
-                <div className="bg-red-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Échecs</span>
-                    <span className="text-2xl font-bold text-red-600">
-                      {countTestsByStatus(playwrightReport.suites, 'failed')}
-                    </span>
-                  </div>
-                </div>
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Ignorés</span>
-                    <span className="text-2xl font-bold text-yellow-600">
-                      {countTestsByStatus(playwrightReport.suites, 'skipped')}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                            return (
+                              <div
+                                key={cardKey}
+                                onClick={() => {
+                                  setSelectedTestForModal({ key: cardKey, suite, spec, test });
+                                  if (!artifactsByTest[cardKey]) loadArtifactsForTest(cardKey);
+                                }}
+                                className="group relative cursor-pointer rounded-xl p-4 overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:translate-x-1"
+                                style={{
+                                  animation: `card-enter 0.4s cubic-bezier(0.22,1,0.36,1) ${(suiteIndex * 3 + specIndex) * 40}ms both`,
+                                  background: isSelected ? 'rgba(59,130,246,0.06)' : 'rgba(255,255,255,0.95)',
+                                  border: `1.5px solid ${isSelected ? '#3b82f6' : cardColor + '40'}`,
+                                  boxShadow: `0 3px 12px ${cardGlow}`,
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.boxShadow = `0 8px 24px ${cardGlow}, 0 0 0 1.5px ${isSelected ? '#3b82f6' : cardColor}50`; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.boxShadow = `0 3px 12px ${cardGlow}`; }}
+                              >
+                                <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-10 transition-opacity duration-300 group-hover:opacity-20" style={{ background: `radial-gradient(circle, ${cardColor}, transparent 70%)` }} />
+                                <div className="flex items-start justify-between relative">
+                                  <div className="flex items-start gap-3 flex-1">
+                                    {(isFailed) && (
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={(e) => {
+                                          e.stopPropagation();
+                                          if (e.target.checked) {
+                                            setSelectedTestsForGroupAnalysis([...selectedTestsForGroupAnalysis, { key: cardKey, testKey: cardKey, testTitle: spec.title, testFile: suite.file || spec.file }]);
+                                          } else {
+                                            setSelectedTestsForGroupAnalysis(selectedTestsForGroupAnalysis.filter(t => t.key !== cardKey));
+                                          }
+                                        }}
+                                        className="mt-1 w-4 h-4 text-blue-600 cursor-pointer rounded"
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                    )}
+                                    {getTestStatusIcon(isPassed ? 'passed' : isFailed ? 'failed' : 'skipped')}
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-bold text-sm truncate" style={{ color: isPassed ? '#166534' : isFailed ? '#991b1b' : '#92400e' }}>{spec.title}</h4>
+                                      <p className="text-xs text-gray-500 truncate">{spec.file}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    {isFailed && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedTestForAnalysis({ key: cardKey, title: spec.title, file: suite.file || spec.file });
+                                          setAnalysisModalOpen(true);
+                                        }}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 hover:scale-105"
+                                        style={{
+                                          background: testAnalyses[cardKey] ? '#3b82f6' : '#ef4444',
+                                          color: 'white',
+                                          boxShadow: `0 2px 8px ${testAnalyses[cardKey] ? 'rgba(59,130,246,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                                          animation: testAnalyses[cardKey] ? undefined : 'pulse 2s ease-in-out infinite',
+                                        }}
+                                        title={testAnalyses[cardKey] ? 'Modifier l\'analyse' : 'Ajouter une analyse'}
+                                      >
+                                        <FileEdit className="w-3 h-3" />
+                                        <span>{testAnalyses[cardKey] ? 'Modifier' : 'Analyser'}</span>
+                                      </button>
+                                    )}
+                                    <div className="text-right">
+                                      <span className="text-xs font-bold px-2 py-1 rounded-md tabular-nums" style={{ background: cardColor + '20', color: cardColor }}>
+                                        {test.results?.[0] ? formatDuration(test.results[0].duration) : 'N/A'}
+                                      </span>
+                                      <p className="text-[10px] font-bold uppercase mt-1" style={{ color: cardColor }}>{testStatus}</p>
+                                    </div>
+                                  </div>
+                                </div>
 
-              {/* Durée totale */}
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Durée totale</span>
-                  <span className="text-lg font-semibold text-blue-600">
-                    {formatDuration(playwrightReport.stats.duration || 0)}
-                  </span>
-                </div>
-              </div>
+                                {testAnalyses[cardKey] && (
+                                  <div className="mt-3 p-3 rounded-lg" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)' }}>
+                                    <div className="flex items-start gap-2">
+                                      <FileEdit className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                      <div className="flex-1 text-sm">
+                                        <p className="font-bold text-blue-900 mb-1">Analyse disponible</p>
+                                        {testAnalyses[cardKey].root_cause && (
+                                          <p className="text-blue-800 mb-1">
+                                            <span className="font-bold">Root cause:</span> {testAnalyses[cardKey].root_cause}
+                                          </p>
+                                        )}
+                                        {testAnalyses[cardKey].analysis && (
+                                          <p className="text-blue-700 text-xs">
+                                            {testAnalyses[cardKey].analysis.substring(0, 100)}
+                                            {testAnalyses[cardKey].analysis.length > 100 && '...'}
+                                          </p>
+                                        )}
+                                        <p className="text-xs text-blue-500 mt-1">
+                                          Par {testAnalyses[cardKey].created_by} • {new Date(testAnalyses[cardKey].created_at).toLocaleString('fr-FR')}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
 
-              {/* Numéros de dossiers créés */}
-              {loadingDossiers ? (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                    <span className="text-sm text-gray-600">Chargement des numéros de dossiers...</span>
-                  </div>
-                </div>
-              ) : dossiersFiles.length > 0 ? (
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <h4 className="text-sm font-semibold text-green-900 mb-2">Dossiers créés durant les tests</h4>
-                  <div className="space-y-3">
-                    {dossiersFiles.map((file, idx) => (
-                      <div key={idx} className="bg-white p-3 rounded border border-green-100">
-                        <div className="text-xs font-semibold text-green-900 mb-2">{file.name}</div>
-                        <div className="bg-gray-50 p-2 rounded border border-gray-200 max-h-32 overflow-y-auto">
-                          <pre className="text-xs text-gray-800 whitespace-pre-wrap font-mono">{file.content}</pre>
-                        </div>
+                                {artifactsByTest[cardKey] ? (
+                                  <div className="mt-3 text-xs text-gray-600 flex items-center gap-1.5">
+                                    <Video className="w-3.5 h-3.5 text-gray-400" />
+                                    Fichiers associés : <span className="font-bold text-gray-700">{artifactsByTest[cardKey].length}</span>
+                                  </div>
+                                ) : (
+                                  <div className="mt-3 text-xs text-gray-400">Cliquez pour charger les fichiers associés</div>
+                                )}
+
+                                {testMedia[cardKey] && testMedia[cardKey].length > 0 && (
+                                  <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                    {testMedia[cardKey].filter(m => m.media_type === 'image').length > 0 && (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(16,185,129,0.12)', color: '#059669' }}>
+                                        <ImageIcon className="w-3 h-3" />
+                                        {testMedia[cardKey].filter(m => m.media_type === 'image').length} image(s)
+                                      </span>
+                                    )}
+                                    {testMedia[cardKey].filter(m => m.media_type === 'video').length > 0 && (
+                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(99,102,241,0.12)', color: '#4f46e5' }}>
+                                        <Video className="w-3 h-3" />
+                                        {testMedia[cardKey].filter(m => m.media_type === 'video').length} vidéo(s)
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                        {suite.suites && suite.suites.map((subSuite, subSuiteIndex) => (
+                          <div key={`sub-${suiteIndex}-${subSuiteIndex}`} className="ml-4 space-y-2">
+                            <h5 className="text-xs font-bold text-gray-600 border-b border-gray-100 pb-1">{subSuite.title}</h5>
+                            {subSuite.specs.map((spec, specIndex) =>
+                              spec.tests.map((test, testIndex) => {
+                                const cardKey = `${suiteIndex}-${subSuiteIndex}-${specIndex}-${testIndex}`;
+                                const testStatus = getTestStatus(test);
+                                const isPassed = testStatus === 'passed' || testStatus === 'flaky';
+                                const isFailed = testStatus === 'failed' || testStatus === 'timedOut';
+                                const cardColor = isPassed ? '#22c55e' : isFailed ? '#ef4444' : '#f59e0b';
+                                const cardGlow = isPassed ? 'rgba(34,197,94,0.20)' : isFailed ? 'rgba(239,68,68,0.20)' : 'rgba(245,158,11,0.20)';
+                                const isSelected = selectedTestsForGroupAnalysis.some(t => t.key === cardKey);
+
+                                return (
+                                  <div
+                                    key={cardKey}
+                                    onClick={() => {
+                                      setSelectedTestForModal({ key: cardKey, suite: subSuite, spec, test });
+                                      if (!artifactsByTest[cardKey]) loadArtifactsForTest(cardKey);
+                                    }}
+                                    className="group relative cursor-pointer rounded-xl p-4 overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:translate-x-1"
+                                    style={{
+                                      animation: `card-enter 0.4s cubic-bezier(0.22,1,0.36,1) ${(suiteIndex * 3 + subSuiteIndex * 2 + specIndex) * 40}ms both`,
+                                      background: isSelected ? 'rgba(59,130,246,0.06)' : 'rgba(255,255,255,0.95)',
+                                      border: `1.5px solid ${isSelected ? '#3b82f6' : cardColor + '40'}`,
+                                      boxShadow: `0 3px 12px ${cardGlow}`,
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.boxShadow = `0 8px 24px ${cardGlow}, 0 0 0 1.5px ${isSelected ? '#3b82f6' : cardColor}50`; }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.boxShadow = `0 3px 12px ${cardGlow}`; }}
+                                  >
+                                    <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-10 transition-opacity duration-300 group-hover:opacity-20" style={{ background: `radial-gradient(circle, ${cardColor}, transparent 70%)` }} />
+                                    <div className="flex items-start justify-between relative">
+                                      <div className="flex items-start gap-3 flex-1">
+                                        {isFailed && (
+                                          <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={(e) => {
+                                              e.stopPropagation();
+                                              if (e.target.checked) {
+                                                setSelectedTestsForGroupAnalysis([...selectedTestsForGroupAnalysis, { key: cardKey, testKey: cardKey, testTitle: spec.title, testFile: subSuite.file || spec.file }]);
+                                              } else {
+                                                setSelectedTestsForGroupAnalysis(selectedTestsForGroupAnalysis.filter(t => t.key !== cardKey));
+                                              }
+                                            }}
+                                            className="mt-1 w-4 h-4 text-blue-600 cursor-pointer rounded"
+                                            onClick={(e) => e.stopPropagation()}
+                                          />
+                                        )}
+                                        {getTestStatusIcon(isPassed ? 'passed' : isFailed ? 'failed' : 'skipped')}
+                                        <div className="flex-1 min-w-0">
+                                          <h4 className="font-bold text-sm truncate" style={{ color: isPassed ? '#166534' : isFailed ? '#991b1b' : '#92400e' }}>{spec.title}</h4>
+                                          <p className="text-xs text-gray-500 truncate">{subSuite.file || spec.file}</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2 flex-shrink-0">
+                                        {isFailed && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setSelectedTestForAnalysis({ key: cardKey, title: spec.title, file: subSuite.file || spec.file });
+                                              setAnalysisModalOpen(true);
+                                            }}
+                                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 hover:scale-105"
+                                            style={{
+                                              background: testAnalyses[cardKey] ? '#3b82f6' : '#ef4444',
+                                              color: 'white',
+                                              boxShadow: `0 2px 8px ${testAnalyses[cardKey] ? 'rgba(59,130,246,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                                              animation: testAnalyses[cardKey] ? undefined : 'pulse 2s ease-in-out infinite',
+                                            }}
+                                            title={testAnalyses[cardKey] ? 'Modifier l\'analyse' : 'Ajouter une analyse'}
+                                          >
+                                            <FileEdit className="w-3 h-3" />
+                                            <span>{testAnalyses[cardKey] ? 'Modifier' : 'Analyser'}</span>
+                                          </button>
+                                        )}
+                                        <div className="text-right">
+                                          <span className="text-xs font-bold px-2 py-1 rounded-md tabular-nums" style={{ background: cardColor + '20', color: cardColor }}>
+                                            {test.results?.[0] ? formatDuration(test.results[0].duration) : 'N/A'}
+                                          </span>
+                                          <p className="text-[10px] font-bold uppercase mt-1" style={{ color: cardColor }}>{testStatus}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {testAnalyses[cardKey] && (
+                                      <div className="mt-3 p-3 rounded-lg" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)' }}>
+                                        <div className="flex items-start gap-2">
+                                          <FileEdit className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                                          <div className="flex-1 text-sm">
+                                            <p className="font-bold text-blue-900 mb-1">Analyse disponible</p>
+                                            {testAnalyses[cardKey].root_cause && (
+                                              <p className="text-blue-800 mb-1">
+                                                <span className="font-bold">Root cause:</span> {testAnalyses[cardKey].root_cause}
+                                              </p>
+                                            )}
+                                            {testAnalyses[cardKey].analysis && (
+                                              <p className="text-blue-700 text-xs">
+                                                {testAnalyses[cardKey].analysis.substring(0, 100)}
+                                                {testAnalyses[cardKey].analysis.length > 100 && '...'}
+                                              </p>
+                                            )}
+                                            <p className="text-xs text-blue-500 mt-1">
+                                              Par {testAnalyses[cardKey].created_by} • {new Date(testAnalyses[cardKey].created_at).toLocaleString('fr-FR')}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {artifactsByTest[cardKey] ? (
+                                      <div className="mt-3 text-xs text-gray-600 flex items-center gap-1.5">
+                                        <Video className="w-3.5 h-3.5 text-gray-400" />
+                                        Fichiers associés : <span className="font-bold text-gray-700">{artifactsByTest[cardKey].length}</span>
+                                      </div>
+                                    ) : (
+                                      <div className="mt-3 text-xs text-gray-400">Cliquez pour charger les fichiers associés</div>
+                                    )}
+
+                                    {testMedia[cardKey] && testMedia[cardKey].length > 0 && (
+                                      <div className="mt-2 flex items-center gap-2 flex-wrap">
+                                        {testMedia[cardKey].filter(m => m.media_type === 'image').length > 0 && (
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(16,185,129,0.12)', color: '#059669' }}>
+                                            <ImageIcon className="w-3 h-3" />
+                                            {testMedia[cardKey].filter(m => m.media_type === 'image').length} image(s)
+                                          </span>
+                                        )}
+                                        {testMedia[cardKey].filter(m => m.media_type === 'video').length > 0 && (
+                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(99,102,241,0.12)', color: '#4f46e5' }}>
+                                            <Video className="w-3 h-3" />
+                                            {testMedia[cardKey].filter(m => m.media_type === 'video').length} vidéo(s)
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        ))}
                       </div>
                     ))}
                   </div>
                 </div>
-              ) : null}
+              </div>
+            ) : test.status === 'running' || test.status === 'pending' ? (
+              <div className="text-center py-16">
+                <div className="relative w-32 h-32 mx-auto mb-6">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Monitor className="w-28 h-28 text-gray-700" strokeWidth={1.5} />
+                    <div className="absolute overflow-hidden" style={{ top: '20%', left: '20%', width: '60%', height: '46%' }}>
+                      <div className="w-full h-full rounded-sm overflow-hidden" style={{ background: 'linear-gradient(to bottom, #eff6ff, #dbeafe)', animation: 'screen-glow-modal 2s ease-in-out infinite' }}>
+                        <div className="w-full h-1.5 bg-blue-600"></div>
+                        <div className="flex gap-0.5 px-0.5 py-0.5">
+                          <div className="w-1.5 h-1.5 bg-blue-400"></div>
+                          <div className="w-2 h-1.5 bg-blue-300"></div>
+                        </div>
+                        <div className="px-0.5 space-y-0.5">
+                          <div className="w-full h-1 bg-gray-300"></div>
+                          <div className="w-3/4 h-1 bg-gray-300"></div>
+                          <div className="w-full h-3 bg-blue-200 mt-0.5"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center" style={{ top: '-4px' }}>
+                    <div style={{ animation: 'search-bugs-modal 3s ease-in-out infinite' }}>
+                      <Search className="w-10 h-10 text-blue-600" strokeWidth={2.5} />
+                    </div>
+                  </div>
+                  <div className="absolute top-1 right-1">
+                    <Bug className="w-6 h-6 text-red-500" style={{ animation: 'bug-appear-modal 3s ease-in-out infinite' }} />
+                  </div>
+                  <div className="absolute bottom-3 left-1">
+                    <Bug className="w-5 h-5 text-orange-500" style={{ animation: 'bug-appear-modal 3s ease-in-out infinite 1s' }} />
+                  </div>
+                  <div className="absolute top-10 left-0">
+                    <Bug className="w-4 h-4 text-yellow-600" style={{ animation: 'bug-appear-modal 3s ease-in-out infinite 1.5s' }} />
+                  </div>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Test en cours d'exécution</h3>
+                <p className="text-sm text-gray-500">Veuillez attendre la fin de l'exécution pour consulter le rapport</p>
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: 'rgba(229,231,235,0.5)' }}>
+                  <FileText className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Aucun rapport Playwright trouvé</h3>
+                <p className="text-sm text-gray-500">Les artifacts ne contiennent pas de rapport Playwright ou le format n'est pas reconnu.</p>
+              </div>
+            )}
+          </div>
 
-              {/* Liste des tests */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Résultats détaillés</h3>
-                  {selectedTestsForGroupAnalysis.length > 0 && (
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-600">
-                        {selectedTestsForGroupAnalysis.length} test{selectedTestsForGroupAnalysis.length > 1 ? 's' : ''} sélectionné{selectedTestsForGroupAnalysis.length > 1 ? 's' : ''}
-                      </span>
-                      <button
-                        onClick={() => {
-                          setAnalysisModalOpen(true);
-                        }}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-semibold"
-                      >
-                        Analyser en groupe
-                      </button>
-                      <button
-                        onClick={() => setSelectedTestsForGroupAnalysis([])}
-                        className="px-3 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-sm"
-                      >
-                        Annuler
-                      </button>
+          {/* ─── Modal interne pour un test sélectionné ──────────── */}
+          {selectedTestForModal && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.45)', animation: 'fade-in 0.2s ease' }}>
+              <div
+                className="rounded-2xl w-full max-w-3xl max-h-[85vh] overflow-y-auto p-6"
+                style={{
+                  background: 'rgba(255,255,255,0.98)',
+                  border: '1px solid rgba(229,231,235,0.8)',
+                  boxShadow: '0 24px 64px rgba(0,0,0,0.18)',
+                  animation: 'scale-in 0.3s cubic-bezier(0.22,1,0.36,1)',
+                }}
+              >
+                <div className="flex items-start justify-between mb-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}>
+                      <Monitor className="w-5 h-5 text-white" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900">{selectedTestForModal.spec?.title || selectedTestForModal.test?.title || 'Détails du test'}</h3>
+                      <p className="text-sm text-gray-500">{selectedTestForModal.suite?.file || selectedTestForModal.spec?.file || ''}</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedTestForModal(null)}
+                    className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between rounded-xl p-3" style={{ background: 'rgba(249,250,251,0.8)', border: '1px solid rgba(229,231,235,0.5)' }}>
+                    <div className="text-sm text-gray-600">
+                      Statut: <span className="font-bold text-gray-900">{selectedTestForModal.test?.status || 'N/A'}</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Durée: <span className="font-bold text-gray-900">{selectedTestForModal.test?.results?.[0] ? formatDuration(selectedTestForModal.test.results[0].duration) : 'N/A'}</span>
+                    </div>
+                  </div>
+
+                  {selectedTestForModal.test?.results?.[0]?.errors?.length > 0 && (
+                    <div className="p-4 rounded-xl text-sm" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)', color: '#dc2626' }}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertTriangle className="w-4 h-4" strokeWidth={2} />
+                        <span className="font-bold">Erreur</span>
+                      </div>
+                      <pre className="whitespace-pre-wrap text-xs font-mono">{selectedTestForModal.test.results[0].errors[0].message}</pre>
                     </div>
                   )}
-                </div>
-                <div className="space-y-3">
-                  {playwrightReport.suites.map((suite, suiteIndex) => (
-                    <div key={suiteIndex} className="space-y-2">
-                      <h4 className="font-semibold text-gray-800 border-b pb-2">{suite.title}</h4>
-                      {suite.specs.map((spec, specIndex) =>
-                        spec.tests.map((test, testIndex) => {
-                          const cardKey = `${suiteIndex}-${specIndex}-${testIndex}`;
-                          const testStatus = getTestStatus(test);
-                          return (
-                            <div
-                              key={cardKey}
-                              onClick={() => {
-                                setSelectedTestForModal({ key: cardKey, suite, spec, test });
-                                if (!artifactsByTest[cardKey]) {
-                                  loadArtifactsForTest(cardKey);
-                                }
-                              }}
-                              className={`cursor-pointer border-2 rounded-lg p-4 hover:shadow-md transition-shadow ${
-                                selectedTestsForGroupAnalysis.some(t => t.key === cardKey)
-                                  ? 'bg-blue-100 border-blue-600'
-                                  : testStatus === 'passed' || testStatus === 'flaky'
-                                  ? 'bg-green-50 border-green-400'
-                                  : testStatus === 'failed' || testStatus === 'timedOut'
-                                  ? 'bg-red-50 border-red-400'
-                                  : 'bg-yellow-50 border-yellow-400'
-                              }`}
-                            >
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-start space-x-3 flex-1">
-                                  {(testStatus === 'failed' || testStatus === 'timedOut') && (
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedTestsForGroupAnalysis.some(t => t.key === cardKey)}
-                                      onChange={(e) => {
-                                        e.stopPropagation();
-                                        if (e.target.checked) {
-                                          setSelectedTestsForGroupAnalysis([...selectedTestsForGroupAnalysis, {
-                                            key: cardKey,
-                                            testKey: cardKey,
-                                            testTitle: spec.title,
-                                            testFile: suite.file || spec.file,
-                                          }]);
-                                        } else {
-                                          setSelectedTestsForGroupAnalysis(selectedTestsForGroupAnalysis.filter(t => t.key !== cardKey));
-                                        }
-                                      }}
-                                      className="mt-1 w-4 h-4 text-blue-600 cursor-pointer"
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
-                                  )}
-                                  {getTestStatusIcon((testStatus === 'passed' || testStatus === 'flaky') ? 'passed' : (testStatus === 'failed' || testStatus === 'timedOut') ? 'failed' : 'skipped')}
-                                  <div className="flex-1">
-                                    <h4 className={`font-medium ${
-                                      testStatus === 'passed' || testStatus === 'flaky'
-                                        ? 'text-green-900'
-                                        : (testStatus === 'failed' || testStatus === 'timedOut')
-                                        ? 'text-red-900'
-                                        : 'text-gray-900'
-                                    }`}>{spec.title}</h4>
-                                    <p className="text-sm text-gray-600">{spec.file}</p>
-                                  </div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  {(testStatus === 'failed' || testStatus === 'timedOut') && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedTestForAnalysis({
-                                          key: cardKey,
-                                          title: spec.title,
-                                          file: suite.file || spec.file,
-                                        });
-                                        setAnalysisModalOpen(true);
-                                      }}
-                                      className={`flex items-center space-x-1 px-3 py-1.5 rounded-md text-xs font-semibold transition-all shadow-md border-2 ${
-                                        testAnalyses[cardKey]
-                                          ? 'bg-blue-500 text-white border-blue-600 hover:bg-blue-600 hover:shadow-lg'
-                                          : 'bg-red-500 text-white border-red-600 hover:bg-red-600 hover:shadow-lg animate-pulse'
-                                      }`}
-                                      title={testAnalyses[cardKey] ? 'Modifier l\'analyse' : 'Ajouter une analyse'}
-                                    >
-                                      <FileEdit className="w-3 h-3" />
-                                      <span>{testAnalyses[cardKey] ? 'Modifier' : 'Analyser'}</span>
-                                    </button>
-                                  )}
-                                  <div className="text-right">
-                                    <span className={`text-sm font-medium px-2 py-1 rounded ${
-                                      testStatus === 'passed' || testStatus === 'flaky'
-                                        ? 'bg-green-200 text-green-800'
-                                        : (testStatus === 'failed' || testStatus === 'timedOut')
-                                        ? 'bg-red-200 text-red-800'
-                                        : 'bg-yellow-200 text-yellow-800'
-                                    }`}>
-                                      {test.results?.[0] ? formatDuration(test.results[0].duration) : 'N/A'}
-                                    </span>
-                                    <p className={`text-xs font-semibold mt-1 uppercase ${
-                                      testStatus === 'passed' || testStatus === 'flaky'
-                                        ? 'text-green-700'
-                                        : (testStatus === 'failed' || testStatus === 'timedOut')
-                                        ? 'text-red-700'
-                                        : 'text-yellow-700'
-                                    }`}>
-                                      {testStatus}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
 
-                              {testAnalyses[cardKey] && (
-                                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                                  <div className="flex items-start space-x-2">
-                                    <FileEdit className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                    <div className="flex-1 text-sm">
-                                      <p className="font-medium text-blue-900 mb-1">Analyse disponible</p>
-                                      {testAnalyses[cardKey].root_cause && (
-                                        <p className="text-blue-800 mb-1">
-                                          <span className="font-medium">Root cause:</span> {testAnalyses[cardKey].root_cause}
-                                        </p>
-                                      )}
-                                      {testAnalyses[cardKey].analysis && (
-                                        <p className="text-blue-700 text-xs">
-                                          {testAnalyses[cardKey].analysis.substring(0, 100)}
-                                          {testAnalyses[cardKey].analysis.length > 100 && '...'}
-                                        </p>
-                                      )}
-                                      <p className="text-xs text-blue-600 mt-1">
-                                        Par {testAnalyses[cardKey].created_by} • {new Date(testAnalyses[cardKey].created_at).toLocaleString('fr-FR')}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-
-                              {artifactsByTest[cardKey] ? (
-                                <div className="mt-3 text-sm text-gray-700">
-                                  Fichiers associés : <span className="font-medium">{artifactsByTest[cardKey].length}</span>
-                                </div>
-                              ) : (
-                                <div className="mt-3 text-sm text-gray-500">
-                                  Cliquez pour charger les fichiers associés
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })
-                      )}
-                       {suite.suites && suite.suites.map((subSuite, subSuiteIndex) => (
-                         <div key={`sub-${suiteIndex}-${subSuiteIndex}`} className="ml-4 space-y-2">
-                           <h5 className="font-medium text-gray-700 border-b pb-1">{subSuite.title}</h5>
-                           {subSuite.specs.map((spec, specIndex) =>
-                             spec.tests.map((test, testIndex) => {
-                               const cardKey = `${suiteIndex}-${subSuiteIndex}-${specIndex}-${testIndex}`;
-                               const testStatus = getTestStatus(test);
-                               return (
-                                 <div
-                                   key={cardKey}
-                                   onClick={() => {
-                                     setSelectedTestForModal({ key: cardKey, suite: subSuite, spec, test });
-                                     if (!artifactsByTest[cardKey]) {
-                                       loadArtifactsForTest(cardKey);
-                                     }
-                                   }}
-                                   className={`cursor-pointer border-2 rounded-lg p-4 hover:shadow-md transition-shadow ${
-                                     selectedTestsForGroupAnalysis.some(t => t.key === cardKey)
-                                       ? 'bg-blue-100 border-blue-600'
-                                       : testStatus === 'passed' || testStatus === 'flaky'
-                                       ? 'bg-green-50 border-green-400'
-                                       : testStatus === 'failed' || testStatus === 'timedOut'
-                                       ? 'bg-red-50 border-red-400'
-                                       : 'bg-yellow-50 border-yellow-400'
-                                   }`}
-                                 >
-                                   <div className="flex items-start justify-between">
-                                     <div className="flex items-start space-x-3 flex-1">
-                                       {(testStatus === 'failed' || testStatus === 'timedOut') && (
-                                         <input
-                                           type="checkbox"
-                                           checked={selectedTestsForGroupAnalysis.some(t => t.key === cardKey)}
-                                           onChange={(e) => {
-                                             e.stopPropagation();
-                                             if (e.target.checked) {
-                                               setSelectedTestsForGroupAnalysis([...selectedTestsForGroupAnalysis, {
-                                                 key: cardKey,
-                                                 testKey: cardKey,
-                                                 testTitle: spec.title,
-                                                 testFile: subSuite.file || spec.file,
-                                               }]);
-                                             } else {
-                                               setSelectedTestsForGroupAnalysis(selectedTestsForGroupAnalysis.filter(t => t.key !== cardKey));
-                                             }
-                                           }}
-                                           className="mt-1 w-4 h-4 text-blue-600 cursor-pointer"
-                                           onClick={(e) => e.stopPropagation()}
-                                         />
-                                       )}
-                                       {getTestStatusIcon((testStatus === 'passed' || testStatus === 'flaky') ? 'passed' : (testStatus === 'failed' || testStatus === 'timedOut') ? 'failed' : 'skipped')}
-                                       <div className="flex-1">
-                                         <h4 className={`font-medium ${
-                                           testStatus === 'passed' || testStatus === 'flaky'
-                                             ? 'text-green-900'
-                                             : (testStatus === 'failed' || testStatus === 'timedOut')
-                                             ? 'text-red-900'
-                                             : 'text-gray-900'
-                                         }`}>{spec.title}</h4>
-                                         <p className="text-sm text-gray-600">{subSuite.file || spec.file}</p>
-                                       </div>
-                                     </div>
-                                     <div className="flex items-center space-x-2">
-                                       {(testStatus === 'failed' || testStatus === 'timedOut') && (
-                                         <button
-                                           onClick={(e) => {
-                                             e.stopPropagation();
-                                             setSelectedTestForAnalysis({
-                                               key: cardKey,
-                                               title: spec.title,
-                                               file: subSuite.file || spec.file,
-                                             });
-                                             setAnalysisModalOpen(true);
-                                           }}
-                                           className={`flex items-center space-x-1 px-3 py-1.5 rounded-md text-xs font-semibold transition-all shadow-md border-2 ${
-                                             testAnalyses[cardKey]
-                                               ? 'bg-blue-500 text-white border-blue-600 hover:bg-blue-600 hover:shadow-lg'
-                                               : 'bg-red-500 text-white border-red-600 hover:bg-red-600 hover:shadow-lg animate-pulse'
-                                           }`}
-                                           title={testAnalyses[cardKey] ? 'Modifier l\'analyse' : 'Ajouter une analyse'}
-                                         >
-                                           <FileEdit className="w-3 h-3" />
-                                           <span>{testAnalyses[cardKey] ? 'Modifier' : 'Analyser'}</span>
-                                         </button>
-                                       )}
-                                       <div className="text-right">
-                                         <span className={`text-sm font-medium px-2 py-1 rounded ${
-                                           testStatus === 'passed' || testStatus === 'flaky'
-                                             ? 'bg-green-200 text-green-800'
-                                             : (testStatus === 'failed' || testStatus === 'timedOut')
-                                             ? 'bg-red-200 text-red-800'
-                                             : 'bg-yellow-200 text-yellow-800'
-                                         }`}>
-                                           {test.results?.[0] ? formatDuration(test.results[0].duration) : 'N/A'}
-                                         </span>
-                                         <p className={`text-xs font-semibold mt-1 uppercase ${
-                                           testStatus === 'passed' || testStatus === 'flaky'
-                                             ? 'text-green-700'
-                                             : (testStatus === 'failed' || testStatus === 'timedOut')
-                                             ? 'text-red-700'
-                                             : 'text-yellow-700'
-                                         }`}>
-                                           {testStatus}
-                                         </p>
-                                       </div>
-                                     </div>
-                                   </div>
-
-                                   {testAnalyses[cardKey] && (
-                                     <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                                       <div className="flex items-start space-x-2">
-                                         <FileEdit className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                                         <div className="flex-1 text-sm">
-                                           <p className="font-medium text-blue-900 mb-1">Analyse disponible</p>
-                                           {testAnalyses[cardKey].root_cause && (
-                                             <p className="text-blue-800 mb-1">
-                                               <span className="font-medium">Root cause:</span> {testAnalyses[cardKey].root_cause}
-                                             </p>
-                                           )}
-                                           {testAnalyses[cardKey].analysis && (
-                                             <p className="text-blue-700 text-xs">
-                                               {testAnalyses[cardKey].analysis.substring(0, 100)}
-                                               {testAnalyses[cardKey].analysis.length > 100 && '...'}
-                                             </p>
-                                           )}
-                                           <p className="text-xs text-blue-600 mt-1">
-                                             Par {testAnalyses[cardKey].created_by} • {new Date(testAnalyses[cardKey].created_at).toLocaleString('fr-FR')}
-                                           </p>
-                                         </div>
-                                       </div>
-                                     </div>
-                                   )}
-
-                                   {artifactsByTest[cardKey] ? (
-                                     <div className="mt-3 text-sm text-gray-700">
-                                       Fichiers associés : <span className="font-medium">{artifactsByTest[cardKey].length}</span>
-                                     </div>
-                                   ) : (
-                                     <div className="mt-3 text-sm text-gray-500">
-                                       Cliquez pour charger les fichiers associés
-                                     </div>
-                                   )}
-                                 </div>
-                               );
-                             })
-                           )}
-                         </div>
-                       ))}
-                     </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : test.status === 'running' || test.status === 'pending' ? (
-            <div className="text-center py-12">
-              <style>{`
-                @keyframes search-bugs-modal {
-                  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-                  25% { transform: translate(12px, -6px) rotate(5deg); }
-                  50% { transform: translate(6px, 12px) rotate(-5deg); }
-                  75% { transform: translate(-6px, 6px) rotate(3deg); }
-                }
-                @keyframes bug-appear-modal {
-                  0%, 40% { opacity: 0; transform: scale(0.5) rotate(0deg); }
-                  50%, 90% { opacity: 1; transform: scale(1) rotate(15deg); }
-                  100% { opacity: 0; transform: scale(0.5) rotate(30deg); }
-                }
-                @keyframes screen-glow-modal {
-                  0%, 100% { opacity: 0.6; }
-                  50% { opacity: 1; }
-                }
-              `}</style>
-              <div className="relative w-32 h-32 mx-auto mb-4">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Monitor className="w-28 h-28 text-gray-700" strokeWidth={1.5} />
-                  <div className="absolute overflow-hidden" style={{ top: '20%', left: '20%', width: '60%', height: '46%' }}>
-                    <div className="w-full h-full bg-gradient-to-b from-blue-50 to-blue-100 rounded-sm overflow-hidden" style={{ animation: 'screen-glow-modal 2s ease-in-out infinite' }}>
-                      <div className="w-full h-1.5 bg-blue-600"></div>
-                      <div className="flex gap-0.5 px-0.5 py-0.5">
-                        <div className="w-1.5 h-1.5 bg-blue-400"></div>
-                        <div className="w-2 h-1.5 bg-blue-300"></div>
+                  {/* Médias uploadés (images et vidéos) */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.12)' }}>
+                          <ImageIcon className="w-4 h-4 text-emerald-600" strokeWidth={2} />
+                        </div>
+                        <h4 className="text-sm font-bold text-gray-900">
+                          Médias ajoutés{testMedia[selectedTestForModal.key] ? ` (${testMedia[selectedTestForModal.key].length})` : ''}
+                        </h4>
                       </div>
-                      <div className="px-0.5 space-y-0.5">
-                        <div className="w-full h-1 bg-gray-300"></div>
-                        <div className="w-3/4 h-1 bg-gray-300"></div>
-                        <div className="w-full h-3 bg-blue-200 mt-0.5"></div>
-                      </div>
+                      <input
+                        ref={mediaFileInputRef}
+                        type="file"
+                        accept="image/*,video/*"
+                        multiple
+                        onChange={handleStandaloneMediaUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMediaUploadKey(selectedTestForModal.key);
+                          setTimeout(() => mediaFileInputRef.current?.click(), 0);
+                        }}
+                        disabled={uploadingMedia}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 hover:scale-105 disabled:opacity-50"
+                        style={{ background: '#10b981', color: 'white', boxShadow: '0 2px 8px rgba(16,185,129,0.3)' }}
+                      >
+                        {uploadingMedia ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                        <span>{uploadingMedia ? (uploadProgressMsg || 'Upload...') : 'Ajouter des médias'}</span>
+                      </button>
                     </div>
-                  </div>
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center" style={{ top: '-4px' }}>
-                  <div style={{ animation: 'search-bugs-modal 3s ease-in-out infinite' }}>
-                    <Search className="w-10 h-10 text-blue-600" strokeWidth={2.5} />
-                  </div>
-                </div>
-                <div className="absolute top-1 right-1">
-                  <Bug className="w-6 h-6 text-red-500" style={{ animation: 'bug-appear-modal 3s ease-in-out infinite' }} />
-                </div>
-                <div className="absolute bottom-3 left-1">
-                  <Bug className="w-5 h-5 text-orange-500" style={{ animation: 'bug-appear-modal 3s ease-in-out infinite 1s' }} />
-                </div>
-                <div className="absolute top-10 left-0">
-                  <Bug className="w-4 h-4 text-yellow-600" style={{ animation: 'bug-appear-modal 3s ease-in-out infinite 1.5s' }} />
+
+                      {/* Images uploadées */}
+                      {testMedia[selectedTestForModal.key]?.some(m => m.media_type === 'image') && (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                          {testMedia[selectedTestForModal.key].filter(m => m.media_type === 'image').map((m, mi) => (
+                            <div
+                              key={m.id}
+                              className="rounded-xl overflow-hidden group cursor-pointer transition-all duration-200 hover:scale-105"
+                              style={{ animation: `card-enter 0.3s ease ${mi * 60}ms both`, border: '1px solid rgba(229,231,235,0.6)' }}
+                              onClick={(e) => { e.stopPropagation(); const w = window.open(); if (w) w.document.write(`<img src="${getMediaPublicUrl(m.file_path)}" style="max-width:100%;height:auto"/>`); }}
+                            >
+                              <img src={getMediaPublicUrl(m.file_path)} alt={m.file_name} className="w-full h-32 object-cover" loading="lazy" />
+                              <div className="p-2 text-xs text-gray-500 truncate">{m.file_name}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Vidéos uploadées */}
+                      {testMedia[selectedTestForModal.key]?.some(m => m.media_type === 'video') && (
+                        <div className="space-y-3">
+                          {testMedia[selectedTestForModal.key].filter(m => m.media_type === 'video').map((m) => (
+                            <div
+                              key={m.id}
+                              className="rounded-xl overflow-hidden"
+                              style={{ border: '1px solid rgba(229,231,235,0.6)' }}
+                            >
+                              <video
+                                src={getMediaPublicUrl(m.file_path)}
+                                controls
+                                className="w-full max-h-72 object-contain bg-black"
+                                preload="metadata"
+                              />
+                              <div className="px-3 py-2 text-xs text-gray-500 truncate flex items-center gap-1.5">
+                                <Video className="w-3.5 h-3.5 flex-shrink-0" />
+                                {m.file_name}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {(!testMedia[selectedTestForModal.key] || testMedia[selectedTestForModal.key].length === 0) && !uploadingMedia && (
+                        <p className="text-xs text-gray-400">Aucun média ajouté pour ce test. Cliquez sur "Ajouter des médias" pour uploader des images ou vidéos.</p>
+                      )}
+                    </div>
                 </div>
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Test en cours d'exécution
-              </h3>
-              <p className="text-gray-600">
-                Veuillez attendre la fin de l'exécution pour consulter le rapport
-              </p>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Aucun rapport Playwright trouvé
-              </h3>
-              <p className="text-gray-600">
-                Les artifacts ne contiennent pas de rapport Playwright ou le format n'est pas reconnu.
-              </p>
             </div>
           )}
+
+          {/* Modal for test failure analysis */}
+          {test.pipelineId && test.jobId && (
+            <TestFailureAnalysisModal
+              isOpen={analysisModalOpen}
+              onClose={() => {
+                setAnalysisModalOpen(false);
+                setSelectedTestForAnalysis(null);
+                setSelectedTestsForGroupAnalysis([]);
+                loadTestAnalyses();
+                loadTestMedia();
+              }}
+              pipelineId={test.pipelineId}
+              jobId={test.jobId}
+              testKey={selectedTestForAnalysis?.key || ''}
+              testTitle={selectedTestForAnalysis?.title || ''}
+              testFile={selectedTestForAnalysis?.file || ''}
+              existingAnalysis={selectedTestForAnalysis ? (testAnalyses[selectedTestForAnalysis.key] || null) : null}
+              selectedTests={selectedTestsForGroupAnalysis.length > 0 ? selectedTestsForGroupAnalysis : undefined}
+              images={(artifactsByTest[selectedTestForAnalysis?.key || ''] || []).filter(a => a.type === 'image')}
+            />
+          )}
         </div>
-
-        {/* Modal interne pour un test sélectionné */}
-        {selectedTestForModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl mx-4 max-h-[85vh] overflow-y-auto p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{selectedTestForModal.spec?.title || selectedTestForModal.test?.title || 'Détails du test'}</h3>
-                  <p className="text-sm text-gray-600">{selectedTestForModal.suite?.file || selectedTestForModal.spec?.file || ''}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button onClick={() => setSelectedTestForModal(null)} className="px-3 py-1 bg-gray-100 rounded">Fermer</button>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-700">
-                    Statut: <span className="font-medium">{selectedTestForModal.test?.status || 'N/A'}</span>
-                  </div>
-                  <div className="text-sm text-gray-700">
-                    Durée: <span className="font-medium">{selectedTestForModal.test?.results?.[0] ? formatDuration(selectedTestForModal.test.results[0].duration) : 'N/A'}</span>
-                  </div>
-                </div>
-
-                {selectedTestForModal.test?.results?.[0]?.errors?.length > 0 && (
-                  <div className="p-3 bg-red-50 border border-red-100 rounded text-sm text-red-700">
-                    <pre className="whitespace-pre-wrap">{selectedTestForModal.test.results[0].errors[0].message}</pre>
-                  </div>
-                )}
-
-                {/* Fichiers associés - chargés à la demande */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-medium text-gray-700">Fichiers associés</h4>
-                    {loadingArtifacts && (
-                      <div className="text-xs text-blue-600">Chargement...</div>
-                    )}
-                  </div>
-
-                  {loadingArtifacts ? (
-                    <div className="text-center py-4">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-                    </div>
-                  ) : artifactsByTest[selectedTestForModal.key] ? (
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {artifactsByTest[selectedTestForModal.key].map((a, ai) => (
-                        <div key={ai} className="border rounded-md overflow-hidden">
-                          {a.type === 'image' ? (
-                            <img src={a.url} alt={a.name} className="w-full h-32 object-cover cursor-pointer" onClick={(e) => { e.stopPropagation(); const w = window.open(); if (w) w.document.write(`<img src="${a.url}" style="max-width:100%;height:auto"/>`); }} />
-                          ) : a.type === 'video' ? (
-                            <video src={a.url} controls className="w-full h-32 object-cover" />
-                          ) : (
-                            <div className="w-full h-32 bg-gray-50 flex items-center justify-center text-xs text-gray-600 p-2 truncate">{a.name}</div>
-                          )}
-                          <div className="p-2 text-xs text-gray-600 truncate">{a.name}</div>
-                        </div>
-                      ))}
-                      {artifactsByTest[selectedTestForModal.key].length === 0 && (
-                        <div className="text-sm text-gray-500 col-span-full">Aucun fichier associé trouvé</div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-500">Les fichiers seront chargés automatiquement</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal for test failure analysis */}
-        {test.pipelineId && test.jobId && (
-          <TestFailureAnalysisModal
-            isOpen={analysisModalOpen}
-            onClose={() => {
-              setAnalysisModalOpen(false);
-              setSelectedTestForAnalysis(null);
-              setSelectedTestsForGroupAnalysis([]);
-              loadTestAnalyses();
-            }}
-            pipelineId={test.pipelineId}
-            jobId={test.jobId}
-            testKey={selectedTestForAnalysis?.key || ''}
-            testTitle={selectedTestForAnalysis?.title || ''}
-            testFile={selectedTestForAnalysis?.file || ''}
-            existingAnalysis={selectedTestForAnalysis ? (testAnalyses[selectedTestForAnalysis.key] || null) : null}
-            selectedTests={selectedTestsForGroupAnalysis.length > 0 ? selectedTestsForGroupAnalysis : undefined}
-          />
-        )}
       </div>
-    </div>
+    </>
   );
 };

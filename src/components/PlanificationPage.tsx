@@ -4,10 +4,11 @@ import { gitlabApi } from '../services/gitlabApi';
 import { GitLabPipelineSchedule } from '../types';
 
 interface PlanificationPageProps {
-  onBack: () => void;
+  onBack?: () => void;
+  embedded?: boolean;
 }
 
-export const PlanificationPage: React.FC<PlanificationPageProps> = ({ onBack }) => {
+export const PlanificationPage: React.FC<PlanificationPageProps> = ({ onBack, embedded = false }) => {
   const [schedules, setSchedules] = useState<GitLabPipelineSchedule[]>([]);
   const [branches, setBranches] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -291,16 +292,17 @@ export const PlanificationPage: React.FC<PlanificationPageProps> = ({ onBack }) 
     return cron;
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  const content = (
+    <>
         <div className="mb-8">
+          {onBack && (
           <button
             onClick={onBack}
             className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-md transition-colors mb-6"
           >
             ← Retour au dashboard
           </button>
+          )}
 
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -445,7 +447,6 @@ export const PlanificationPage: React.FC<PlanificationPageProps> = ({ onBack }) 
             ))}
           </div>
         )}
-      </div>
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -747,6 +748,18 @@ export const PlanificationPage: React.FC<PlanificationPageProps> = ({ onBack }) 
           </div>
         </div>
       )}
+    </>
+  );
+
+  if (embedded) {
+    return content;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {content}
+      </div>
     </div>
   );
 };

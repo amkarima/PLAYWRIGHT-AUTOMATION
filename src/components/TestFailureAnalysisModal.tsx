@@ -1,11 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { X, Save, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { X, Save, AlertCircle, ImageIcon, Upload, Trash2, Video, Loader2 } from 'lucide-react';
 import { TestFailureAnalysis } from '../types';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from '../services/supabaseClient';
 
 const ROOT_CAUSE_OPTIONS = [
   'Bug applicatif',
@@ -23,6 +19,22 @@ const JIRA_REQUIRED_ROOT_CAUSES = [
   'Évolution code(tests auto à mettre à jour)',
 ] as const;
 
+interface TestArtifactImage {
+  name: string;
+  url: string;
+  type: 'image' | 'video' | 'trace' | 'other';
+}
+
+interface UploadedMedia {
+  id: string;
+  file_name: string;
+  file_path: string;
+  media_type: 'image' | 'video';
+  mime_type: string;
+  uploaded_by: string;
+  created_at: string;
+}
+
 interface TestFailureAnalysisModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -33,6 +45,22 @@ interface TestFailureAnalysisModalProps {
   testFile: string;
   existingAnalysis?: TestFailureAnalysis | null;
   selectedTests?: Array<{ testKey: string; testTitle: string; testFile: string }>;
+  images?: TestArtifactImage[];
+}
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+
+function getMediaType(mimeType: string): 'image' | 'video' | null {
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType.startsWith('video/')) return 'video';
+  return null;
+}
+
+function buildStoragePath(jobId: number, testKey: string, fileName: string): string {
+  const safeTestKey = testKey.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).slice(2, 8);
+  return `${jobId}/${safeTestKey}/${timestamp}-${random}-${fileName}`;
 }
 
 export const TestFailureAnalysisModal: React.FC<TestFailureAnalysisModalProps> = ({
@@ -45,6 +73,7 @@ export const TestFailureAnalysisModal: React.FC<TestFailureAnalysisModalProps> =
   testFile,
   existingAnalysis,
   selectedTests = [],
+  images = [],
 }) => {
   const [rootCause, setRootCause] = useState('');
   const [analysis, setAnalysis] = useState('');
@@ -52,6 +81,11 @@ export const TestFailureAnalysisModal: React.FC<TestFailureAnalysisModalProps> =
   const [jiraTicketUrl, setJiraTicketUrl] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [uploadedMedia, setUploadedMedia] = useState<UploadedMedia[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isGroupAnalysis = selectedTests.length > 0;
   const requiresJiraTicket = JIRA_REQUIRED_ROOT_CAUSES.includes(rootCause as any);
@@ -72,6 +106,122 @@ export const TestFailureAnalysisModal: React.FC<TestFailureAnalysisModalProps> =
       setError(null);
     }
   }, [isOpen, existingAnalysis]);
+
+  const loadUploadedMedia = useCallback(async () => {
+    if (isGroupAnalysis || !testKey) return;
+    try {
+      const { data, error: queryError } = await supabase
+        .from('test_media_uploads')
+        .select('id, file_name, file_path, media_type, mime_type, uploaded_by, created_at')
+        .eq('job_id', jobId)
+        .eq('test_key', testKey)
+        .order('created_at', { ascending: false });
+
+      if (queryError) throw queryError;
+      setUploadedMedia((data || []) as UploadedMedia[]);
+    } catch (err) {
+      console.error('Error loading uploaded media:', err);
+      setUploadedMedia([]);
+    }
+  }, [isGroupAnalysis, testKey, jobId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadUploadedMedia();
+    }
+  }, [isOpen, loadUploadedMedia]);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    for (const file of Array.from(files)) {
+      const mediaType = getMediaType(file.type);
+      if (!mediaType) {
+        setError(`Le fichier "${file.name}" n'est pas une image ou une vidéo (type: ${file.type || 'inconnu'})`);
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`Le fichier "${file.name}" dépasse la taille maximale de 50 Mo`);
+        continue;
+      }
+
+      setUploading(true);
+      setUploadProgress(`Upload de ${file.name}...`);
+      setError(null);
+
+      try {
+        const filePath = buildStoragePath(jobId, testKey, file.name);
+
+        const { error: uploadError } = await supabase.storage
+          .from('test-media-uploads')
+          .upload(filePath, file, {
+            contentType: file.type,
+            upsert: false,
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { error: dbError } = await supabase
+          .from('test_media_uploads')
+          .insert({
+            analysis_id: existingAnalysis?.id || null,
+            pipeline_id: pipelineId,
+            job_id: jobId,
+            test_key: testKey,
+            file_name: file.name,
+            file_path: filePath,
+            media_type: mediaType,
+            mime_type: file.type,
+            file_size: file.size,
+            uploaded_by: createdBy.trim() || 'anonymous',
+          });
+
+        if (dbError) throw dbError;
+
+        await loadUploadedMedia();
+      } catch (err) {
+        console.error('Upload error:', err);
+        setError(`Erreur lors de l'upload de "${file.name}": ${err instanceof Error ? err.message : 'erreur inconnue'}`);
+      } finally {
+        setUploading(false);
+        setUploadProgress('');
+      }
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteMedia = async (mediaId: string, filePath: string) => {
+    try {
+      const { error: storageError } = await supabase.storage
+        .from('test-media-uploads')
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      const { error: dbError } = await supabase
+        .from('test_media_uploads')
+        .delete()
+        .eq('id', mediaId);
+
+      if (dbError) throw dbError;
+
+      setUploadedMedia(prev => prev.filter(m => m.id !== mediaId));
+    } catch (err) {
+      console.error('Delete media error:', err);
+      setError(`Erreur lors de la suppression: ${err instanceof Error ? err.message : 'erreur inconnue'}`);
+    }
+  };
+
+  const getPublicUrl = (filePath: string): string => {
+    const { data } = supabase.storage
+      .from('test-media-uploads')
+      .getPublicUrl(filePath);
+    return data.publicUrl;
+  };
 
   const handleSave = async () => {
     if (!rootCause.trim()) {
@@ -137,11 +287,26 @@ export const TestFailureAnalysisModal: React.FC<TestFailureAnalysisModalProps> =
 
           if (updateError) throw updateError;
         } else {
-          const { error: insertError } = await supabase
+          const { data: inserted, error: insertError } = await supabase
             .from('test_failure_analyses')
-            .insert([data]);
+            .insert([data])
+            .select('id')
+            .maybeSingle();
 
           if (insertError) throw insertError;
+
+          if (inserted && uploadedMedia.length > 0) {
+            const { error: linkError } = await supabase
+              .from('test_media_uploads')
+              .update({ analysis_id: inserted.id })
+              .eq('job_id', jobId)
+              .eq('test_key', testKey)
+              .is('analysis_id', null);
+
+            if (linkError) {
+              console.warn('Could not link media to new analysis:', linkError);
+            }
+          }
         }
       }
 
@@ -155,6 +320,9 @@ export const TestFailureAnalysisModal: React.FC<TestFailureAnalysisModalProps> =
   };
 
   if (!isOpen) return null;
+
+  const imageMedia = uploadedMedia.filter(m => m.media_type === 'image');
+  const videoMedia = uploadedMedia.filter(m => m.media_type === 'video');
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100]">
@@ -185,6 +353,149 @@ export const TestFailureAnalysisModal: React.FC<TestFailureAnalysisModalProps> =
           )}
 
           <div className="space-y-4">
+            {/* Auto-attached images from test artifacts */}
+            {images.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-1.5">
+                  <ImageIcon className="w-4 h-4 text-gray-500" />
+                  Captures d'écran du test ({images.length})
+                </label>
+                <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto p-1">
+                  {images.map((img, idx) => (
+                    <a
+                      key={idx}
+                      href={img.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group relative block rounded-lg overflow-hidden border border-gray-200 hover:border-blue-400 transition-colors"
+                    >
+                      <img
+                        src={img.url}
+                        alt={img.name}
+                        className="w-full h-28 object-contain bg-gray-50"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p className="text-xs text-white truncate" title={img.name}>{img.name}</p>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Upload section */}
+            {!isGroupAnalysis && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Images et vidéos ajoutées
+                </label>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 hover:bg-blue-50/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? (
+                    <div className="flex items-center justify-center gap-2 text-blue-600">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="text-sm">{uploadProgress || 'Upload en cours...'}</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-1.5 text-gray-500">
+                      <Upload className="w-6 h-6" />
+                      <span className="text-sm font-medium">Cliquez pour ajouter des images ou vidéos</span>
+                      <span className="text-xs text-gray-400">Jusqu'à 50 Mo par fichier</span>
+                    </div>
+                  )}
+                </button>
+
+                {/* Uploaded images */}
+                {imageMedia.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
+                      <ImageIcon className="w-3.5 h-3.5" /> Images ({imageMedia.length})
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {imageMedia.map((media) => (
+                        <div
+                          key={media.id}
+                          className="group relative rounded-lg overflow-hidden border border-gray-200"
+                        >
+                          <img
+                            src={getPublicUrl(media.file_path)}
+                            alt={media.file_name}
+                            className="w-full h-28 object-contain bg-gray-50"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-2 py-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-between">
+                            <p className="text-xs text-white truncate" title={media.file_name}>{media.file_name}</p>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMedia(media.id, media.file_path)}
+                              className="text-white hover:text-red-300 transition-colors flex-shrink-0 ml-2"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Uploaded videos */}
+                {videoMedia.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium text-gray-600 mb-2 flex items-center gap-1">
+                      <Video className="w-3.5 h-3.5" /> Vidéos ({videoMedia.length})
+                    </p>
+                    <div className="space-y-3">
+                      {videoMedia.map((media) => (
+                        <div
+                          key={media.id}
+                          className="group relative rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
+                        >
+                          <video
+                            src={getPublicUrl(media.file_path)}
+                            controls
+                            className="w-full max-h-60 object-contain bg-black"
+                            preload="metadata"
+                          />
+                          <div className="flex items-center justify-between px-3 py-1.5 bg-white border-t">
+                            <p className="text-xs text-gray-600 truncate" title={media.file_name}>{media.file_name}</p>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMedia(media.id, media.file_path)}
+                              className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 ml-2"
+                              title="Supprimer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {uploadedMedia.length === 0 && !uploading && (
+                  <p className="mt-2 text-xs text-gray-400">Aucun fichier ajouté pour ce test.</p>
+                )}
+              </div>
+            )}
+
             {isGroupAnalysis ? (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

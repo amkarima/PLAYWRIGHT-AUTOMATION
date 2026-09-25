@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { X, Play, GitBranch, ChevronLeft, ChevronRight, Link2, Copy, Check, Smartphone, QrCode } from 'lucide-react';
+import { X, Play, GitBranch, ChevronLeft, ChevronRight, Link2, Copy, Check, Smartphone, QrCode, Tag, Plus, ChevronDown, ChevronUp, Settings, Sparkles, Zap, FileText, Loader2 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { QRCodeSVG } from 'qrcode.react';
 import { getPartnerLogo, mapPartnerIdToPartner, type Partner } from '../utils/partnerLogos';
@@ -20,7 +20,33 @@ interface TriggerTestModalProps {
   xrayConfig?: any;
 }
 
-type TestItem = { id: string; name: string; testType: string; partner?: Partner };
+type TestItem = { id: string; name: string; testType: string; partner?: Partner; tags: string[]; isAutomated: boolean };
+
+interface TagGroup {
+  id: string;
+  name: string;
+  description: string;
+  tags: string[];
+  color: string;
+  sort_order: number;
+}
+
+const TAG_COLOR_MAP: Record<string, { bg: string; border: string; text: string; badge: string; dot: string }> = {
+  red: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', badge: 'bg-red-100 text-red-700', dot: 'bg-red-500' },
+  green: { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700', badge: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
+  blue: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700', badge: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500' },
+  orange: { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', badge: 'bg-orange-100 text-orange-700', dot: 'bg-orange-500' },
+  purple: { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700', badge: 'bg-violet-100 text-violet-700', dot: 'bg-violet-500' },
+  teal: { bg: 'bg-teal-50', border: 'border-teal-200', text: 'text-teal-700', badge: 'bg-teal-100 text-teal-700', dot: 'bg-teal-500' },
+  yellow: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700', badge: 'bg-amber-100 text-amber-700', dot: 'bg-amber-500' },
+  gray: { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-700', badge: 'bg-slate-100 text-slate-700', dot: 'bg-slate-500' },
+};
+
+const TYPE_BADGE: Record<string, string> = {
+  Manual: 'bg-blue-100 text-blue-700',
+  Cucumber: 'bg-amber-100 text-amber-700',
+  Generic: 'bg-violet-100 text-violet-700',
+};
 
 export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
   isOpen,
@@ -34,7 +60,7 @@ export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
   const [newVarValue, setNewVarValue] = useState('');
   const [selectedTests, setSelectedTests] = useState<string[]>([]);
   const [eSignature, setESignature] = useState(false);
-  const [executionMode, setExecutionMode] = useState<'auto' | 'manual'>('auto');
+  const [executionMode, setExecutionMode] = useState<'auto' | 'tags' | 'manual'>('auto');
   const [generatedUrl, setGeneratedUrl] = useState('');
   const [urlCopied, setUrlCopied] = useState(false);
   const [generatingUrl, setGeneratingUrl] = useState(false);
@@ -48,6 +74,13 @@ export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
   const [loadingTests, setLoadingTests] = useState(true);
   const [showUrlConfigModal, setShowUrlConfigModal] = useState(false);
 
+  // Tags mode state
+  const [tagGroups, setTagGroups] = useState<TagGroup[]>([]);
+  const [loadingTagGroups, setLoadingTagGroups] = useState(true);
+  const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [customTagInput, setCustomTagInput] = useState('');
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+
   const generateOrderId = () => {
     const randomDigits = Math.floor(10000000 + Math.random() * 90000000);
     return `TestAuto${randomDigits}`;
@@ -56,6 +89,7 @@ export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
   useEffect(() => {
     loadPresets();
     loadTestCatalog();
+    loadTagGroups();
   }, []);
 
   const loadTestCatalog = async () => {
@@ -66,27 +100,38 @@ export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
-      if (error) {
-        console.error('Supabase error loading test catalog:', error);
-        throw error;
-      }
-
-      console.log('Loaded test catalog data:', data);
+      if (error) throw error;
 
       const tests: TestItem[] = data?.map((test) => ({
         id: test.id,
         name: test.name,
         testType: test.test_type,
-        partner: test.partner as Partner
+        partner: test.partner as Partner,
+        tags: test.tags || [],
+        isAutomated: test.is_automated ?? false,
       })) || [];
 
-      console.log('Mapped tests:', tests);
       setAvailableTests(tests);
     } catch (error) {
       console.error('Error loading test catalog:', error);
-      alert('Erreur lors du chargement du catalogue de tests. Vérifiez la console.');
     } finally {
       setLoadingTests(false);
+    }
+  };
+
+  const loadTagGroups = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tag_groups')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order');
+      if (error) throw error;
+      setTagGroups(data || []);
+    } catch (err) {
+      console.error('Error loading tag groups:', err);
+    } finally {
+      setLoadingTagGroups(false);
     }
   };
 
@@ -135,13 +180,14 @@ export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
 
   const [apiParams, setApiParams] = useState<{ name: string; [key: string]: string }>({} as any);
 
+  // Auto mode
   const TEST_TYPES = [...new Set(availableTests.map(test => test.testType))];
   const [activeTestTypes, setActiveTestTypes] = useState<string[]>([]);
   const toggleTestType = (type: string) =>
     setActiveTestTypes(prev => (prev.includes(type) ? prev.filter(x => x !== type) : [...prev, type]));
 
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 12; // tests par page
+  const pageSize = 12;
 
   const filteredTests = useMemo(() => {
     const arr = activeTestTypes.length === 0 ? availableTests : availableTests.filter(t => activeTestTypes.includes(t.testType));
@@ -154,8 +200,11 @@ export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
   const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
   const paginatedTests = filteredTests.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  const toggleTest = (id: string) =>
+  const toggleTest = (id: string) => {
+    const test = availableTests.find(t => t.id === id);
+    if (test && !test.isAutomated) return;
     setSelectedTests(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
+  };
 
   const addVariable = () => {
     if (!newVarKey.trim() || !newVarValue.trim()) return;
@@ -172,6 +221,44 @@ export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
     });
   };
 
+  // Tags mode helpers
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    availableTests.forEach(t => (t.tags || []).forEach(tag => tagSet.add(tag)));
+    return Array.from(tagSet).sort();
+  }, [availableTests]);
+
+  const matchingTests = useMemo(() => {
+    if (activeTags.length === 0) return [];
+    return availableTests.filter(test =>
+      activeTags.some(tag => (test.tags || []).includes(tag))
+    );
+  }, [availableTests, activeTags]);
+
+  const toggleTag = (tag: string) =>
+    setActiveTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+
+  const addCustomTag = () => {
+    const t = customTagInput.trim();
+    if (!t || activeTags.includes(t)) return;
+    setActiveTags(prev => [...prev, t]);
+    setCustomTagInput('');
+  };
+
+  const applyTagGroup = (group: TagGroup) => {
+    const newTags = group.tags.filter(t => !activeTags.includes(t));
+    setActiveTags(prev => [...prev, ...newTags]);
+  };
+
+  const toggleGroupExpand = (id: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  // Generate URL (manual mode)
   const generateTestUrl = async () => {
     setGeneratingUrl(true);
     setGeneratedUrl('');
@@ -203,7 +290,6 @@ export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
 
     } catch (error) {
       console.error('Erreur lors de la génération de l\'URL:', error);
-      alert(`Erreur lors de la génération de l'URL de test: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     } finally {
       setGeneratingUrl(false);
     }
@@ -238,380 +324,607 @@ export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (executionMode === 'auto') {
-      if (selectedTests.length === 0) {
-        alert('Veuillez sélectionner au moins un test à exécuter.');
-        return;
-      }
-
-      console.log('Submitting test trigger with:', {
-        selectedTests,
-        variables,
-        eSignature
-      });
-
+    if (executionMode === 'auto' || executionMode === 'tags') {
+      if (selectedTests.length === 0) return;
       onTrigger(selectedTests, variables, eSignature);
     }
   };
 
   if (!isOpen) return null;
 
+  const MODE_TABS = [
+    { id: 'auto' as const, label: 'Automatique', icon: Zap, desc: 'Lancer des tests automatisés' },
+    { id: 'tags' as const, label: 'Par tag', icon: Tag, desc: 'Filtrer et sélectionner par tags' },
+    { id: 'manual' as const, label: 'Manuel (URL)', icon: Link2, desc: 'Générer une URL de test' },
+  ];
+
+  const renderSelectedChips = () => {
+    if (selectedTests.length === 0) return null;
+    return (
+      <div className="flex flex-wrap gap-2 mt-3">
+        {selectedTests.map(testId => {
+          const test = availableTests.find(t => t.id === testId);
+          if (!test) return null;
+          const partnerLogo = test.partner ? getPartnerLogo(test.partner) : null;
+          return (
+            <span key={testId} className="inline-flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+              {partnerLogo && (
+                <img src={partnerLogo.src} alt={partnerLogo.alt} className="w-4 h-4 object-contain rounded" />
+              )}
+              <span>{test.name}</span>
+              <button type="button" onClick={() => toggleTest(testId)} className="text-emerald-600 hover:text-emerald-800 font-bold leading-none">×</button>
+            </span>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const renderVariables = (accent: 'emerald' | 'blue') => {
+    const ring = accent === 'emerald' ? 'focus:ring-emerald-500' : 'focus:ring-blue-500';
+    return (
+      <div>
+        <label className="block text-sm font-semibold text-slate-700 mb-2">Variables (optionnel)</label>
+        {Object.entries(variables).map(([key, value]) => (
+          <div key={key} className="flex items-center space-x-2 mb-2">
+            <input type="text" value={key} readOnly className="flex-1 px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-sm font-mono" />
+            <input type="text" value={value} readOnly className="flex-1 px-3 py-2 border border-slate-200 rounded-lg bg-slate-50 text-sm font-mono" />
+            <button type="button" onClick={() => removeVariable(key)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+        <div className="flex items-center space-x-2">
+          <input type="text" value={newVarKey} onChange={(e) => setNewVarKey(e.target.value)} placeholder="Nom" className={`flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 ${ring} focus:border-transparent`} />
+          <input type="text" value={newVarValue} onChange={(e) => setNewVarValue(e.target.value)} placeholder="Valeur" className={`flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 ${ring} focus:border-transparent`} />
+          <button type="button" onClick={addVariable} disabled={!newVarKey.trim() || !newVarValue.trim()} className="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors disabled:opacity-40">
+            <Plus className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderActionButtons = (accent: 'emerald' | 'blue', label: string) => {
+    const primary = accent === 'emerald' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700';
+    return (
+      <div className="flex space-x-3 pt-2">
+        <button type="button" onClick={onClose} disabled={loading} className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors font-medium disabled:opacity-50">
+          Annuler
+        </button>
+        <button
+          type="submit"
+          disabled={loading || selectedTests.length === 0}
+          className={`flex-1 px-4 py-2.5 ${primary} text-white rounded-xl transition-colors flex items-center justify-center space-x-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed`}
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+          <span>{label}</span>
+        </button>
+      </div>
+    );
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl mx-4 max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col animate-[fadeIn_0.2s_ease-out]">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
           <div className="flex items-center space-x-3">
-            <Play className="w-6 h-6 text-green-600" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-sm">
+              <Play className="w-5 h-5 text-white" fill="white" />
+            </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Lancer un nouveau test</h2>
-              <p className="text-sm text-gray-500">Sélectionnez les tests et options avant l'exécution</p>
+              <h2 className="text-lg font-bold text-slate-900">Lancer un nouveau test</h2>
+              <p className="text-sm text-slate-500">Sélectionnez les tests et options avant l'exécution</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close">
-            <X className="w-6 h-6" />
+          <button onClick={onClose} className="w-9 h-9 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all" aria-label="Close">
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="overflow-y-auto max-h-[calc(90vh-140px)]">
+        {/* Mode tabs */}
+        <div className="px-6 pt-4 pb-2 border-b border-slate-100">
+          <div className="flex gap-2">
+            {MODE_TABS.map(tab => {
+              const active = executionMode === tab.id;
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => { setExecutionMode(tab.id); setSelectedTests([]); setActiveTags([]); }}
+                  className={`flex-1 flex items-center gap-3 px-4 py-3 rounded-xl transition-all border ${
+                    active
+                      ? 'bg-white border-slate-300 shadow-sm'
+                      : 'bg-slate-50 border-transparent hover:bg-slate-100'
+                  }`}
+                >
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${active ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-500'}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div className="text-left">
+                    <div className={`text-sm font-semibold ${active ? 'text-slate-900' : 'text-slate-500'}`}>{tab.label}</div>
+                    <div className={`text-xs ${active ? 'text-slate-400' : 'text-slate-400'}`}>{tab.desc}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="overflow-y-auto flex-1">
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
-            {/* Mode selector */}
-            <div className="flex items-center space-x-4 pb-4 border-b">
-              <label className="text-sm font-medium text-gray-700">Mode d'exécution:</label>
-              <div className="flex space-x-2">
-                <button
-                  type="button"
-                  onClick={() => setExecutionMode('auto')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    executionMode === 'auto'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <Play className="w-4 h-4" />
-                    <span>Automatique</span>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setExecutionMode('manual')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    executionMode === 'manual'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2">
-                    <Link2 className="w-4 h-4" />
-                    <span>Manuel (URL)</span>
-                  </div>
-                </button>
-              </div>
-            </div>
 
-            {executionMode === 'auto' ? (
+            {/* ── AUTO MODE ── */}
+            {executionMode === 'auto' && (
               <>
-            {/* Test type filter + summary */}
-            <div className="flex items-center justify-between space-x-4">
-              <div className="flex items-center space-x-3">
-                <label className="text-sm text-gray-700">Filtrer par type</label>
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTestTypes([])}
-                    className={`px-2 py-1 rounded-md text-sm ${activeTestTypes.length === 0 ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-                  >
-                    Tous
-                  </button>
-                  {TEST_TYPES.map(type => (
+                {/* Filter bar */}
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Type</span>
                     <button
-                      key={type}
                       type="button"
-                      onClick={() => toggleTestType(type)}
-                      className={`px-2 py-1 rounded-md text-sm ${activeTestTypes.includes(type) ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                      onClick={() => setActiveTestTypes([])}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTestTypes.length === 0 ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                     >
-                      {type}
+                      Tous
                     </button>
-                  ))}
-                </div>
-                <div className="text-sm text-gray-500">Résultats: {filteredTests.length}</div>
-              </div>
-
-              <div className="text-sm text-gray-600">Pages: {currentPage}/{totalPages}</div>
-            </div>
-
-            {/* Tests grid */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sélectionnez les tests à exécuter</label>
-
-              {selectedTests.length > 0 && (
-                <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-md">
-                  <p className="text-sm text-green-800 font-medium">
-                    {selectedTests.length} test{selectedTests.length > 1 ? 's' : ''} sélectionné{selectedTests.length > 1 ? 's' : ''}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {selectedTests.map(testId => {
-                      const test = availableTests.find(t => t.id === testId);
-                      if (!test) return null;
-                      const partnerLogo = test.partner ? getPartnerLogo(test.partner) : null;
-                      return (
-                        <span key={testId} className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {partnerLogo && (
-                            <img
-                              src={partnerLogo.src}
-                              alt={partnerLogo.alt}
-                              className="w-4 h-4 object-contain rounded"
-                            />
-                          )}
-                          <span>{test.name}</span>
-                          <button
-                            type="button"
-                            onClick={() => toggleTest(testId)}
-                            className="ml-0.5 text-green-600 hover:text-green-800 font-bold"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {paginatedTests.map(test => {
-                  const selected = selectedTests.includes(test.id);
-                  const typeClass =
-                    test.testType === 'Manual'
-                      ? 'bg-blue-100 text-blue-800'
-                      : test.testType === 'Cucumber'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : test.testType === 'Generic'
-                      ? 'bg-purple-100 text-purple-800'
-                      : 'bg-gray-100 text-gray-800';
-                  const partnerLogo = test.partner ? getPartnerLogo(test.partner) : null;
-                  return (
-                    <button
-                      key={test.id}
-                      type="button"
-                      onClick={() => toggleTest(test.id)}
-                      className={`text-left p-4 border rounded-lg transition-all hover:shadow-md focus:outline-none ${selected ? 'border-green-500 bg-green-50 ring-2 ring-green-200' : 'border-gray-200 bg-white'}`}
-                    >
-                      <div className="flex items-start gap-3">
-                        {partnerLogo && (
-                          <div className="flex-shrink-0">
-                            <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center p-1">
-                              <img
-                                src={partnerLogo.src}
-                                alt={partnerLogo.alt}
-                                className="w-full h-full object-contain"
-                              />
-                            </div>
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1">
-                              <div className="text-sm font-semibold text-gray-800 line-clamp-2">{test.name}</div>
-                              <div className="text-xs text-gray-500 mt-1">{test.id}</div>
-                            </div>
-                            <div className={`text-xs px-2 py-1 rounded-full font-semibold whitespace-nowrap ${typeClass}`}>{test.testType}</div>
-                          </div>
-                          <div className="mt-2 text-xs text-gray-500">
-                            {selected ? '✓ Sélectionné' : 'Cliquer pour sélectionner'}
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Pagination controls (centered) */}
-              <div className="flex flex-col items-center mt-4">
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="px-2 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Previous page"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-
-                  <div className="flex items-center space-x-2">
-                    {pageNumbers.map(num => (
+                    {TEST_TYPES.map(type => (
                       <button
-                        key={num}
+                        key={type}
                         type="button"
-                        onClick={() => setCurrentPage(num)}
-                        className={`px-3 py-1 rounded-md ${num === currentPage ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+                        onClick={() => toggleTestType(type)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${activeTestTypes.includes(type) ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                       >
-                        {num}
+                        {type}
                       </button>
                     ))}
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className="px-2 py-1 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Next page"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                  <div className="text-sm text-slate-500 font-medium">
+                    {filteredTests.length} test{filteredTests.length > 1 ? 's' : ''}
+                  </div>
                 </div>
 
-                <div className="text-sm text-gray-500 mt-2">
-                  {filteredTests.length} tests — affichage {filteredTests.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}-{Math.min(currentPage * pageSize, filteredTests.length)}
-                </div>
-              </div>
-            </div>
+                {/* Selection summary */}
+                {selectedTests.length > 0 && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <p className="text-sm font-semibold text-emerald-800">
+                        {selectedTests.length} test{selectedTests.length > 1 ? 's' : ''} sélectionné{selectedTests.length > 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    {renderSelectedChips()}
+                  </div>
+                )}
 
-            {/* E-signature */}
-            <div className="flex items-center space-x-3">
-              <input id="e-signature" type="checkbox" checked={eSignature} onChange={(e) => setESignature(e.target.checked)} className="h-4 w-4 text-green-600 border-gray-300 rounded" />
-              <label htmlFor="e-signature" className="text-sm text-gray-700">Signature électronique</label>
-            </div>
-
-            {/* Variables */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Variables (optionnel)</label>
-
-              {Object.entries(variables).map(([key, value]) => (
-                <div key={key} className="flex items-center space-x-2 mb-2">
-                  <input type="text" value={key} readOnly className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50" />
-                  <input type="text" value={value} readOnly className="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50" />
-                  <button type="button" onClick={() => removeVariable(key)} className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-md transition-colors">×</button>
-                </div>
-              ))}
-
-              <div className="flex items-center space-x-2">
-                <input type="text" value={newVarKey} onChange={(e) => setNewVarKey(e.target.value)} placeholder="Nom de la variable" className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
-                <input type="text" value={newVarValue} onChange={(e) => setNewVarValue(e.target.value)} placeholder="Valeur" className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent" />
-                <button type="button" onClick={addVariable} className="px-3 py-2 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 transition-colors" disabled={!newVarKey.trim() || !newVarValue.trim()}>+</button>
-              </div>
-            </div>
-
-            <div className="flex space-x-3 pt-2">
-              <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors" disabled={loading}>Annuler</button>
-              <button
-                type="submit"
-                disabled={loading || selectedTests.length === 0}
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <GitBranch className="w-4 h-4" />
-                <span>
-                  {loading ? 'Lancement...' : selectedTests.length === 0 ? 'Sélectionnez des tests' : `Lancer ${selectedTests.length} test${selectedTests.length > 1 ? 's' : ''}`}
-                </span>
-              </button>
-            </div>
-            </>
-            ) : (
-              <>
-                {/* Manual mode - Test selection */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Sélectionnez un test manuel</label>
-
-                    {/* Filters */}
-                    <div className="flex gap-4 mb-4">
-                      <div className="flex-1">
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Partenaire</label>
-                        <select
-                          value={partnerFilter}
-                          onChange={(e) => setPartnerFilter(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="all">Tous les partenaires</option>
-                          {Array.from(new Set(Object.values(manualTestPresets).map(p => p.partnerId))).map(partner => (
-                            <option key={partner} value={partner}>{partner.replace('web_', '').toUpperCase()}</option>
-                          ))}
-                        </select>
+                {/* Tests grid */}
+                <div>
+                  {loadingTests ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                      <Loader2 className="w-8 h-8 animate-spin mb-3" />
+                      <p className="text-sm">Chargement du catalogue…</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {paginatedTests.map(test => {
+                          const selected = selectedTests.includes(test.id);
+                          const disabled = !test.isAutomated;
+                          const typeClass = TYPE_BADGE[test.testType] || 'bg-slate-100 text-slate-600';
+                          const partnerLogo = test.partner ? getPartnerLogo(test.partner) : null;
+                          return (
+                            <button
+                              key={test.id}
+                              type="button"
+                              disabled={disabled}
+                              onClick={() => toggleTest(test.id)}
+                              className={`group text-left p-4 border rounded-xl transition-all focus:outline-none ${
+                                disabled
+                                  ? 'border-slate-100 bg-slate-50/50 opacity-60 cursor-not-allowed'
+                                  : selected
+                                  ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200 shadow-sm'
+                                  : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                {partnerLogo ? (
+                                  <div className="flex-shrink-0 w-11 h-11 rounded-lg overflow-hidden border border-slate-100 bg-white flex items-center justify-center p-1">
+                                    <img src={partnerLogo.src} alt={partnerLogo.alt} className="w-full h-full object-contain" />
+                                  </div>
+                                ) : (
+                                  <div className="flex-shrink-0 w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center">
+                                    <FileText className="w-5 h-5 text-slate-300" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <div className="text-sm font-semibold text-slate-800 line-clamp-2 leading-snug">{test.name}</div>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap ${typeClass}`}>{test.testType}</span>
+                                  </div>
+                                  <div className="text-xs text-slate-400 mt-1 font-mono">{test.id}</div>
+                                  <div className="mt-2 text-xs font-medium">
+                                    {disabled ? (
+                                      <span className="text-slate-400">Non automatisé</span>
+                                    ) : selected ? (
+                                      <span className="text-emerald-600 flex items-center gap-1"><Check className="w-3 h-3" /> Sélectionné</span>
+                                    ) : (
+                                      <span className="text-slate-400 group-hover:text-slate-600 transition-colors">Cliquer pour sélectionner</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
 
-                      <div className="flex-1">
-                        <label className="block text-xs font-medium text-gray-600 mb-1">Type de contrat</label>
-                        <select
-                          value={contractTypeFilter}
-                          onChange={(e) => setContractTypeFilter(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="all">Tous les types</option>
-                          {Array.from(new Set(Object.values(manualTestPresets).map(p => p.sourceId))).map(type => (
-                            <option key={type} value={type}>{type.toUpperCase()}</option>
+                      {/* Pagination */}
+                      {totalPages > 1 && (
+                        <div className="flex flex-col items-center mt-5">
+                          <div className="flex items-center gap-1.5">
+                            <button type="button" onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" aria-label="Previous page">
+                              <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            {pageNumbers.map(num => (
+                              <button key={num} type="button" onClick={() => setCurrentPage(num)} className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${num === currentPage ? 'bg-slate-900 text-white' : 'text-slate-500 hover:bg-slate-100'}`}>
+                                {num}
+                              </button>
+                            ))}
+                            <button type="button" onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors" aria-label="Next page">
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          </div>
+                          <div className="text-xs text-slate-400 mt-2">
+                            Page {currentPage} sur {totalPages}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {/* E-signature */}
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative">
+                    <input type="checkbox" checked={eSignature} onChange={(e) => setESignature(e.target.checked)} className="sr-only peer" />
+                    <div className="w-10 h-6 bg-slate-200 rounded-full peer-checked:bg-emerald-500 transition-colors" />
+                    <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-4" />
+                  </div>
+                  <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">Signature électronique</span>
+                </label>
+
+                {renderVariables('emerald')}
+                {renderActionButtons('emerald', loading ? 'Lancement…' : selectedTests.length === 0 ? 'Sélectionnez des tests' : `Lancer ${selectedTests.length} test${selectedTests.length > 1 ? 's' : ''}`)}
+              </>
+            )}
+
+            {/* ── TAGS MODE ── */}
+            {executionMode === 'tags' && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+                  {/* Left: tag selection (2/5) */}
+                  <div className="lg:col-span-2 space-y-4">
+                    {/* Tag groups */}
+                    {!loadingTagGroups && tagGroups.length > 0 && (
+                      <div className="border border-slate-200 rounded-xl overflow-hidden">
+                        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100">
+                          <p className="text-sm font-semibold text-slate-700">Groupes suggérés</p>
+                          <p className="text-xs text-slate-400">Cliquez pour appliquer les tags du groupe</p>
+                        </div>
+                        <div className="divide-y divide-slate-50 max-h-48 overflow-y-auto">
+                          {tagGroups.map(group => {
+                            const colors = TAG_COLOR_MAP[group.color] || TAG_COLOR_MAP.gray;
+                            const isExpanded = expandedGroups.has(group.id);
+                            const allApplied = group.tags.every(t => activeTags.includes(t));
+                            const groupTests = availableTests.filter(t =>
+                              group.tags.some(tag => (t.tags || []).includes(tag))
+                            );
+                            return (
+                              <div key={group.id} className={`px-4 py-2.5 ${colors.bg}`}>
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 rounded-full ${colors.dot} flex-shrink-0`} />
+                                  <div className="flex-1 min-w-0">
+                                    <div className={`text-sm font-semibold ${colors.text}`}>{group.name}</div>
+                                    <div className="flex flex-wrap gap-1 mt-1">
+                                      {group.tags.map(tag => (
+                                        <span key={tag} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${colors.badge}`}>{tag}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-1 flex-shrink-0">
+                                    <button type="button" onClick={() => toggleGroupExpand(group.id)} className="text-xs text-slate-400 hover:text-slate-600 px-1.5 py-1 rounded flex items-center gap-0.5 transition-colors">
+                                      {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                      <span>{groupTests.length}</span>
+                                    </button>
+                                    <button type="button" onClick={() => applyTagGroup(group)} disabled={allApplied} className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all ${allApplied ? 'bg-slate-100 text-slate-300 cursor-not-allowed' : `${colors.badge} hover:opacity-80`}`}>
+                                      {allApplied ? <Check className="w-3 h-3" /> : 'Appliquer'}
+                                    </button>
+                                  </div>
+                                </div>
+                                {isExpanded && groupTests.length > 0 && (
+                                  <div className="mt-2 space-y-1 pl-4">
+                                    {groupTests.map(t => (
+                                      <div key={t.id} className="text-xs text-slate-400 flex items-center gap-1.5">
+                                        <span className="w-1 h-1 rounded-full bg-slate-300 flex-shrink-0" />
+                                        <span className="truncate">{t.name}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* All tags */}
+                    <div className="border border-slate-200 rounded-xl p-4">
+                      <p className="text-sm font-semibold text-slate-700 mb-2">Tags disponibles</p>
+                      {allTags.length === 0 ? (
+                        <p className="text-xs text-slate-400">Aucun tag défini. Ajoutez des tags aux tests dans la Configuration.</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {allTags.map(tag => (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => toggleTag(tag)}
+                              className={`text-sm px-3 py-1 rounded-full font-medium border transition-all ${
+                                activeTags.includes(tag)
+                                  ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                                  : 'bg-white text-slate-600 border-slate-200 hover:border-blue-400 hover:text-blue-600'
+                              }`}
+                            >
+                              {tag}
+                            </button>
                           ))}
-                        </select>
+                        </div>
+                      )}
+                      <div className="mt-3 pt-3 border-t border-slate-100 flex gap-2">
+                        <input
+                          type="text"
+                          value={customTagInput}
+                          onChange={e => setCustomTagInput(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCustomTag())}
+                          placeholder="Tag personnalisé…"
+                          className="flex-1 text-sm px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <button type="button" onClick={addCustomTag} disabled={!customTagInput.trim()} className="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors">
+                          <Plus className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {Object.entries(manualTestPresets)
-                        .filter(([_, preset]) => {
-                          const matchesPartner = partnerFilter === 'all' || preset.partnerId === partnerFilter;
-                          const matchesContractType = contractTypeFilter === 'all' || preset.sourceId === contractTypeFilter;
-                          return matchesPartner && matchesContractType;
-                        })
-                        .map(([key, preset]) => {
+                    {/* Active tags */}
+                    {activeTags.length > 0 && (
+                      <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-semibold text-blue-800">Tags actifs</span>
+                          <button type="button" onClick={() => setActiveTags([])} className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                            Effacer
+                          </button>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {activeTags.map(tag => (
+                            <span key={tag} className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-blue-600 text-white rounded-full font-medium">
+                              {tag}
+                              <button type="button" onClick={() => toggleTag(tag)} className="hover:opacity-75">
+                                <X className="w-3 h-3" />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: matching tests (3/5) */}
+                  <div className="lg:col-span-3">
+                    {activeTags.length === 0 ? (
+                      <div className="h-full min-h-[300px] flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-slate-200 rounded-xl">
+                        <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-3">
+                          <Tag className="w-7 h-7 text-slate-300" />
+                        </div>
+                        <p className="text-sm font-medium text-slate-500">Sélectionnez des tags</p>
+                        <p className="text-xs text-slate-400 mt-1">Les tests correspondants apparaîtront ici</p>
+                      </div>
+                    ) : (
+                      <div className="border border-slate-200 rounded-xl overflow-hidden">
+                        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-700">Tests correspondants</p>
+                            <p className="text-xs text-slate-400">{matchingTests.length} résultat{matchingTests.length > 1 ? 's' : ''}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button type="button" onClick={() => setSelectedTests(matchingTests.filter(t => t.isAutomated).map(t => t.id))} className="text-xs px-2.5 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-medium transition-colors">
+                              Tout sélectionner
+                            </button>
+                            {selectedTests.length > 0 && (
+                              <button type="button" onClick={() => setSelectedTests([])} className="text-xs px-2.5 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors">
+                                Désélectionner
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="max-h-[400px] overflow-y-auto divide-y divide-slate-50">
+                          {matchingTests.length === 0 ? (
+                            <div className="p-8 text-center text-sm text-slate-400">
+                              Aucun test ne correspond aux tags sélectionnés.
+                            </div>
+                          ) : matchingTests.map(test => {
+                            const selected = selectedTests.includes(test.id);
+                            const disabled = !test.isAutomated;
+                            const logo = test.partner ? getPartnerLogo(test.partner) : null;
+                            const matchedTags = (test.tags || []).filter(t => activeTags.includes(t));
+                            return (
+                              <button
+                                key={test.id}
+                                type="button"
+                                disabled={disabled}
+                                onClick={() => toggleTest(test.id)}
+                                className={`w-full text-left px-4 py-3 flex items-center gap-3 transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : selected ? 'bg-emerald-50' : 'hover:bg-slate-50'}`}
+                              >
+                                <div className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-colors ${selected ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'}`}>
+                                  {selected && <Check className="w-3 h-3 text-white" />}
+                                </div>
+                                {logo ? (
+                                  <div className="w-8 h-8 rounded-lg border border-slate-100 bg-white flex items-center justify-center p-0.5 flex-shrink-0">
+                                    <img src={logo.src} alt={logo.alt} className="w-full h-full object-contain" />
+                                  </div>
+                                ) : (
+                                  <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                                    <FileText className="w-4 h-4 text-slate-300" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium text-slate-900 truncate">{test.name}</div>
+                                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                    <span className="text-xs text-slate-400 font-mono">{test.id}</span>
+                                    {matchedTags.map(tag => (
+                                      <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded-full font-medium">{tag}</span>
+                                    ))}
+                                    {disabled && <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 text-slate-400 rounded-full font-medium">Non automatisé</span>}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Selected summary */}
+                {selectedTests.length > 0 && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <p className="text-sm font-semibold text-emerald-800">
+                        {selectedTests.length} test{selectedTests.length > 1 ? 's' : ''} sélectionné{selectedTests.length > 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    {renderSelectedChips()}
+                  </div>
+                )}
+
+                {/* E-signature toggle */}
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <div className="relative">
+                    <input type="checkbox" checked={eSignature} onChange={e => setESignature(e.target.checked)} className="sr-only peer" />
+                    <div className="w-10 h-6 bg-slate-200 rounded-full peer-checked:bg-blue-500 transition-colors" />
+                    <div className="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform peer-checked:translate-x-4" />
+                  </div>
+                  <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">Signature électronique</span>
+                </label>
+
+                {renderVariables('blue')}
+                {renderActionButtons('blue', loading ? 'Lancement…' : selectedTests.length === 0 ? 'Sélectionnez des tests' : `Lancer ${selectedTests.length} test${selectedTests.length > 1 ? 's' : ''}`)}
+              </div>
+            )}
+
+            {/* ── MANUAL MODE ── */}
+            {executionMode === 'manual' && (
+              <div className="space-y-5">
+                {/* Test selection */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-3">Sélectionnez un test manuel</label>
+
+                  {/* Filters */}
+                  <div className="flex gap-4 mb-4">
+                    <div className="flex-1">
+                      <label className="block text-xs font-medium text-slate-500 mb-1">Partenaire</label>
+                      <select
+                        value={partnerFilter}
+                        onChange={(e) => setPartnerFilter(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      >
+                        <option value="all">Tous les partenaires</option>
+                        {Array.from(new Set(Object.values(manualTestPresets).map(p => p.partnerId))).map(partner => (
+                          <option key={partner} value={partner}>{partner.replace('web_', '').toUpperCase()}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs font-medium text-slate-500 mb-1">Type de contrat</label>
+                      <select
+                        value={contractTypeFilter}
+                        onChange={(e) => setContractTypeFilter(e.target.value)}
+                        className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      >
+                        <option value="all">Tous les types</option>
+                        {Array.from(new Set(Object.values(manualTestPresets).map(p => p.sourceId))).map(type => (
+                          <option key={type} value={type}>{type.toUpperCase()}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {Object.entries(manualTestPresets)
+                      .filter(([_, preset]) => {
+                        const matchesPartner = partnerFilter === 'all' || preset.partnerId === partnerFilter;
+                        const matchesContractType = contractTypeFilter === 'all' || preset.sourceId === contractTypeFilter;
+                        return matchesPartner && matchesContractType;
+                      })
+                      .map(([key, preset]) => {
                         const partner = mapPartnerIdToPartner(preset.partnerId);
                         const partnerLogo = partner ? getPartnerLogo(partner) : null;
-
+                        const isSelected = selectedManualTest === key;
                         return (
                           <button
                             key={key}
                             type="button"
                             onClick={() => handleManualTestChange(key)}
-                            className={`text-left p-4 border-2 rounded-lg transition-all hover:shadow-md focus:outline-none ${
-                              selectedManualTest === key
-                                ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200'
-                                : 'border-gray-200 bg-white hover:border-blue-300'
+                            className={`text-left p-4 border rounded-xl transition-all focus:outline-none ${
+                              isSelected
+                                ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 shadow-sm'
+                                : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
                             }`}
                           >
-                            <div className="flex items-start gap-3 mb-3">
+                            <div className="flex items-start justify-between mb-3">
                               {partnerLogo ? (
-                                <div className="flex-shrink-0">
-                                  <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-200 bg-white flex items-center justify-center p-1">
-                                    <img
-                                      src={partnerLogo.src}
-                                      alt={partnerLogo.alt}
-                                      className="w-full h-full object-contain"
-                                    />
-                                  </div>
+                                <div className="w-11 h-11 rounded-lg overflow-hidden border border-slate-100 bg-white flex items-center justify-center p-1">
+                                  <img src={partnerLogo.src} alt={partnerLogo.alt} className="w-full h-full object-contain" />
                                 </div>
                               ) : (
-                                <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-gray-400 text-xs font-semibold">
+                                <div className="w-11 h-11 rounded-lg bg-slate-100 flex items-center justify-center">
+                                  <span className="text-slate-400 text-xs font-bold">
                                     {preset.partnerId.replace('web_', '').substring(0, 2).toUpperCase()}
                                   </span>
                                 </div>
                               )}
-                              {selectedManualTest === key && (
-                                <div className="ml-auto">
-                                  <Check className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                              {isSelected && (
+                                <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                                  <Check className="w-3 h-3 text-white" />
                                 </div>
                               )}
                             </div>
-                            <div className="text-sm font-semibold text-gray-800 mb-1">{preset.name}</div>
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              <span className="px-2 py-0.5 bg-gray-100 rounded">{preset.partnerId.replace('web_', '').toUpperCase()}</span>
-                              <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">{preset.sourceId}</span>
+                            <div className="text-sm font-semibold text-slate-800 mb-1.5">{preset.name}</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-[10px] px-2 py-0.5 bg-slate-100 text-slate-600 rounded font-medium">{preset.partnerId.replace('web_', '').toUpperCase()}</span>
+                              <span className="text-[10px] px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-medium">{preset.sourceId}</span>
                             </div>
                           </button>
                         );
                       })}
-                    </div>
                   </div>
+                </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t">
-                    <h3 className="text-md font-semibold text-gray-800">Paramètres de génération d'URL</h3>
+                {/* URL generation section */}
+                <div className="border-t border-slate-100 pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-slate-700">Paramètres de génération d'URL</h3>
                     <button
                       type="button"
                       onClick={() => setShowUrlConfigModal(true)}
-                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium"
                     >
-                      Configurer les paramètres
+                      <Settings className="w-4 h-4" />
+                      <span>Configurer</span>
                     </button>
                   </div>
 
@@ -619,48 +932,38 @@ export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
                     type="button"
                     onClick={generateTestUrl}
                     disabled={generatingUrl}
-                    className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed font-semibold shadow-sm"
                   >
-                    <Link2 className="w-5 h-5" />
-                    <span>{generatingUrl ? 'Génération en cours...' : 'Générer l\'URL de test'}</span>
+                    {generatingUrl ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                    <span>{generatingUrl ? 'Génération en cours…' : 'Générer l\'URL de test'}</span>
                   </button>
 
                   {generatedUrl && (
-                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <label className="block text-sm font-medium text-green-800 mb-2">URL générée:</label>
+                    <div className="mt-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Check className="w-4 h-4 text-emerald-600" />
+                        <label className="text-sm font-semibold text-emerald-800">URL générée</label>
+                      </div>
                       <div className="flex items-center space-x-2 mb-3">
                         <input
                           type="text"
                           value={generatedUrl}
                           readOnly
-                          className="flex-1 px-3 py-2 border border-green-300 rounded-md bg-white text-sm"
+                          className="flex-1 px-3 py-2 border border-emerald-200 rounded-lg bg-white text-sm font-mono"
                         />
-                        <button
-                          type="button"
-                          onClick={copyToClipboard}
-                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center space-x-2"
-                        >
+                        <button type="button" onClick={copyToClipboard} className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center space-x-2 text-sm font-medium">
                           {urlCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                           <span>{urlCopied ? 'Copié' : 'Copier'}</span>
                         </button>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-3 mb-3">
-                        <button
-                          type="button"
-                          onClick={openInMobileSimulator}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
-                        >
+                      <div className="grid grid-cols-2 gap-3">
+                        <button type="button" onClick={openInMobileSimulator} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 text-sm font-medium">
                           <Smartphone className="w-4 h-4" />
-                          <span>Ouvrir en mode mobile</span>
+                          <span>Mode mobile</span>
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowQrCode(true)}
-                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
-                        >
+                        <button type="button" onClick={() => setShowQrCode(true)} className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors flex items-center justify-center space-x-2 text-sm font-medium">
                           <QrCode className="w-4 h-4" />
-                          <span>Afficher QR Code</span>
+                          <span>QR Code</span>
                         </button>
                       </div>
                     </div>
@@ -668,170 +971,84 @@ export const TriggerTestModal: React.FC<TriggerTestModalProps> = ({
                 </div>
 
                 <div className="flex space-x-3 pt-2">
-                  <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">Fermer</button>
+                  <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors font-medium">
+                    Fermer
+                  </button>
                 </div>
-              </>
+              </div>
             )}
           </form>
         </div>
       </div>
 
+      {/* QR Code modal */}
       {showQrCode && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]" onClick={() => setShowQrCode(false)}>
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={() => setShowQrCode(false)}>
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">QR Code</h3>
-              <button
-                onClick={() => setShowQrCode(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
+              <h3 className="text-lg font-bold text-slate-900">QR Code</h3>
+              <button onClick={() => setShowQrCode(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="flex flex-col items-center justify-center">
-              <p className="text-sm text-gray-600 mb-4 text-center">Scannez ce QR code avec votre mobile</p>
-              <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-                <QRCodeSVG
-                  value={generatedUrl}
-                  size={220}
-                  level="H"
-                  includeMargin={true}
-                />
+              <p className="text-sm text-slate-500 mb-4 text-center">Scannez ce QR code avec votre mobile</p>
+              <div className="bg-white p-4 rounded-xl border-2 border-slate-100">
+                <QRCodeSVG value={generatedUrl} size={220} level="H" includeMargin={true} />
               </div>
-              <p className="text-xs text-gray-500 mt-4 text-center">Le QR code redirige vers l'URL de test générée</p>
+              <p className="text-xs text-slate-400 mt-4 text-center">Le QR code redirige vers l'URL de test générée</p>
             </div>
           </div>
         </div>
       )}
 
+      {/* URL Config modal */}
       {showUrlConfigModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]" onClick={() => setShowUrlConfigModal(false)}>
-          <div className="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60]" onClick={() => setShowUrlConfigModal(false)}>
+          <div className="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Configuration des paramètres d'URL</h3>
-              <button
-                onClick={() => setShowUrlConfigModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <Settings className="w-5 h-5 text-slate-500" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Configuration des paramètres</h3>
+              </div>
+              <button onClick={() => setShowUrlConfigModal(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Partner ID</label>
-                <input
-                  type="text"
-                  value={apiParams.partnerId}
-                  onChange={(e) => setApiParams({ ...apiParams, partnerId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Source ID</label>
-                <input
-                  type="text"
-                  value={apiParams.sourceId}
-                  onChange={(e) => setApiParams({ ...apiParams, sourceId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Scale ID</label>
-                <input
-                  type="text"
-                  value={apiParams.scaleId}
-                  onChange={(e) => setApiParams({ ...apiParams, scaleId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Montant</label>
-                <input
-                  type="text"
-                  value={apiParams.amount}
-                  onChange={(e) => setApiParams({ ...apiParams, amount: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Durée (mois)</label>
-                <input
-                  type="text"
-                  value={apiParams.duration}
-                  onChange={(e) => setApiParams({ ...apiParams, duration: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
-                <input
-                  type="text"
-                  value={apiParams.firstName}
-                  onChange={(e) => setApiParams({ ...apiParams, firstName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-                <input
-                  type="text"
-                  value={apiParams.lastName}
-                  onChange={(e) => setApiParams({ ...apiParams, lastName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date de naissance</label>
-                <input
-                  type="date"
-                  value={apiParams.birthDate}
-                  onChange={(e) => setApiParams({ ...apiParams, birthDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  value={apiParams.email}
-                  onChange={(e) => setApiParams({ ...apiParams, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mobile</label>
-                <input
-                  type="tel"
-                  value={apiParams.mobile}
-                  onChange={(e) => setApiParams({ ...apiParams, mobile: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Order ID</label>
-                <input
-                  type="text"
-                  value={apiParams.orderId}
-                  onChange={(e) => setApiParams({ ...apiParams, orderId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+              {[
+                { label: 'Partner ID', key: 'partnerId' },
+                { label: 'Source ID', key: 'sourceId' },
+                { label: 'Scale ID', key: 'scaleId' },
+                { label: 'Montant', key: 'amount' },
+                { label: 'Durée (mois)', key: 'duration' },
+                { label: 'Prénom', key: 'firstName' },
+                { label: 'Nom', key: 'lastName' },
+                { label: 'Date de naissance', key: 'birthDate', type: 'date' },
+                { label: 'Email', key: 'email', type: 'email' },
+                { label: 'Mobile', key: 'mobile', type: 'tel' },
+                { label: 'Order ID', key: 'orderId' },
+              ].map(field => (
+                <div key={field.key}>
+                  <label className="block text-sm font-medium text-slate-600 mb-1">{field.label}</label>
+                  <input
+                    type={field.type || 'text'}
+                    value={apiParams[field.key] || ''}
+                    onChange={(e) => setApiParams({ ...apiParams, [field.key]: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+              ))}
             </div>
 
-            <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-              <button
-                type="button"
-                onClick={() => setShowUrlConfigModal(false)}
-                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
-              >
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
+              <button type="button" onClick={() => setShowUrlConfigModal(false)} className="px-4 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors font-medium">
                 Annuler
               </button>
-              <button
-                type="button"
-                onClick={() => setShowUrlConfigModal(false)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-              >
+              <button type="button" onClick={() => setShowUrlConfigModal(false)} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
                 Enregistrer
               </button>
             </div>

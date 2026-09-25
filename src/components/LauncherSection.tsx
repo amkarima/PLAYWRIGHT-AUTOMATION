@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Link2, Smartphone, QrCode, Copy, Check, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, Link2, Smartphone, QrCode, Copy, Check, X, Rocket, Zap, Loader2, Sparkles, FileText, ChevronRight } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { QRCodeSVG } from 'qrcode.react';
 import { getPartnerLogo, mapPartnerIdToPartner, type Partner } from '../utils/partnerLogos';
@@ -24,8 +24,9 @@ interface Preset {
   returnUrl: string;
   exchangeUrl: string;
   businessProviderId?: string;
+  staticUrl?: string | null;
   orderId: string;
-  [key: string]: string | undefined;
+  [key: string]: string | undefined | null;
 }
 
 interface LauncherSectionProps {
@@ -36,7 +37,6 @@ interface LauncherSectionProps {
 const generateOrderId = () => `TestAuto${Math.floor(10000000 + Math.random() * 90000000)}`;
 
 export const LauncherSection: React.FC<LauncherSectionProps> = ({ isDarkMode, onAutoLaunch }) => {
-  const [expanded, setExpanded] = useState(true);
   const [presets, setPresets] = useState<Record<string, Preset>>({});
   const [loading, setLoading] = useState(true);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -77,6 +77,7 @@ export const LauncherSection: React.FC<LauncherSectionProps> = ({ isDarkMode, on
           returnUrl: p.return_url,
           exchangeUrl: p.exchange_url,
           ...(p.business_provider_id && { businessProviderId: p.business_provider_id }),
+          ...(p.static_url && { staticUrl: p.static_url }),
           orderId: generateOrderId(),
         };
       });
@@ -93,6 +94,20 @@ export const LauncherSection: React.FC<LauncherSectionProps> = ({ isDarkMode, on
     setSelectedKey(key);
     setGeneratedUrl('');
     setUrlCopied(false);
+  };
+
+  const launchTest = async () => {
+    if (!selectedKey) return;
+    const preset = presets[selectedKey];
+    if (!preset) return;
+
+    if (preset.staticUrl) {
+      setGeneratedUrl(preset.staticUrl);
+      setUrlCopied(false);
+      return;
+    }
+
+    await generateUrl();
   };
 
   const generateUrl = async () => {
@@ -136,180 +151,234 @@ export const LauncherSection: React.FC<LauncherSectionProps> = ({ isDarkMode, on
     partnerFilter === 'all' || p.partnerId === partnerFilter
   );
 
-  const card = isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200';
-  const text = isDarkMode ? 'text-white' : 'text-gray-900';
-  const subtext = isDarkMode ? 'text-gray-400' : 'text-gray-500';
+  // Theme tokens
+  const surface = isDarkMode ? 'bg-slate-800/60 border-slate-700' : 'bg-white border-slate-200';
+  const headerBg = isDarkMode ? 'bg-slate-800/80' : 'bg-gradient-to-r from-slate-50 to-white';
+  const textPrimary = isDarkMode ? 'text-white' : 'text-slate-900';
+  const textSecondary = isDarkMode ? 'text-slate-400' : 'text-slate-500';
+  const textTertiary = isDarkMode ? 'text-slate-500' : 'text-slate-400';
+  const divider = isDarkMode ? 'border-slate-700' : 'border-slate-100';
+  const chipBase = isDarkMode ? 'bg-slate-700/60 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200';
+  const chipActive = 'bg-orange-500 text-white shadow-sm';
 
   return (
-    <div className={`rounded-xl shadow-lg border-2 mb-8 overflow-hidden ${card}`}>
-      {/* Header - toujours visible */}
-      <button
-        onClick={() => setExpanded(v => !v)}
-        className={`w-full flex items-center justify-between p-6 transition-colors ${isDarkMode ? 'hover:bg-white/5' : 'hover:bg-gray-50'}`}
-      >
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center text-xl">
-            🚀
+    <div className={`rounded-2xl shadow-xl border overflow-hidden ${surface}`}>
+      {/* ── Header ── */}
+      <div className={`flex items-center justify-between px-6 py-4 border-b ${divider} ${headerBg}`}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-sm">
+            <Rocket className="w-5 h-5 text-white" />
           </div>
-          <div className="text-left">
-            <h2 className={`text-xl font-bold ${text}`}>Lanceur</h2>
-            <p className={`text-sm ${subtext}`}>Lancez des tests manuels directement depuis l'accueil</p>
+          <div>
+            <h2 className={`text-base font-bold ${textPrimary}`}>Lanceur de tests</h2>
+            <p className={`text-xs ${textSecondary}`}>Générez et ouvrez des URLs de test manuel</p>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
+        <button
+          onClick={onAutoLaunch}
+          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all text-sm font-semibold shadow-sm hover:shadow-md"
+        >
+          <Zap className="w-4 h-4" />
+          <span>Test automatique</span>
+        </button>
+      </div>
+
+      <div className="px-6 py-5 space-y-5">
+        {/* ── Partner filter bar ── */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className={`text-xs font-semibold uppercase tracking-wide ${textTertiary}`}>Partenaire</span>
           <button
-            onClick={(e) => { e.stopPropagation(); onAutoLaunch(); }}
-            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+            onClick={() => setPartnerFilter('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${partnerFilter === 'all' ? chipActive : chipBase}`}
           >
-            <Play className="w-4 h-4" />
-            <span>Test automatique</span>
+            Tous
           </button>
-          {expanded
-            ? <ChevronUp className={`w-5 h-5 ${subtext}`} />
-            : <ChevronDown className={`w-5 h-5 ${subtext}`} />
-          }
-        </div>
-      </button>
-
-      {/* Corps expandable */}
-      {expanded && (
-        <div className={`px-6 pb-6 border-t ${isDarkMode ? 'border-white/10' : 'border-gray-100'}`}>
-          <div className="pt-5 space-y-5">
-            {/* Filtre partenaire */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`text-sm font-medium ${subtext}`}>Partenaire :</span>
+          {partners.map(pid => {
+            const partner = mapPartnerIdToPartner(pid);
+            const logo = partner ? getPartnerLogo(partner) : null;
+            return (
               <button
-                onClick={() => setPartnerFilter('all')}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${partnerFilter === 'all' ? 'bg-orange-500 text-white' : isDarkMode ? 'bg-white/10 text-gray-300 hover:bg-white/20' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                key={pid}
+                onClick={() => setPartnerFilter(pid)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${partnerFilter === pid ? chipActive : chipBase}`}
               >
-                Tous
+                {logo && <img src={logo.src} alt={logo.alt} className="w-4 h-4 object-contain" />}
+                {pid.replace('web_', '').toUpperCase()}
               </button>
-              {partners.map(pid => {
-                const partner = mapPartnerIdToPartner(pid);
-                const logo = partner ? getPartnerLogo(partner) : null;
-                return (
-                  <button
-                    key={pid}
-                    onClick={() => setPartnerFilter(pid)}
-                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-colors ${partnerFilter === pid ? 'bg-orange-500 text-white' : isDarkMode ? 'bg-white/10 text-gray-300 hover:bg-white/20' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                  >
-                    {logo && <img src={logo.src} alt={logo.alt} className="w-4 h-4 object-contain" />}
-                    {pid.replace('web_', '').toUpperCase()}
-                  </button>
-                );
-              })}
-            </div>
+            );
+          })}
+        </div>
 
-            {/* Grille de presets */}
-            {loading ? (
-              <div className={`text-center py-8 text-sm ${subtext}`}>Chargement...</div>
-            ) : visiblePresets.length === 0 ? (
-              <div className={`text-center py-8 text-sm ${subtext}`}>Aucun preset disponible</div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-                {visiblePresets.map(([key, preset]) => {
+        {/* ── Preset grid ── */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16">
+            <Loader2 className={`w-7 h-7 animate-spin mb-3 ${textTertiary}`} />
+            <p className={`text-sm ${textSecondary}`}>Chargement des presets…</p>
+          </div>
+        ) : visiblePresets.length === 0 ? (
+          <div className={`flex flex-col items-center justify-center py-16 ${textSecondary}`}>
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 ${isDarkMode ? 'bg-slate-700/50' : 'bg-slate-100'}`}>
+              <FileText className={`w-7 h-7 ${textTertiary}`} />
+            </div>
+            <p className="text-sm font-medium">Aucun preset disponible</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            {visiblePresets.map(([key, preset]) => {
+              const partner = mapPartnerIdToPartner(preset.partnerId) as Partner | null;
+              const logo = partner ? getPartnerLogo(partner) : null;
+              const selected = selectedKey === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => handleSelect(key)}
+                  className={`group relative flex flex-col items-center gap-2.5 p-4 rounded-xl border transition-all text-center ${
+                    selected
+                      ? isDarkMode
+                        ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/30 shadow-md'
+                        : 'border-orange-500 bg-orange-50 ring-2 ring-orange-200 shadow-md'
+                      : isDarkMode
+                        ? 'border-slate-700 bg-slate-700/30 hover:border-slate-600 hover:bg-slate-700/50'
+                        : 'border-slate-200 bg-white hover:border-orange-300 hover:shadow-md'
+                  }`}
+                >
+                  {selected && (
+                    <div className="absolute top-2 right-2 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center shadow-sm">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                  <div className={`w-12 h-12 rounded-xl border flex items-center justify-center overflow-hidden shadow-sm transition-colors ${
+                    isDarkMode ? 'border-slate-600 bg-white' : 'border-slate-100 bg-white'
+                  }`}>
+                    {logo
+                      ? <img src={logo.src} alt={logo.alt} className="w-10 h-10 object-contain" />
+                      : <span className={`text-sm font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{preset.partnerId.replace('web_', '').substring(0, 2).toUpperCase()}</span>
+                    }
+                  </div>
+                  <div className={`text-xs font-semibold leading-snug line-clamp-2 ${selected ? (isDarkMode ? 'text-orange-300' : 'text-orange-800') : textPrimary}`}>{preset.name}</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${isDarkMode ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-500'}`}>{preset.sourceId}</span>
+                    {preset.staticUrl && (
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex items-center gap-0.5 ${isDarkMode ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
+                        <Link2 className="w-2.5 h-2.5" />
+                        Statique
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Action & URL section ── */}
+        {selectedKey && (
+          <div className={`pt-4 border-t ${divider} space-y-4`}>
+            {/* Selected preset info */}
+            {presets[selectedKey] && (
+              <div className={`flex items-center gap-3 p-3 rounded-xl ${isDarkMode ? 'bg-slate-700/40' : 'bg-slate-50'}`}>
+                {(() => {
+                  const preset = presets[selectedKey];
                   const partner = mapPartnerIdToPartner(preset.partnerId) as Partner | null;
                   const logo = partner ? getPartnerLogo(partner) : null;
-                  const selected = selectedKey === key;
                   return (
-                    <button
-                      key={key}
-                      onClick={() => handleSelect(key)}
-                      className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-center ${
-                        selected
-                          ? 'border-orange-400 bg-orange-50 shadow-md ring-2 ring-orange-200'
-                          : isDarkMode
-                          ? 'border-white/10 bg-white/5 hover:border-white/30 hover:bg-white/10'
-                          : 'border-gray-200 bg-white hover:border-orange-300 hover:shadow-sm'
-                      }`}
-                    >
-                      {selected && (
-                        <div className="absolute top-1.5 right-1.5 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
-                          <Check className="w-2.5 h-2.5 text-white" />
-                        </div>
-                      )}
-                      <div className="w-10 h-10 rounded-lg bg-white border border-gray-100 flex items-center justify-center overflow-hidden shadow-sm">
+                    <>
+                      <div className={`w-9 h-9 rounded-lg border flex items-center justify-center overflow-hidden flex-shrink-0 ${isDarkMode ? 'border-slate-600 bg-white' : 'border-slate-100 bg-white'}`}>
                         {logo
-                          ? <img src={logo.src} alt={logo.alt} className="w-9 h-9 object-contain" />
-                          : <span className="text-xs font-bold text-gray-500">{preset.partnerId.replace('web_', '').substring(0, 2).toUpperCase()}</span>
+                          ? <img src={logo.src} alt={logo.alt} className="w-7 h-7 object-contain" />
+                          : <span className={`text-xs font-bold ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>{preset.partnerId.replace('web_', '').substring(0, 2).toUpperCase()}</span>
                         }
                       </div>
-                      <div className={`text-xs font-semibold leading-tight ${selected ? 'text-orange-800' : text}`}>{preset.name}</div>
-                      <div className={`text-xs px-1.5 py-0.5 rounded ${isDarkMode ? 'bg-white/10 text-gray-400' : 'bg-gray-100 text-gray-500'}`}>{preset.sourceId}</div>
-                    </button>
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-sm font-semibold truncate ${textPrimary}`}>{preset.name}</div>
+                        <div className={`text-xs ${textSecondary}`}>
+                          {preset.partnerId.replace('web_', '').toUpperCase()} · {preset.sourceId} · {preset.amount}€ / {preset.duration}mois
+                        </div>
+                      </div>
+                    </>
                   );
-                })}
+                })()}
               </div>
             )}
 
-            {/* Actions */}
-            {selectedKey && (
-              <div className="space-y-3">
-                <button
-                  onClick={generateUrl}
-                  disabled={generatingUrl}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Link2 className="w-5 h-5" />
-                  {generatingUrl ? 'Génération...' : 'Générer l\'URL de test'}
-                </button>
+            {/* Generate button */}
+            <button
+              onClick={launchTest}
+              disabled={generatingUrl}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl font-semibold transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {generatingUrl ? <Loader2 className="w-5 h-5 animate-spin" /> : presets[selectedKey]?.staticUrl ? <Link2 className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
+              <span>{generatingUrl ? 'Génération…' : presets[selectedKey]?.staticUrl ? 'Ouvrir l\'URL statique' : 'Générer l\'URL de test'}</span>
+            </button>
 
-                {generatedUrl && (
-                  <div className={`p-4 rounded-xl border-2 space-y-3 ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-green-50 border-green-200'}`}>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={generatedUrl}
-                        readOnly
-                        className={`flex-1 px-3 py-2 rounded-lg border text-sm truncate ${isDarkMode ? 'bg-white/10 border-white/20 text-white' : 'bg-white border-green-300 text-gray-800'}`}
-                      />
-                      <button
-                        onClick={copyUrl}
-                        className="flex items-center gap-1.5 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors flex-shrink-0"
-                      >
-                        {urlCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                        {urlCopied ? 'Copié' : 'Copier'}
-                      </button>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={openMobile}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-                      >
-                        <Smartphone className="w-4 h-4" />
-                        Mode mobile
-                      </button>
-                      <button
-                        onClick={() => setShowQr(true)}
-                        className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
-                      >
-                        <QrCode className="w-4 h-4" />
-                        QR Code
-                      </button>
-                    </div>
-                  </div>
-                )}
+            {/* Generated URL */}
+            {generatedUrl && (
+              <div className={`p-4 rounded-xl border space-y-3 transition-all ${
+                isDarkMode
+                  ? 'bg-emerald-500/10 border-emerald-500/30'
+                  : 'bg-emerald-50 border-emerald-200'
+              }`}>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-500" />
+                  <label className={`text-sm font-semibold ${isDarkMode ? 'text-emerald-300' : 'text-emerald-800'}`}>URL générée</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={generatedUrl}
+                    readOnly
+                    className={`flex-1 px-3 py-2 rounded-lg border text-sm font-mono truncate ${
+                      isDarkMode ? 'bg-slate-800 border-slate-600 text-slate-200' : 'bg-white border-emerald-200 text-slate-800'
+                    }`}
+                  />
+                  <button
+                    onClick={copyUrl}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors flex-shrink-0"
+                  >
+                    {urlCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    <span>{urlCopied ? 'Copié' : 'Copier'}</span>
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    onClick={openMobile}
+                    className="flex items-center justify-center gap-2 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    Mode mobile
+                  </button>
+                  <button
+                    onClick={() => setShowQr(true)}
+                    className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                      isDarkMode ? 'bg-slate-700 hover:bg-slate-600 text-white' : 'bg-slate-800 hover:bg-slate-900 text-white'
+                    }`}
+                  >
+                    <QrCode className="w-4 h-4" />
+                    QR Code
+                  </button>
+                </div>
               </div>
             )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* QR Code modal */}
+      {/* ── QR Code modal ── */}
       {showQr && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowQr(false)}>
-          <div className="bg-white rounded-2xl p-6 max-w-xs w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={() => setShowQr(false)}>
+          <div className="bg-white rounded-2xl p-6 max-w-xs w-full mx-4 shadow-2xl animate-[fadeIn_0.2s_ease-out]" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-gray-900">QR Code</h3>
-              <button onClick={() => setShowQr(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <h3 className="text-lg font-bold text-slate-900">QR Code</h3>
+              <button onClick={() => setShowQr(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="flex flex-col items-center gap-3">
-              <p className="text-sm text-gray-500 text-center">Scannez avec votre mobile</p>
-              <div className="bg-white p-3 rounded-xl border-2 border-gray-200">
+              <p className="text-sm text-slate-500 text-center">Scannez avec votre mobile</p>
+              <div className="bg-white p-4 rounded-xl border-2 border-slate-100">
                 <QRCodeSVG value={generatedUrl} size={200} level="H" includeMargin />
               </div>
+              <p className="text-xs text-slate-400 text-center">Le QR code redirige vers l'URL de test générée</p>
             </div>
           </div>
         </div>

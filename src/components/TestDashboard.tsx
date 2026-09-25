@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { RefreshCw, Play, Search, Filter, BarChart3, Settings, Eye, CheckCircle, XCircle, RotateCcw, Monitor, Bug, Database, Moon, Sun, BookOpen } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { RefreshCw, Play, Search, Filter, BarChart3, Settings, Eye, CheckCircle, XCircle, RotateCcw, Monitor, Bug, Database, Moon, Sun, BookOpen, Award, Rocket, ChevronDown, ExternalLink, ChevronLeft, Mail, Menu, X, Lock } from 'lucide-react';
 import { TestResult } from '../types';
 import { TestCard } from './TestCard';
 import { TriggerTestModal } from './TriggerTestModal';
@@ -10,15 +10,17 @@ import { WeatherCalendar } from './WeatherCalendar';
 import { ExecutionsPage } from './ExecutionsPage';
 import PIDsGeneratorPage from './PIDsGeneratorPage';
 import GetMyMFAPage from './GetMyMFAPage';
-import { PlanificationPage } from './PlanificationPage';
 import { ConfigPage } from './ConfigPage';
 import { AccessibilityPage } from './AccessibilityPage';
 import JDDPage from './JDDPage';
 import { DocumentationPage } from './DocumentationPage';
+import ContactPage from './ContactPage';
 import { LauncherSection } from './LauncherSection';
+import { PartnerTestsModal } from './PartnerTestsModal';
+import { PerimetreCard, PartnerCard } from './StatCards';
 import { gitlabApi } from '../services/gitlabApi';
 import { xrayApi } from '../services/xrayApi';
-import { getPartnerLogo, detectPartnerFromText } from '../utils/partnerLogos';
+import { getPartnerLogo, detectPartnerFromText, Partner } from '../utils/partnerLogos';
 
 export const TestDashboard: React.FC = () => {
   const [tests, setTests] = useState<TestResult[]>([]);
@@ -31,11 +33,24 @@ export const TestDashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [error, setError] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<'dashboard' | 'statistics' | 'weather' | 'executions' | 'config' | 'pids' | 'mfa' | 'planification' | 'accessibility' | 'jdd' | 'documentation'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'statistics' | 'weather' | 'executions' | 'config' | 'pids' | 'mfa' | 'planification' | 'accessibility' | 'jdd' | 'documentation' | 'launcher' | 'contact'>('dashboard');
   const [currentEnvironment, setCurrentEnvironment] = useState<'ci' | 'sit' | 'prod' | 'stg'>('ci');
   const [visibleExecutionsCount, setVisibleExecutionsCount] = useState(10);
   const [perimetreStats, setPerimetreStats] = useState<Record<string, { success: number; failure: number; total: number; tests: Array<{ title: string; passed: boolean }> }>>({});
   const [loadingPerimetreStats, setLoadingPerimetreStats] = useState(false);
+  const [selectedExecutionJobId, setSelectedExecutionJobId] = useState<number | null>(null);
+  const [partnerModalOpen, setPartnerModalOpen] = useState(false);
+  const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
+  const [partnerModalTests, setPartnerModalTests] = useState<Array<{ title: string; passed: boolean; perimetre: string }>>([]);
+  const [perimetreModalOpen, setPerimetreModalOpen] = useState(false);
+  const [selectedPerimetre, setSelectedPerimetre] = useState<string | null>(null);
+  const [perimetreModalTests, setPerimetreModalTests] = useState<Array<{ title: string; passed: boolean; perimetre: string }>>([]);
+  const [jddMenuOpen, setJddMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [configUnlocked, setConfigUnlocked] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : true;
@@ -64,12 +79,40 @@ export const TestDashboard: React.FC = () => {
     setVisibleExecutionsCount(10);
     // Réinitialiser les statistiques par périmètre
     setPerimetreStats({});
+    setSelectedExecutionJobId(null);
   }, [currentEnvironment]);
 
   useEffect(() => {
     // Réinitialiser les statistiques par périmètre quand les tests changent
     setPerimetreStats({});
   }, [tests]);
+
+  const availableExecutions = useMemo(() => {
+    const envTests = tests.filter(t => t.environment?.toLowerCase() === currentEnvironment.toLowerCase());
+    return envTests
+      .filter(t =>
+        (t.branch?.toLowerCase() === 'develop' || t.branch?.toLowerCase() === 'master') &&
+        t.status !== 'running' && t.status !== 'pending' &&
+        t.jobId
+      )
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  }, [tests, currentEnvironment]);
+
+  useEffect(() => {
+    if (loadingPerimetreStats || Object.keys(perimetreStats).length > 0) return;
+    if (availableExecutions.length === 0) return;
+    const latest = availableExecutions[0];
+    if (latest?.jobId) {
+      setSelectedExecutionJobId(latest.jobId);
+      loadPerimetreStats(latest.jobId);
+    }
+  }, [tests, currentEnvironment, perimetreStats, loadingPerimetreStats, availableExecutions]);
+
+  const handleExecutionChange = (jobId: number) => {
+    setSelectedExecutionJobId(jobId);
+    setPerimetreStats({});
+    loadPerimetreStats(jobId);
+  };
 
   useEffect(() => {
     let filtered = tests;
@@ -142,7 +185,7 @@ export const TestDashboard: React.FC = () => {
   const loadPerimetreStats = async (jobId: number) => {
     setLoadingPerimetreStats(true);
     try {
-      const reportContent = await gitlabApi.getJobArtifactFile(jobId, 'test-results-merged.json');
+      const reportContent = await gitlabApi.getJobArtifactFile(jobId, 'subscription-essential-e2e/test-results-merged.json');
       const report = JSON.parse(reportContent);
 
       const stats: Record<string, { success: number; failure: number; total: number; tests: Array<{ title: string; passed: boolean }> }> = {};
@@ -256,6 +299,28 @@ export const TestDashboard: React.FC = () => {
     setTestResultModalOpen(true);
   };
 
+  const handleConfigAccess = () => {
+    if (configUnlocked) {
+      setCurrentView('config');
+    } else {
+      setShowPasswordModal(true);
+      setPasswordInput('');
+      setPasswordError(false);
+    }
+  };
+
+  const handlePasswordSubmit = () => {
+    if (passwordInput === 'dashboardqa2026') {
+      setConfigUnlocked(true);
+      setShowPasswordModal(false);
+      setPasswordInput('');
+      setPasswordError(false);
+      setCurrentView('config');
+    } else {
+      setPasswordError(true);
+    }
+  };
+
 
 
   const handleDayClick = (dayTests: TestResult[]) => {
@@ -265,6 +330,41 @@ export const TestDashboard: React.FC = () => {
       setFilteredTests(dayTests);
     }
   };
+
+  if (currentView === 'contact') {
+    return <ContactPage onBack={() => setCurrentView('dashboard')} />;
+  }
+
+  if (currentView === 'launcher') {
+    return (
+      <div className={`min-h-screen ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-6">
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-100'}`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span>Retour au dashboard</span>
+            </button>
+          </div>
+          <div className="flex items-center space-x-3 mb-8">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl flex items-center justify-center shadow-md">
+              <Rocket className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Lanceur</h1>
+              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Lancez des tests manuels directement depuis l'accueil</p>
+            </div>
+          </div>
+          <LauncherSection
+            isDarkMode={isDarkMode}
+            onAutoLaunch={() => setTriggerModalOpen(true)}
+          />
+        </div>
+      </div>
+    );
+  }
 
   if (currentView === 'jdd') {
     return (
@@ -316,10 +416,6 @@ export const TestDashboard: React.FC = () => {
         </div>
       </div>
     );
-  }
-
-  if (currentView === 'planification') {
-    return <PlanificationPage onBack={() => setCurrentView('dashboard')} />;
   }
 
   if (currentView === 'mfa') {
@@ -486,127 +582,188 @@ export const TestDashboard: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-start justify-between mb-6 gap-4">
-            <div className="flex items-center space-x-6 flex-shrink-0">
+          <div className="flex items-center justify-between mb-4 gap-3 flex-nowrap">
+            <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
               <img
-                src="/logo.svg"
-                alt="sofinco"
-                className="h-16 w-auto"
+                src="/images/logoQA.png"
+                alt="Sofinco QA Dashboard"
+                className="h-16 sm:h-18 lg:h-20 w-auto object-contain max-w-[140px] sm:max-w-[150px] lg:max-w-[180px] flex-shrink-0"
               />
-              <div>
-                <div className="flex items-center space-x-3">
-                  <p className={`text-base font-medium text-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`} style={{ marginTop: '2px' }}>Dashboard QA</p>
-                  <button
-                    onClick={() => setIsDarkMode(!isDarkMode)}
-                    className={`p-2 rounded-lg transition-colors ${isDarkMode ? 'bg-white/10 hover:bg-white/20' : 'bg-gray-200 hover:bg-gray-300'}`}
-                    title={isDarkMode ? 'Passer en mode clair' : 'Passer en mode sombre'}
-                  >
-                    {isDarkMode ? <Sun className="w-4 h-4 text-yellow-300" /> : <Moon className="w-4 h-4 text-gray-700" />}
-                  </button>
-                </div>
-                <div className="flex items-center justify-center mt-2 space-x-2">
-                  <button
-                    onClick={() => setCurrentEnvironment('ci')}
-                    className={`px-3 py-1 rounded-md text-xs font-medium uppercase transition-colors ${
-                      currentEnvironment === 'ci'
-                        ? 'bg-red-600 text-white'
-                        : 'bg-purple-100 text-purple-800 hover:bg-purple-200'
-                    }`}
-                  >
-                    RCT
-                  </button>
-                  <button
-                    onClick={() => setCurrentEnvironment('prod')}
-                    className={`px-3 py-1 rounded-md text-xs font-medium uppercase transition-colors ${
-                      currentEnvironment === 'prod'
-                        ? 'bg-red-600 text-white'
-                        : 'bg-yellow-100 text-yellow-800 hover:bg-grey-200'
-                    }`}
-                  >
-                    PROD
-                  </button>
-                </div>
-              </div>
             </div>
 
-            <div className="flex items-center gap-3 justify-end flex-1">
-              <div className={`flex items-center rounded-lg shadow-sm border overflow-hidden ${isDarkMode ? 'bg-white/10 border-white/20' : 'bg-white border-gray-200'}`}>
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center justify-end flex-1 min-w-0">
+              <div className={`flex items-center justify-between w-full rounded-lg shadow-sm border ${isDarkMode ? 'bg-white/10 border-white/20' : 'bg-white border-gray-200'}`}>
+                <button
+                  onClick={() => setCurrentView('launcher')}
+                  className={`flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
+                  title="Lanceur"
+                >
+                  <Rocket className="w-4 h-4" />
+                  <span className="text-sm font-medium">Lanceur</span>
+                </button>
                 <button
                   onClick={() => setCurrentView('statistics')}
-                  className={`flex items-center space-x-2 px-4 py-2.5 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
+                  className={`flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
                   title="Statistiques"
                 >
                   <BarChart3 className="w-4 h-4" />
                   <span className="text-sm font-medium">Statistiques</span>
                 </button>
-                <button
-                  onClick={() => setCurrentView('weather')}
-                  className={`flex items-center space-x-2 px-4 py-2.5 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
-                  title="Météo"
-                >
-                  <span className="text-lg">🌤️</span>
-                  <span className="text-sm font-medium">Météo</span>
-                </button>
-                <button
-                  onClick={() => setCurrentView('planification')}
-                  className={`flex items-center space-x-2 px-4 py-2.5 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
-                  title="Planification"
-                >
-                  <span className="text-lg">📅</span>
-                  <span className="text-sm font-medium">Planification</span>
-                </button>
 
                 <button
                   onClick={() => setCurrentView('accessibility')}
-                  className={`flex items-center space-x-2 px-4 py-2.5 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
+                  className={`flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
                   title="Accessibilité"
                 >
                   <Eye className="w-4 h-4" />
                   <span className="text-sm font-medium">Accessibilité</span>
                 </button>
-                <button
-                  onClick={() => setCurrentView('jdd')}
-                  className={`flex items-center space-x-2 px-4 py-2.5 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
-                  title="Jeux De Données"
+
+                <div
+                  className="relative flex-1"
+                  onMouseEnter={() => setJddMenuOpen(true)}
+                  onMouseLeave={() => setJddMenuOpen(false)}
                 >
-                  <Database className="w-4 h-4" />
-                  <span className="text-sm font-medium">JDD</span>
-                </button>
-                <button
-                  onClick={() => setCurrentView('mfa')}
-                  className={`flex items-center space-x-2 px-4 py-2.5 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
-                  title="Get My MFA"
-                >
-                  <span className="text-lg">📱</span>
-                  <span className="text-sm font-medium">MFA</span>
-                </button>
-                <button
-                  onClick={() => setCurrentView('pids')}
-                  className={`flex items-center space-x-2 px-4 py-2.5 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
-                  title="PIDs Generator"
-                >
-                  <span className="text-lg">🪪</span>
-                  <span className="text-sm font-medium">PIDs</span>
-                </button>
+                  <button
+                    className={`flex items-center justify-center space-x-1.5 px-3 py-2 transition-colors border-r w-full ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
+                    title="JDD"
+                  >
+                    <Database className="w-4 h-4" />
+                    <span className="text-sm font-medium">JDD</span>
+                    <ChevronDown className={`w-3 h-3 transition-transform ${jddMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {jddMenuOpen && (
+                    <div className={`absolute top-full left-0 ${isDarkMode ? 'bg-gray-800 border-white/10' : 'bg-white border-gray-200'} border rounded-lg shadow-lg py-1 min-w-[140px] z-50`}>
+                      <button
+                        onClick={() => { setCurrentView('mfa'); setJddMenuOpen(false); }}
+                        className={`flex items-center space-x-2 w-full px-4 py-2 text-sm transition-colors ${isDarkMode ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        <span className="text-lg">📱</span>
+                        <span>MFA</span>
+                      </button>
+                      <button
+                        onClick={() => { setCurrentView('pids'); setJddMenuOpen(false); }}
+                        className={`flex items-center space-x-2 w-full px-4 py-2 text-sm transition-colors ${isDarkMode ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        <span className="text-lg">🪪</span>
+                        <span>PIDs</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={() => setCurrentView('documentation')}
-                  className={`flex items-center space-x-2 px-4 py-2.5 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
+                  className={`flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
                   title="Documentation"
                 >
                   <BookOpen className="w-4 h-4" />
                   <span className="text-sm font-medium">Documentation</span>
                 </button>
                 <button
-                  onClick={() => setCurrentView('config')}
-                  className={`flex items-center space-x-2 px-4 py-2.5 transition-colors ${isDarkMode ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50'}`}
+                  onClick={handleConfigAccess}
+                  className={`flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 transition-colors border-r ${isDarkMode ? 'text-white hover:bg-white/10 border-white/20' : 'text-gray-700 hover:bg-gray-50 border-gray-200'}`}
                   title="Configuration"
                 >
-                  <Settings className="w-4 h-4" />
+                  {configUnlocked ? <Settings className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
                   <span className="text-sm font-medium">Configuration</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('contact')}
+                  className={`flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 transition-colors ${isDarkMode ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50'}`}
+                  title="Contacter l'équipe"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span className="text-sm font-medium">Contact</span>
                 </button>
               </div>
             </div>
+
+            {/* Mobile Hamburger Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`lg:hidden flex items-center justify-center p-2.5 rounded-lg transition-colors ${isDarkMode ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white border border-gray-200 hover:bg-gray-50 text-gray-700'}`}
+              title="Menu"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
+
+          {/* Mobile Dropdown Menu */}
+          {mobileMenuOpen && (
+            <div className={`lg:hidden rounded-xl shadow-lg border mb-6 overflow-hidden ${isDarkMode ? 'bg-gray-800 border-white/10' : 'bg-white border-gray-200'}`}>
+              <button
+                onClick={() => { setCurrentView('launcher'); setMobileMenuOpen(false); }}
+                className={`flex items-center space-x-3 w-full px-5 py-3.5 transition-colors border-b ${isDarkMode ? 'text-white hover:bg-white/10 border-white/10' : 'text-gray-700 hover:bg-gray-50 border-gray-100'}`}
+              >
+                <Rocket className="w-5 h-5" />
+                <span className="text-sm font-medium">Lanceur</span>
+              </button>
+              <button
+                onClick={() => { setCurrentView('statistics'); setMobileMenuOpen(false); }}
+                className={`flex items-center space-x-3 w-full px-5 py-3.5 transition-colors border-b ${isDarkMode ? 'text-white hover:bg-white/10 border-white/10' : 'text-gray-700 hover:bg-gray-50 border-gray-100'}`}
+              >
+                <BarChart3 className="w-5 h-5" />
+                <span className="text-sm font-medium">Statistiques</span>
+              </button>
+              <button
+                onClick={() => { setCurrentView('accessibility'); setMobileMenuOpen(false); }}
+                className={`flex items-center space-x-3 w-full px-5 py-3.5 transition-colors border-b ${isDarkMode ? 'text-white hover:bg-white/10 border-white/10' : 'text-gray-700 hover:bg-gray-50 border-gray-100'}`}
+              >
+                <Eye className="w-5 h-5" />
+                <span className="text-sm font-medium">Accessibilité</span>
+              </button>
+              <div className={`border-b ${isDarkMode ? 'border-white/10' : 'border-gray-100'}`}>
+                <button
+                  onClick={() => setJddMenuOpen(!jddMenuOpen)}
+                  className={`flex items-center space-x-3 w-full px-5 py-3.5 transition-colors ${isDarkMode ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50'}`}
+                >
+                  <Database className="w-5 h-5" />
+                  <span className="text-sm font-medium">JDD</span>
+                  <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${jddMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {jddMenuOpen && (
+                  <div className={isDarkMode ? 'bg-black/20' : 'bg-gray-50'}>
+                    <button
+                      onClick={() => { setCurrentView('mfa'); setMobileMenuOpen(false); setJddMenuOpen(false); }}
+                      className={`flex items-center space-x-3 w-full px-8 py-3 text-sm transition-colors ${isDarkMode ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-gray-100'}`}
+                    >
+                      <span className="text-lg">📱</span>
+                      <span>MFA</span>
+                    </button>
+                    <button
+                      onClick={() => { setCurrentView('pids'); setMobileMenuOpen(false); setJddMenuOpen(false); }}
+                      className={`flex items-center space-x-3 w-full px-8 py-3 text-sm transition-colors ${isDarkMode ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-gray-100'}`}
+                    >
+                      <span className="text-lg">🪪</span>
+                      <span>PIDs</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => { setCurrentView('documentation'); setMobileMenuOpen(false); }}
+                className={`flex items-center space-x-3 w-full px-5 py-3.5 transition-colors border-b ${isDarkMode ? 'text-white hover:bg-white/10 border-white/10' : 'text-gray-700 hover:bg-gray-50 border-gray-100'}`}
+              >
+                <BookOpen className="w-5 h-5" />
+                <span className="text-sm font-medium">Documentation</span>
+              </button>
+              <button
+                onClick={() => { handleConfigAccess(); setMobileMenuOpen(false); }}
+                className={`flex items-center space-x-3 w-full px-5 py-3.5 transition-colors border-b ${isDarkMode ? 'text-white hover:bg-white/10 border-white/10' : 'text-gray-700 hover:bg-gray-50 border-gray-100'}`}
+              >
+                {configUnlocked ? <Settings className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+                <span className="text-sm font-medium">Configuration</span>
+              </button>
+              <button
+                onClick={() => { setCurrentView('contact'); setMobileMenuOpen(false); }}
+                className={`flex items-center space-x-3 w-full px-5 py-3.5 transition-colors ${isDarkMode ? 'text-white hover:bg-white/10' : 'text-gray-700 hover:bg-gray-50'}`}
+              >
+                <Mail className="w-5 h-5" />
+                <span className="text-sm font-medium">Contact / Bug</span>
+              </button>
+            </div>
+          )}
 
           {/* Weather Image with Test Banner */}
           {(() => {
@@ -617,7 +774,16 @@ export const TestDashboard: React.FC = () => {
             // Si aucun test pour cet environnement et qu'on n'est pas en train de charger, afficher le bandeau "Aucun test trouvé"
             if (environmentTests.length === 0 && !loading) {
               return (
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-100 border border-blue-200 rounded-lg p-8 text-center mb-6">
+                <div className="relative bg-gradient-to-r from-blue-50 to-indigo-100 border border-blue-200 rounded-lg p-8 text-center mb-6">
+                  <div className="absolute top-4 left-4">
+                    <button
+                      onClick={() => setIsDarkMode(!isDarkMode)}
+                      className="p-2 rounded-lg bg-white/60 hover:bg-white transition-colors"
+                      title={isDarkMode ? 'Passer en mode clair' : 'Passer en mode sombre'}
+                    >
+                      {isDarkMode ? <Sun className="w-4 h-4 text-yellow-500" /> : <Moon className="w-4 h-4 text-gray-700" />}
+                    </button>
+                  </div>
                   <div className="mb-6">
                     <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <span className="text-3xl">🔍</span>
@@ -688,6 +854,12 @@ export const TestDashboard: React.FC = () => {
             const latestMainTest = mainBranchTests.length > 0
               ? mainBranchTests.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]
               : null;
+
+            // Fallback : dernière exécution toute branche confondue (pour le rappel sur le bandeau)
+            const latestAnyTest = environmentTests.length > 0
+              ? [...environmentTests].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]
+              : null;
+            const latestTestForReminder = latestMainTest || latestAnyTest;
 
             // Vérifier s'il y a des tests en cours aujourd'hui
             const runningTestsToday = environmentTests.filter(test => {
@@ -862,21 +1034,22 @@ export const TestDashboard: React.FC = () => {
                               <div className="text-sm opacity-75">Échecs</div>
                             </div>
                           </div>
-                          {latestMainTest && (
-                            <div className="mt-2 text-xs opacity-75">
-                              Dernière exécution sur {latestMainTest.branch} • {new Date(latestMainTest.timestamp).toLocaleString('fr-FR', {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                day: 'numeric',
-                                month: 'short'
-                              })}
-                            </div>
-                          )}
                         </div>
                       )}
                     </div>
                   </div>
                   
+                  {/* Dark mode toggle - top left */}
+                  <div className="absolute top-4 left-4 z-10">
+                    <button
+                      onClick={() => setIsDarkMode(!isDarkMode)}
+                      className="p-2.5 rounded-lg bg-white/20 backdrop-blur-sm hover:bg-white/30 transition-colors"
+                      title={isDarkMode ? 'Passer en mode clair' : 'Passer en mode sombre'}
+                    >
+                      {isDarkMode ? <Sun className="w-5 h-5 text-yellow-300" /> : <Moon className="w-5 h-5 text-white" />}
+                    </button>
+                  </div>
+
                   {/* Date indicator and running tests info */}
                   <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
                     <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
@@ -904,64 +1077,42 @@ export const TestDashboard: React.FC = () => {
                   <div className="absolute bottom-4 left-4">
                     <button
                       onClick={() => setTriggerModalOpen(true)}
-                      className="px-6 py-3 bg-white text-blue-700 rounded-lg hover:bg-blue-50 transition-all flex items-center space-x-2 shadow-xl font-semibold border-2 border-blue-200 hover:border-blue-300"
+                      className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all flex items-center space-x-2 shadow-xl font-semibold border-2 border-green-700 hover:border-green-800"
                     >
                       <Play className="w-5 h-5" />
                       <span>Nouveau test</span>
                     </button>
                   </div>
+
+                  {/* Rappel dernière exécution */}
+                  {latestTestForReminder && (
+                    <button
+                      onClick={() => handleViewTestDetails(latestTestForReminder)}
+                      className="absolute bottom-4 right-4 inline-flex items-center gap-2 px-4 py-2.5 bg-white text-blue-800 rounded-lg hover:bg-blue-50 transition-all border-2 border-blue-300 shadow-xl font-semibold"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      <div className="text-left">
+                        <div className="text-xs text-blue-500 font-medium">Dernière exécution</div>
+                        <div className="text-sm font-bold text-blue-900">
+                          {new Date(latestTestForReminder.timestamp).toLocaleString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            day: 'numeric',
+                            month: 'short'
+                          })}
+                          {' · '}
+                          <span className="text-green-600">{latestTestForReminder.successCount || 0} ✓</span>
+                          {' / '}
+                          <span className="text-red-600">{latestTestForReminder.failureCount || 0} ✗</span>
+                        </div>
+                      </div>
+                    </button>
+                  )}
                 </div>
               </div>
             );
           })()}
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-gradient-to-br from-teal-50 to-teal-100 rounded-xl p-6 border-2 border-teal-200 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => setCurrentView('statistics')}>
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-teal-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <BarChart3 className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-teal-900 mb-1">Statistiques détaillées</h3>
-                  <p className="text-sm text-teal-700 mb-3">Analysez les performances de vos tests</p>
-                  <span className="text-sm font-semibold text-teal-700 hover:text-teal-900 underline">
-                    Voir les stats →
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border-2 border-purple-200 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => setCurrentView('planification')}>
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl">📅</span>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-purple-900 mb-1">Planification</h3>
-                  <p className="text-sm text-purple-700 mb-3">Planifiez vos tests automatiques</p>
-                  <span className="text-sm font-semibold text-purple-700 hover:text-purple-900 underline">
-                    Planifier →
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gradient-to-br from-cyan-50 to-cyan-100 rounded-xl p-6 border-2 border-cyan-200 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => setCurrentView('accessibility')}>
-              <div className="flex items-start space-x-4">
-                <div className="w-12 h-12 bg-cyan-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Eye className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-cyan-900 mb-1">Accessibilité</h3>
-                  <p className="text-sm text-cyan-700 mb-3">Tests WCAG 2.1 niveau AA</p>
-                  <span className="text-sm font-semibold text-cyan-700 hover:text-cyan-900 underline">
-                    Consulter →
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Statistiques par périmètre */}
           {(() => {
@@ -976,23 +1127,10 @@ export const TestDashboard: React.FC = () => {
               ? mainBranchTests.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0]
               : null;
 
-            if (!latestMainTest || !latestMainTest.jobId) return null;
-
-            // Load stats if not already loaded
-            if (Object.keys(perimetreStats).length === 0 && !loadingPerimetreStats) {
-              loadPerimetreStats(latestMainTest.jobId);
-            }
-
             return (
               <div className={`rounded-xl shadow-lg border-2 mb-8 overflow-hidden ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'}`}>
                 {/* Illustration bannière */}
-                <div className="relative w-full">
-                  <img
-                    src="/images/sof.png"
-                    alt="Circuits Sofinco : Circuit Court, Circuit Long Web, Circuit Long In-Store"
-                    className="w-full h-auto"
-                  />
-                </div>
+          
 
                 <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
@@ -1005,12 +1143,28 @@ export const TestDashboard: React.FC = () => {
                         Statistiques par périmètre
                       </h2>
                       <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                        Dernière exécution {latestMainTest.branch}
+                        {availableExecutions.find(t => t.jobId === selectedExecutionJobId)?.branch || '—'} · {availableExecutions.find(t => t.jobId === selectedExecutionJobId) ? new Date(availableExecutions.find(t => t.jobId === selectedExecutionJobId)!.timestamp).toLocaleString('fr-FR') : ''}
                       </p>
                     </div>
                   </div>
-                  <div className={`px-3 py-1 text-sm font-semibold rounded-full ${isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
-                    {Object.keys(perimetreStats).length} périmètres
+                  <div className="flex items-center gap-3">
+                    {availableExecutions.length > 0 && (
+                      <select
+                        value={selectedExecutionJobId ?? ''}
+                        onChange={(e) => handleExecutionChange(Number(e.target.value))}
+                        disabled={loadingPerimetreStats}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'} disabled:opacity-50`}
+                      >
+                        {availableExecutions.map((t) => (
+                          <option key={t.jobId} value={t.jobId}>
+                            {new Date(t.timestamp).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} {new Date(t.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} — {t.branch}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <div className={`px-3 py-1 text-sm font-semibold rounded-full ${isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
+                      {Object.keys(perimetreStats).length} périmètres
+                    </div>
                   </div>
                 </div>
 
@@ -1027,97 +1181,19 @@ export const TestDashboard: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Object.entries(perimetreStats)
                       .sort(([a], [b]) => a.localeCompare(b))
-                      .map(([perimetre, stats]) => {
-                        const successRate = stats.total > 0 ? (stats.success / stats.total) * 100 : 0;
-
-                        return (
-                          <div
-                            key={perimetre}
-                            className={`rounded-xl border-2 p-5 shadow-sm hover:shadow-md transition-shadow ${
-                              successRate >= 90
-                                ? 'bg-gradient-to-br from-green-50 to-green-100 border-green-300'
-                                : successRate >= 60
-                                ? 'bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-300'
-                                : 'bg-gradient-to-br from-red-50 to-red-100 border-red-300'
-                            }`}
-                          >
-                            {/* Header : nom + badge statut */}
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center space-x-2">
-                                <h3 className="font-bold text-gray-900 text-sm">{perimetre}</h3>
-                              </div>
-                              <div
-                                className={`w-8 h-8 rounded-lg shadow-md flex items-center justify-center ${
-                                  successRate >= 90
-                                    ? 'bg-green-600'
-                                    : successRate >= 60
-                                    ? 'bg-orange-600'
-                                    : 'bg-red-600'
-                                }`}
-                              >
-                                <span className="text-white text-xs font-bold">
-                                  {successRate >= 90 ? '✓' : successRate >= 60 ? '!' : '✗'}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="text-3xl font-bold text-gray-900 mb-3">
-                              {Math.round(successRate)}%
-                            </div>
-
-                            <div className="space-y-2">
-                              <div className="flex justify-between text-sm">
-                                <span className="text-green-700 font-medium">✓ Réussis</span>
-                                <span className="font-bold text-gray-900">{stats.success}</span>
-                              </div>
-
-                              <div className="flex justify-between text-sm">
-                                <span className="text-red-700 font-medium">✗ Échecs</span>
-                                <span className="font-bold text-gray-900">{stats.failure}</span>
-                              </div>
-
-                              <div className="flex justify-between text-sm pt-2 border-t-2 border-gray-300">
-                                <span className="text-gray-700 font-bold">Total</span>
-                                <span className="font-bold text-gray-900">{stats.total}</span>
-                              </div>
-
-                              {/* Liste des tests individuels */}
-                              {stats.tests.length > 0 && (
-                                <div className="pt-2 border-t border-gray-300 flex flex-wrap gap-2">
-                                  {stats.tests.map((t, idx) => {
-                                    const partner = detectPartnerFromText(t.title);
-                                    const logo = getPartnerLogo(partner);
-                                    return (
-                                      <div key={idx} className="relative group cursor-default" title={t.title}>
-                                        {/* Logo */}
-                                        <div className="w-8 h-8 rounded-md bg-white border border-gray-200 flex items-center justify-center overflow-hidden shadow-sm">
-                                          {logo && (
-                                            <img src={logo.src} alt={logo.alt} className="w-7 h-7 object-contain" />
-                                          )}
-                                        </div>
-                                        {/* Badge statut superposé */}
-                                        <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow ${t.passed ? 'bg-green-500' : 'bg-red-500'}`}>
-                                          {t.passed
-                                            ? <CheckCircle className="w-3 h-3 text-white" />
-                                            : <XCircle className="w-3 h-3 text-white" />
-                                          }
-                                        </div>
-                                        {/* Tooltip au survol */}
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 pointer-events-none">
-                                          <div className="bg-gray-900 text-white text-xs rounded-lg px-2 py-1.5 whitespace-nowrap max-w-48 text-center shadow-lg">
-                                            {t.title}
-                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                      .map(([perimetre, pStats], index) => (
+                        <PerimetreCard
+                          key={perimetre}
+                          perimetre={perimetre}
+                          data={pStats}
+                          delay={index * 80}
+                          onClick={() => {
+                            setSelectedPerimetre(perimetre);
+                            setPerimetreModalTests(pStats.tests.map(t => ({ title: t.title, passed: t.passed, perimetre })));
+                            setPerimetreModalOpen(true);
+                          }}
+                        />
+                      ))}
                   </div>
                 )}
                 </div>{/* end p-6 */}
@@ -1125,11 +1201,106 @@ export const TestDashboard: React.FC = () => {
             );
           })()}
 
-          {/* Lanceur */}
-          <LauncherSection
-            isDarkMode={isDarkMode}
-            onAutoLaunch={() => setTriggerModalOpen(true)}
-          />
+          {/* Statistiques par partenaire */}
+          {(() => {
+            const partnerAgg: Record<string, { success: number; failure: number; total: number; perimetres: Set<string> }> = {};
+            Object.entries(perimetreStats).forEach(([perimetre, s]) => {
+              s.tests.forEach((t) => {
+                const partner = detectPartnerFromText(t.title);
+                if (!partnerAgg[partner]) {
+                  partnerAgg[partner] = { success: 0, failure: 0, total: 0, perimetres: new Set() };
+                }
+                partnerAgg[partner].total++;
+                if (t.passed) {
+                  partnerAgg[partner].success++;
+                } else {
+                  partnerAgg[partner].failure++;
+                }
+                partnerAgg[partner].perimetres.add(perimetre);
+              });
+            });
+
+            return (
+              <div className={`rounded-xl shadow-lg border-2 mb-8 overflow-hidden ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'}`}>
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <Award className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                          Statistiques par partenaire
+                        </h2>
+                        <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                          Vue agrégée par partenaire
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {availableExecutions.length > 0 && (
+                        <select
+                          value={selectedExecutionJobId ?? ''}
+                          onChange={(e) => handleExecutionChange(Number(e.target.value))}
+                          disabled={loadingPerimetreStats}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${isDarkMode ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-gray-300 text-gray-700 hover:border-gray-400'} disabled:opacity-50`}
+                        >
+                          {availableExecutions.map((t) => (
+                            <option key={t.jobId} value={t.jobId}>
+                              {new Date(t.timestamp).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} {new Date(t.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} — {t.branch}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <div className={`px-3 py-1 text-sm font-semibold rounded-full ${isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
+                        {Object.keys(partnerAgg).length} partenaires
+                      </div>
+                    </div>
+                  </div>
+
+                {loadingPerimetreStats ? (
+                  <div className="text-center py-8">
+                    <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Chargement des données...</p>
+                  </div>
+                ) : Object.keys(partnerAgg).length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Aucune donnée disponible</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Object.entries(partnerAgg)
+                      .sort((a, b) => b[1].total - a[1].total)
+                      .map(([partner, s], index) => (
+                        <PartnerCard
+                          key={partner}
+                          partner={partner}
+                          success={s.success}
+                          failure={s.failure}
+                          total={s.total}
+                          perimetres={s.perimetres}
+                          delay={index * 80}
+                          onClick={() => {
+                            const partnerTests: Array<{ title: string; passed: boolean; perimetre: string }> = [];
+                            Object.entries(perimetreStats).forEach(([perimetre, ps]) => {
+                              ps.tests.forEach((t) => {
+                                if (detectPartnerFromText(t.title) === partner) {
+                                  partnerTests.push({ title: t.title, passed: t.passed, perimetre });
+                                }
+                              });
+                            });
+                            setSelectedPartner(partner as Partner);
+                            setPartnerModalTests(partnerTests);
+                            setPartnerModalOpen(true);
+                          }}
+                        />
+                      ))}
+                  </div>
+                )}
+                </div>
+              </div>
+            );
+          })()}
 
           <WeatherCalendar
             tests={tests.filter(test => test.environment?.toLowerCase() === currentEnvironment.toLowerCase())}
@@ -1139,8 +1310,26 @@ export const TestDashboard: React.FC = () => {
 
           {/* Latest Execution Banner */}
           {tests.filter(test => test.environment?.toLowerCase() === currentEnvironment.toLowerCase()).length > 0 && (
-            <div className={`rounded-lg shadow-sm border p-6 mb-6 mt-8 ${isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'}`}>
-              <h2 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>Dernières exécutions</h2>
+            <div
+              className="rounded-2xl shadow-lg p-6 mb-6 mt-8"
+              style={{
+                background: 'rgba(255,255,255,0.97)',
+                border: '1px solid rgba(229,231,235,0.8)',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
+              }}
+            >
+              <div className="flex items-center gap-3 mb-5">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-sm"
+                  style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}
+                >
+                  <Rocket className="w-5 h-5 text-white" strokeWidth={2} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">Dernières exécutions</h2>
+                  <p className="text-sm text-gray-500">Historique récent des pipelines de test</p>
+                </div>
+              </div>
               {(() => {
                 const allFilteredTests = tests
                   .filter(test => test.environment?.toLowerCase() === currentEnvironment.toLowerCase())
@@ -1149,96 +1338,151 @@ export const TestDashboard: React.FC = () => {
                 const latestTests = allFilteredTests.slice(0, visibleExecutionsCount);
 
                 return (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {latestTests.map((test, index) => {
                       const successCount = test.successCount || 0;
                       const failureCount = test.failureCount || 0;
                       const totalTests = successCount + failureCount;
                       const successRate = totalTests > 0 ? (successCount / totalTests) * 100 : 0;
-
                       const isRunning = test.status === 'running' || test.status === 'pending';
 
+                      let execColor = '#22c55e';
+                      let execGlow = 'rgba(34,197,94,0.25)';
+                      if (isRunning) {
+                        execColor = '#3b82f6';
+                        execGlow = 'rgba(59,130,246,0.25)';
+                      } else if (successRate < 50) {
+                        execColor = '#ef4444';
+                        execGlow = 'rgba(239,68,68,0.25)';
+                      } else if (successRate < 70) {
+                        execColor = '#f97316';
+                        execGlow = 'rgba(249,115,22,0.25)';
+                      } else if (successRate < 90) {
+                        execColor = '#f59e0b';
+                        execGlow = 'rgba(245,158,11,0.25)';
+                      }
+
                       return (
-                        <div key={test.id} className={`flex items-center justify-between p-4 rounded-lg border ${
-                          isDarkMode
-                            ? (index === 0 ? 'bg-blue-900/30 border-blue-500/30' : 'bg-white/5 border-white/10')
-                            : (index === 0 ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200')
-                        }`}>
-                          <div className="flex items-center space-x-4">
+                        <div
+                          key={test.id}
+                          className="group relative flex items-center justify-between p-4 rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.01] hover:translate-x-1"
+                          style={{
+                            animation: `card-enter 0.4s cubic-bezier(0.22,1,0.36,1) ${index * 60}ms both`,
+                            background: 'rgba(255,255,255,0.95)',
+                            border: `1.5px solid ${execColor}25`,
+                            boxShadow: `0 3px 12px ${execGlow}`,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.boxShadow = `0 8px 24px ${execGlow}, 0 0 0 1.5px ${execColor}40`;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.boxShadow = `0 3px 12px ${execGlow}`;
+                          }}
+                        >
+                          {/* Decorative blob */}
+                          <div
+                            className="absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-10 transition-opacity duration-300 group-hover:opacity-20"
+                            style={{ background: `radial-gradient(circle, ${execColor}, transparent 70%)` }}
+                          />
+
+                          <div className="flex items-center space-x-4 relative">
                             {isRunning ? (
-                              <div className="relative w-8 h-8 flex items-center justify-center">
-                                <RefreshCw className="w-6 h-6 text-blue-500 animate-spin" />
+                              <div
+                                className="relative w-10 h-10 rounded-xl flex items-center justify-center"
+                                style={{ background: `${execColor}15` }}
+                              >
+                                <RefreshCw className="w-5 h-5 animate-spin" style={{ color: execColor }} />
                               </div>
                             ) : (
-                              <span className="text-2xl">
-                                {(() => {
-                                  if (successRate >= 90) return '☀️';
-                                  if (successRate >= 70) return '☁️';
-                                  if (successRate >= 50) return '🌧️';
-                                  return '⛈️';
-                                })()}
-                              </span>
+                              <div
+                                className="relative w-10 h-10 rounded-xl flex items-center justify-center"
+                                style={{ background: `${execColor}15` }}
+                              >
+                                {successRate >= 90 ? (
+                                  <Sun className="w-5 h-5" style={{ color: execColor }} strokeWidth={2} />
+                                ) : successRate >= 70 ? (
+                                  <BarChart3 className="w-5 h-5" style={{ color: execColor }} strokeWidth={2} />
+                                ) : successRate >= 50 ? (
+                                  <XCircle className="w-5 h-5" style={{ color: execColor }} strokeWidth={2} />
+                                ) : (
+                                  <XCircle className="w-5 h-5" style={{ color: execColor }} strokeWidth={2} />
+                                )}
+                              </div>
                             )}
                             <div>
-                              <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                                {test.name}
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-gray-900 text-sm">
+                                  {test.name}
+                                </h3>
                                 {isRunning && (
-                                  <span className={`ml-2 px-2 py-1 text-xs font-medium rounded-full ${isDarkMode ? 'bg-blue-900/50 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
+                                  <span
+                                    className="px-2 py-0.5 text-xs font-bold rounded-full"
+                                    style={{ background: `${execColor}20`, color: execColor }}
+                                  >
                                     En cours
                                   </span>
                                 )}
-                              </h3>
-                              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5">
                                 {test.branch} • {new Date(test.timestamp).toLocaleString('fr-FR')}
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex items-center space-x-6">
+                          <div className="flex items-center space-x-5 relative">
                             {isRunning ? (
                               <div className="text-center">
-                                <div className="flex items-center space-x-2">
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                                <div className="flex items-center space-x-1.5">
+                                  {[0, 0.2, 0.4].map((d, i) => (
+                                    <div
+                                      key={i}
+                                      className="w-2 h-2 rounded-full animate-pulse"
+                                      style={{ background: execColor, animationDelay: `${d}s` }}
+                                    />
+                                  ))}
                                 </div>
-                                <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>En cours</p>
+                                <p className="text-xs text-gray-500 mt-1">En cours</p>
                               </div>
                             ) : totalTests > 0 ? (
-                              <div className="text-center">
-                                <p className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{Math.round(successRate)}%</p>
-                                <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Taux de réussite</p>
+                              <div className="text-center min-w-[60px]">
+                                <p className="text-xl font-extrabold" style={{ color: execColor }}>
+                                  {Math.round(successRate)}%
+                                </p>
+                                <p className="text-[10px] text-gray-500">Réussite</p>
                               </div>
                             ) : null}
 
                             {!isRunning && (
-                              <div className="flex items-center space-x-4">
+                              <div className="flex items-center space-x-3">
                                 <div className="text-center">
                                   <div className="flex items-center space-x-1">
                                     <CheckCircle className="w-4 h-4 text-green-500" />
-                                    <span className="text-lg font-semibold text-green-600">{successCount}</span>
+                                    <span className="text-base font-bold text-green-600 tabular-nums">{successCount}</span>
                                   </div>
-                                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Réussis</p>
+                                  <p className="text-[10px] text-gray-500">Réussis</p>
                                 </div>
-
                                 <div className="text-center">
                                   <div className="flex items-center space-x-1">
                                     <XCircle className="w-4 h-4 text-red-500" />
-                                    <span className="text-lg font-semibold text-red-600">{failureCount}</span>
+                                    <span className="text-base font-bold text-red-600 tabular-nums">{failureCount}</span>
                                   </div>
-                                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Échecs</p>
+                                  <p className="text-[10px] text-gray-500">Échecs</p>
                                 </div>
-
                                 <div className="text-center">
-                                  <p className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{totalTests}</p>
-                                  <p className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total</p>
+                                  <p className="text-base font-bold text-gray-900 tabular-nums">{totalTests}</p>
+                                  <p className="text-[10px] text-gray-500">Total</p>
                                 </div>
                               </div>
                             )}
 
                             <button
                               onClick={() => handleViewTestDetails(test)}
-                              className={`px-4 py-2 rounded-md transition-colors text-sm ${isDarkMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                              className="px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                              style={{
+                                background: execColor,
+                                color: 'white',
+                                boxShadow: `0 2px 8px ${execGlow}`,
+                              }}
                             >
                               Voir détails
                             </button>
@@ -1259,10 +1503,15 @@ export const TestDashboard: React.FC = () => {
                 const hasMoreExecutions = allFilteredTests.length > visibleExecutionsCount;
 
                 return hasMoreExecutions && (
-                  <div className="flex justify-center mt-6">
+                  <div className="flex justify-center mt-5">
                     <button
                       onClick={() => setVisibleExecutionsCount(prev => prev + 10)}
-                      className={`px-6 py-3 rounded-lg transition-colors font-medium shadow-sm ${isDarkMode ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                      className="px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 hover:scale-105"
+                      style={{
+                        background: 'linear-gradient(135deg, #3b82f6, #6366f1)',
+                        color: 'white',
+                        boxShadow: '0 4px 14px rgba(59,130,246,0.3)',
+                      }}
                     >
                       Voir plus d'exécutions ({allFilteredTests.length - visibleExecutionsCount} restantes)
                     </button>
@@ -1425,6 +1674,87 @@ export const TestDashboard: React.FC = () => {
           }}
           test={selectedTest}
         />
+      )}
+
+      <PartnerTestsModal
+        isOpen={partnerModalOpen}
+        onClose={() => setPartnerModalOpen(false)}
+        partner={selectedPartner}
+        tests={partnerModalTests}
+        onTrigger={(selectedTests, variables, eSignature) => {
+          handleTriggerTest(selectedTests, variables, eSignature);
+          setPartnerModalOpen(false);
+        }}
+        loading={triggerLoading}
+      />
+
+      <PartnerTestsModal
+        isOpen={perimetreModalOpen}
+        onClose={() => setPerimetreModalOpen(false)}
+        partner={null}
+        title={selectedPerimetre || undefined}
+        tests={perimetreModalTests}
+        onTrigger={(selectedTests, variables, eSignature) => {
+          handleTriggerTest(selectedTests, variables, eSignature);
+          setPerimetreModalOpen(false);
+        }}
+        loading={triggerLoading}
+      />
+
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-blue-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-gray-900">Accès à la configuration</h2>
+              </div>
+              <button
+                onClick={() => { setShowPasswordModal(false); setPasswordInput(''); setPasswordError(false); }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-600 mb-4">
+                Cette section est protégée. Veuillez saisir le mot de passe pour continuer.
+              </p>
+              <input
+                type="password"
+                value={passwordInput}
+                onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') handlePasswordSubmit(); }}
+                placeholder="Mot de passe"
+                autoFocus
+                className={`w-full px-4 py-3 border rounded-md focus:outline-none focus:ring-2 transition-colors ${
+                  passwordError
+                    ? 'border-red-300 focus:ring-red-400'
+                    : 'border-gray-300 focus:ring-blue-500'
+                }`}
+              />
+              {passwordError && (
+                <p className="mt-2 text-sm text-red-600">Mot de passe incorrect. Veuillez réessayer.</p>
+              )}
+              <div className="flex items-center justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => { setShowPasswordModal(false); setPasswordInput(''); setPasswordError(false); }}
+                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handlePasswordSubmit}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Déverrouiller
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
