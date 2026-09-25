@@ -319,11 +319,11 @@ blockquote p{margin:0}
 <!-- ================= VUE D'ENSEMBLE ================= -->
 <section id="vue-ensemble">
 <h2>Vue d'ensemble<a class="anchor" href="#vue-ensemble">#</a></h2>
-<p class="lede">Tests end-to-end <strong>Playwright</strong> du parcours de souscription <strong>Essentiel</strong>Le projet couvre l'ensemble des points d'entrée du parcours — site Sofinco, Circuit Long partenaire, Ceasy, espace client MySof — jusqu'à la signature électronique, en environnement de <strong>recette (RCT)</strong>.</p>
+<p class="lede">Tests end-to-end <strong>Playwright</strong> du parcours de souscription <strong>Essentiel</strong> de Sofinco / CA Consumer Finance. Le projet couvre l'ensemble des points d'entrée du parcours — site Sofinco, Credit Launcher partenaire, Ceasy, espace client MySof — jusqu'à la signature électronique, en environnement de <strong>recette (RCT)</strong>.</p>
 
 <div class="cards">
-  <div class="card"><h4>4 canaux d'entrée</h4><p>Circuit Court direct, Ceasy enseigne, Circuit Long partenaire, espace client MySof.</p></div>
-  <div class="card"><h4>7 enseignes Ceasy</h4><p>FNAC, DARTY, IKEA, Middle Market, EM, Castorama, Printemps.</p></div>
+  <div class="card"><h4>4 canaux d'entrée</h4><p>Crédit Conso direct, Ceasy enseigne, Credit Launcher partenaire, espace client MySof.</p></div>
+  <div class="card"><h4>7 enseignes Ceasy</h4><p>FNAC, DARTY, IKEA, Maisons du Monde, Electro Market, Castorama, Printemps.</p></div>
   <div class="card"><h4>3 produits</h4><p>CRA (crédit renouvelable amortissable), VAC (vente à crédit), CRS (crédit renouvelable simple).</p></div>
   <div class="card"><h4>Mobile-first</h4><p>Un seul projet Playwright actif : <em>Mobile Chrome</em>, émulation Pixel 5. Tous les sélecteurs en dépendent.</p></div>
 </div>
@@ -407,19 +407,19 @@ npx playwright show-report</code></pre>
 ├── api/                    # Appels API (génération de liens, OTP)
 │   ├── Ceasy.js            # Token, simulations CRA/VAC/CRS, getUrl  ← utilisé par les tests
 │   ├── Ceasy2.ts           # Refonte typée du même périmètre (non branchée)
-│   ├── CL.ts               # Circuit Long : /creditlauncher/data-transfert
+│   ├── CL.ts               # Credit Launcher : /creditlauncher/data-transfert
 │   └── getMyMFA.ts         # Récupération du dernier code OTP (GetMyMFA)
 │
 ├── pom/                    # Page Object Model, une fonction = une étape
 │   ├── essentiel/          # Cœur du parcours (PID, MiTrust, Linxo, CSP, adresse…)
-│   ├── CL/                 # Entrée Circuit Long partenaire
+│   ├── CL/                 # Entrée Credit Launcher partenaire
 │   ├── simulateur/         # Cookies, simulation, sites vitrines partenaires
 │   └── mysof/              # Espace client Sofinco
 │
 ├── tests/
-│   ├── CC/                 # Circuit Court direct — PROSPECT et CONNU_CREDIT
+│   ├── CC/                 # Crédit Conso direct — PROSPECT et CONNU_CREDIT
 │   ├── CEASY/              # Parcours Ceasy par enseigne
-│   ├── CL/                 # Parcours Circuit Long web par enseigne
+│   ├── CL/                 # Parcours Credit Launcher web par enseigne
 │   ├── MYSOF/              # Espace client (WEB / MOBILE)
 │   ├── T2/                 # Parcours à deux emprunteurs
 │   └── RECORD_TEST.ts      # Bac à sable d'enregistrement manuel
@@ -427,7 +427,7 @@ npx playwright show-report</code></pre>
 ├── datas/
 │   ├── jdd/                # Jeux de données fonctionnels
 │   ├── ceasy/              # Payloads API simulation / génération de lien
-│   ├── CL/                 # Payloads Circuit Long
+│   ├── CL/                 # Payloads Credit Launcher
 │   ├── identite/           # CNI recto/verso générées + passeport
 │   └── mytrust1.json       # Identité numérique injectée dans MiTrust
 │
@@ -462,7 +462,7 @@ npx playwright show-report</code></pre>
 <h3 id="canaux">Les quatre canaux d'entrée<a class="anchor" href="#canaux">#</a></h3>
 <p>Le parcours Essentiel est atteint par quatre chemins différents. C'est ce qui structure l'arborescence <code>tests/</code>.</p>
 
-<h4>1. <code>tests/CC/</code> — Circuit Court direct (site Sofinco)</h4>
+<h4>1. <code>tests/CC/</code> — Crédit Conso direct (site Sofinco)</h4>
 <p><strong><code>PROSPECT/</code></strong> — client inconnu. Le test attaque directement une URL de souscription paramétrée :</p>
 <pre><code>await page.goto('https://rct.souscription.sofinco.fr/essentiel/?q6=web_sofinco&amp;amount=3200&amp;dueNumber=36&amp;productId=RESERVE&amp;projectLabel=FAMILY_MOVING&amp;x1=crs&amp;sourceId=NEOURL02')</code></pre>
 <p>Puis : cookies → <code>fastSimulation</code> → mini-formulaire → parcours Essentiel complet.</p>
@@ -486,9 +486,9 @@ await page.goto(link)</code></pre>
 <tr><td><code>getSimulationXxx()</code></td><td><code>.../revolvingSimulation/v3/…</code><br><code>.../creditSaleSimulation/v1/…</code></td><td>Calcule une simulation, retourne son <code>id</code></td></tr>
 <tr><td><code>getUrl()</code></td><td><code>POST .../partnerDataExchange/v1/links/</code></td><td>Retourne le <code>link</code> de souscription pré-alimenté</td></tr>
 </tbody></table></div>
-<p>Enseignes : FNAC, DARTY, IKEA, MM (Middle Market), EM , CASTORAMA, PRINTEMPS. Produits : <strong>CRA</strong>, <strong>VAC</strong>, <strong>CRS</strong>.</p>
+<p>Enseignes : FNAC, DARTY, IKEA, MM (Maisons du Monde), EM (Electro Market), CASTORAMA, PRINTEMPS. Produits : <strong>CRA</strong>, <strong>VAC</strong>, <strong>CRS</strong>.</p>
 
-<h4>3. <code>tests/CL/</code> — Circuit Long (web partenaire)</h4>
+<h4>3. <code>tests/CL/</code> — Credit Launcher (web partenaire)</h4>
 <pre><code>await cl.generateCL(page, "cra", "web_cl", "web_cl.json")
 // → POST rct-creditpartner.ca-cf.gca/creditlauncher/data-transfert
 // → page.goto('https://rct.creditpartner.fr/simulateur/?Q6=&lt;partenaire&gt;&amp;X1=&lt;contrat&gt;&amp;token=&lt;token&gt;')</code></pre>
@@ -695,11 +695,11 @@ Constante exportée : <code>essentiel.env</code> → <code>process.env.ENV || "h
 <tr><td><code>goToBforbank</code> <span class="pill grey">non exportée</span></td><td><code>(page)</code></td><td>Non ré-exportée par <code>index.js</code></td></tr>
 </tbody></table></div>
 
-<h4>pom/CL — Circuit Long</h4>
+<h4>pom/CL — Credit Launcher</h4>
 <div class="table-wrap"><table>
 <thead><tr><th>Fonction</th><th>Signature</th><th>Comportement</th></tr></thead>
 <tbody>
-<tr><td><code>generateCL</code></td><td><code>(page, contrat, partenaire, payload)</code></td><td>Appelle l'API Circuit Long puis ouvre <code>https://rct.creditpartner.fr/simulateur/?Q6=…&amp;X1=…&amp;token=…</code></td></tr>
+<tr><td><code>generateCL</code></td><td><code>(page, contrat, partenaire, payload)</code></td><td>Appelle l'API Credit Launcher puis ouvre <code>https://rct.creditpartner.fr/simulateur/?Q6=…&amp;X1=…&amp;token=…</code></td></tr>
 <tr><td><code>generateNxcb</code></td><td><code>(page, contrat, partenaire, payload)</code></td><td>Variante paiement fractionné → <code>rct.splitpayment.creditpartner.fr</code></td></tr>
 <tr><td><code>setEmailTelAndValidate</code></td><td><code>(page, mail, tel)</code></td><td>Email + téléphone (accepte <code>#input-telephone</code> <strong>ou</strong> <code>#input-mobileNumber</code>)</td></tr>
 <tr><td><code>setEmailTelAndValidate2</code></td><td><code>(page, mail, tel)</code></td><td>Variante forçant <code>#input-mobileNumber</code></td></tr>
@@ -750,7 +750,7 @@ Constante exportée : <code>essentiel.env</code> → <code>process.env.ENV || "h
   <p>Deux implémentations concurrentes coexistent. Les signatures diffèrent de <code>Ceasy.js</code> (objets nommés au lieu d'arguments positionnels, <code>getToken(auth)</code> prend l'en-tête Basic en paramètre) : une bascule demande une reprise des appels côté tests.</p>
 </div>
 
-<h3>api/CL.ts — Circuit Long</h3>
+<h3>api/CL.ts — Credit Launcher</h3>
 <div class="table-wrap"><table>
 <thead><tr><th>Fonction</th><th>Signature</th><th>Endpoint</th></tr></thead>
 <tbody>
@@ -784,7 +784,7 @@ Constante exportée : <code>essentiel.env</code> → <code>process.env.ENV || "h
 <div class="flow">datas/
 ├── jdd/        Données fonctionnelles consommées par les tests
 ├── ceasy/      Payloads JSON des API simulation et génération de lien
-├── CL/         Payloads JSON de l'API Circuit Long
+├── CL/         Payloads JSON de l'API Credit Launcher
 ├── identite/   Images de pièces d'identité
 └── mytrust1.json   Fichier d'identité numérique MiTrust</div>
 
@@ -885,7 +885,7 @@ Constante exportée : <code>essentiel.env</code> → <code>process.env.ENV || "h
    vac          darty      credit / comptant / t2
    crs          ikea …</div>
 
-<h4>datas/CL — payloads Circuit Long</h4>
+<h4>datas/CL — payloads Credit Launcher</h4>
 <p>Un fichier par partenaire (<code>fnac.json</code>, <code>darty.json</code>, <code>ikea.json</code>, <code>printemps.json</code>, <code>redoute.json</code>, <code>em.json</code>, <code>web_cl.json</code>, <code>web_mm.json</code>, <code>nxcb_darty.json</code>, <code>fnac-vacr.json</code>). Placeholder unique : <code>{{orderId}}</code>, remplacé par <code>Date.now().substring(4,9)</code>.</p>
 
 <h3 id="identite">3. Pièces d'identité &amp; Linxo<a class="anchor" href="#identite">#</a></h3>
@@ -1001,7 +1001,7 @@ npx playwright show-report</code></pre>
 <tr><td>Une URL de souscription Sofinco (prospect)</td><td><code>tests/CC/PROSPECT/</code></td></tr>
 <tr><td>L'espace client d'un porteur existant</td><td><code>tests/CC/CONNU_CREDIT/</code></td></tr>
 <tr><td>Un lien Ceasy généré par API</td><td><code>tests/CEASY/&lt;ENSEIGNE&gt;/</code></td></tr>
-<tr><td>Le Circuit Long partenaire</td><td><code>tests/CL/&lt;ENSEIGNE&gt;/</code></td></tr>
+<tr><td>Le Credit Launcher partenaire</td><td><code>tests/CL/&lt;ENSEIGNE&gt;/</code></td></tr>
 <tr><td>L'espace client seul (hors souscription)</td><td><code>tests/MYSOF/WEB/</code> ou <code>tests/MYSOF/MOBILE/</code></td></tr>
 <tr><td>Un parcours à deux emprunteurs</td><td><code>tests/T2/</code></td></tr>
 </tbody></table></div>
