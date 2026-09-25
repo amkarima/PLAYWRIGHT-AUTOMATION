@@ -4,9 +4,10 @@ import { cacheService } from './cacheService';
 class GitLabAPI {
   private _config: GitLabConfig = {
     baseUrl: 'https://scm.saas.cagip.group.gca',
-    token: 'yrYRXygrVbmiwb2aVJ45',
+    token: 'hJNCF9N_zr95YEFPvRog',
     projectId: '207292'
   };
+
 
   get config() {
     return this._config;
@@ -440,7 +441,6 @@ class GitLabAPI {
             author: pipeline.user?.name || 'Unknown',
             artifacts: job.artifacts ? job.artifacts.map((a: any) => a.filename) : [],
             jobId: job.id,
-
             pipelineId: pipeline.id,
             successCount,
             failureCount,
