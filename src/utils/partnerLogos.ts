@@ -41,7 +41,7 @@ export const getPartnerLogo = (partner?: Partner): PartnerLogo | null => {
       bgColor: '#0070CC'
     },
     sofinco: {
-      src: '/logo.svg',
+      src: '/images/logo-sofinco.svg',
       alt: 'Sofinco'
     }
   };
@@ -57,7 +57,7 @@ export const getPartnerColor = (partner?: Partner): string => {
     fnac: '#FFCB00',
     ikea: '#0052A5',
     castorama: '#0070CC',
-    sofinco: '#E30613'
+    sofinco: '#00334D'
   };
 
   return partner ? colors[partner] : '#6B7280';
